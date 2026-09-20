@@ -4,6 +4,8 @@ site_description: Documentation for assembling, configuring, and testing algorit
 theme:
   name: material
   custom_dir: docs/overrides
+  logo: assets/logo.png
+  favicon: assets/favicon.png
   palette:
     # Palette toggle for light mode
     - media: "(prefers-color-scheme: light)"

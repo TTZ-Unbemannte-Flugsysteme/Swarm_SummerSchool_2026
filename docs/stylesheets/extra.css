@@ -25,3 +25,16 @@
     border-color: var(--md-default-fg-color);
     color: var(--md-default-fg-color);
 }
+
+/* Site logo: Material forces a square box, which squashes our wide logo.
+   Let the width follow the aspect ratio instead. */
+.md-header__button.md-logo img {
+    height: 1.9rem;
+    width: auto;
+}
+
+/* Same fix for the logo in the mobile navigation drawer */
+.md-nav__button.md-logo img {
+    height: 3rem;
+    width: auto;
+}

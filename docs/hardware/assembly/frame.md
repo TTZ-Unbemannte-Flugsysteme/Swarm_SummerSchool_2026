@@ -2,7 +2,7 @@
 
 ## Attaching Arms & Legs
 
-![Mounting Overview](../../../assets/mounting.png)
+![Mounting Overview](../../assets/mounting.png)
 
 1. **Position the Bottom PDB**: Place the bottom Power Distribution Board (PDB) flat on your workspace. This forms the base of the central body.
 2. **Sandwich the Arms**: Insert the root of each F450 arm between the bottom PDB and the top carbon/glass fiber plate. Carefully align the mounting holes.
