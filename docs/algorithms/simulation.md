@@ -2,6 +2,30 @@
 
 Before flying real hardware, you must test your algorithms in a simulated environment to prevent crashes and verify logic safely.
 
+## Get the Simulation Code
+
+The simulation code lives on the **`simulation`** branch of this repository, separate from `main` (which holds this documentation).
+
+[Browse the `simulation` branch](https://github.com/TTZ-Unbemannte-Flugsysteme/Swarm_SummerSchool_2026/tree/simulation){ .md-button .md-button--primary }
+
+Clone just that branch into its own folder:
+
+```bash
+git clone -b simulation --single-branch \
+  https://github.com/TTZ-Unbemannte-Flugsysteme/Swarm_SummerSchool_2026.git swarm-simulation
+cd swarm-simulation
+```
+
+If you already have the repository checked out, fetch the branch and switch to it:
+
+```bash
+git fetch origin simulation
+git switch simulation
+```
+
+!!! note
+    The branch is under active development. Run `git pull` at the start of each session to pick up the latest changes.
+
 ## Simulator Setup
 
 We recommend using **Gazebo** (or Gazebo Classic depending on your ROS version) paired with Software In The Loop (SITL).
