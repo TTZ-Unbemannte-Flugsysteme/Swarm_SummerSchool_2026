@@ -1,0 +1,14 @@
+# Python
+.venv/
+__pycache__/
+*.pyc
+
+# cflib TOC cache (regenerated on connect)
+cache/
+
+# Node
+node_modules/
+web/ui/dist/
+
+# macOS
+.DS_Store
