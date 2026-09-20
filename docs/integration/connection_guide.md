@@ -101,87 +101,16 @@
 </header>
 
 <nav>
-  <a href="#1-what-is-actually-connected-right-now">1 · Status now</a>
-  <a href="#2-board-layout">2 · Board</a>
-  <a href="#3-power-where-everything-gets-its-volts">3 · Power</a>
-  <a href="#4-receiver-compass-and-gps-one-block-of-pads">4 · RX / GPS / compass</a>
-  <a href="#5-escs-motors">5 · Motors</a>
-  <a href="#6-uart-reference">6 · UARTs</a>
-  <a href="#7-bring-up-order">7 · Bring-up</a>
+  <a href="#1-board-layout">1 · Board</a>
+  <a href="#2-power-where-everything-gets-its-volts">2 · Power</a>
+  <a href="#3-receiver-compass-and-gps-one-block-of-pads">3 · RX / GPS / compass</a>
+  <a href="#4-escs-motors">4 · Motors</a>
+  <a href="#5-uart-reference">5 · UARTs</a>
+  <a href="#6-bring-up-order">6 · Bring-up</a>
 </nav>
 
-<!-- ========== 1 STATUS ========== -->
-## 1 &middot; What is actually connected right now
-  <p class="sub">Live read from the board &mdash; 2026-08-03, after wiring. Bench conditions, indoors.</p>
-
-  <div class="ok">
-    <b>Receiver and GPS are wired correctly and talking.</b> Three of the four peripherals are good.
-    The two things still to resolve are the <b>compass</b> (not detected at all) and
-    <b>battery voltage sensing</b> (reading an impossible value).
-  </div>
-
-  <div class="card scroll">
-  <table>
-    <tr><th>Item</th><th>State</th><th>Evidence from the board</th></tr>
-    <tr><td><b>Flight controller</b></td><td><span class="st st-y">CONNECTED</span></td>
-        <td>MatekH7A3, ArduCopter 4.7.0, USB <code>1209:5741</code></td></tr>
-    <tr><td><b>IMU + baro</b></td><td><span class="st st-y">CONNECTED</span></td>
-        <td>ICM-42688P and SPL06 both healthy</td></tr>
-    <tr><td><b>Accel calibration</b></td><td><span class="st st-y">CONNECTED</span></td>
-        <td><code>INS_ACCSCAL</code> 0.9932 / 1.0024 / 0.9974 &mdash; real 6-position cal</td></tr>
-    <tr><td><b>FrSky receiver</b></td><td><span class="st st-y">CONNECTED</span></td>
-        <td><b>16 channels live</b> &mdash; ch1-4 read 1475 / 1493 / 1616 / 1487. Present and healthy.</td></tr>
-    <tr><td><b>GEP-M10 GPS</b></td><td><span class="st st-w">NO FIX YET</span></td>
-        <td>FC is <b>configuring the module</b> &mdash; <code>GPS 1: u-blox saving config</code>.
-            Wiring proven good. 0 satellites because indoors.</td></tr>
-    <tr><td><b>Compass</b></td><td><span class="st st-n">NOT WIRED</span></td>
-        <td><code>COMPASS_DEV_ID=0</code> and <code>DEV_ID2=0</code> &mdash; nothing on the I2C bus</td></tr>
-    <tr><td><b>Battery sensing</b></td><td><span class="st st-w">CHECK</span></td>
-        <td>Reads <b>4.57 V</b> / <b>8.30 A</b> / 0&percnt; &mdash; not a valid pack voltage</td></tr>
-    <tr><td><b>ESCs / motors</b></td><td><span class="st st-w">CHECK</span></td>
-        <td>Not verified &mdash; needs a working battery feed and a props-off motor test</td></tr>
-  </table>
-  </div>
-
-  <div class="ok">
-    <b>The receiver works with <code>SERIAL2_OPTIONS=0</code>.</b> No inversion setting was needed &mdash;
-    either the receiver outputs non-inverted (F.Port / CRSF) or UART2 handles inversion in hardware.
-    <b>Leave this parameter alone.</b>
-  </div>
-
-  <div class="ok">
-    <b>The GPS message proves the wiring.</b> <code>GPS 1: probing for u-blox</code> followed by
-    <code>u-blox saving config</code> means the FC is <em>writing configuration into</em> the module, not
-    just listening to noise. TX and RX are crossed correctly. It only needs sky view for a fix.
-  </div>
-
-  <div class="warn">
-    <b>Battery voltage is not believable.</b> 4.57&nbsp;V is no LiPo &mdash; 3S is ~11.1&nbsp;V, 4S ~14.8&nbsp;V.
-    And 8.30&nbsp;A with nothing spinning is a floating current input. Most likely the pack reaches the
-    ESCs but <b>not the <code>Vbat</code> sense pad</b>. Check that battery&nbsp;<b>+</b> reaches
-    <code>Vbat</code> and that <code>G</code> is common.
-  </div>
-
-  <div class="bad">
-    <b>Do not fly until battery sensing is fixed.</b> A bad voltage reading means <b>no low-battery
-    failsafe</b> &mdash; the aircraft cannot tell when the pack is empty. With <code>remaining 0&percnt;</code>
-    a failsafe may also trigger the moment you arm.
-  </div>
-
-  <div class="ok">
-    <b>Resolved:</b> <code>AHRS_ORIENTATION=8</code> (Roll180). This board is mounted upside-down relative to the frame.
-    It is critical this is set correctly before calibrating the accelerometer so the flight controller knows which way is "up".
-  </div>
-
-  <div class="ok">
-    <b>Compass changes what you can fly.</b> Without one: Stabilize and AltHold only.
-    With one: Loiter, RTL, Auto and position hold. Check whether your GEP-M10 variant carries a
-    magnetometer &mdash; if it does, wiring <code>SDA</code>/<code>SCL</code> makes it appear instantly,
-    indoors, no GPS fix required.
-  </div>
-
-<!-- ========== 2 BOARD ========== -->
-## 2 &middot; Board layout
+<!-- ========== 1 BOARD ========== -->
+## 1 &middot; Board layout
   <details class="card" style="margin-bottom: 20px;">
     <summary>Official Matek photo (cross-check the silkscreen)</summary>
     <img src="../assets/H7A3-SLIM.jpg" alt="MatekH7A3-SLIM top and bottom" style="width:100%;margin-top:12px;border-radius:8px">
@@ -343,8 +272,8 @@
     column &mdash; so <b>S1 is the lowest of the four</b>, not the top. Easy to solder the quad backwards.</div>
 
 
-<!-- ========== 3 POWER ========== -->
-## 3 &middot; Power &mdash; where everything gets its volts
+<!-- ========== 2 POWER ========== -->
+## 2 &middot; Power &mdash; where everything gets its volts
   <div class="ok">
     <b>The LiPo is the only power source.</b> It feeds the PDB, which feeds the <b>ESCs</b> (raw voltage)
     and the FC's <b>Vbat</b> pad. The flight controller regulates that down itself and hands out
@@ -486,8 +415,8 @@
     which is how parameters and firmware are read and written with no battery. But USB cannot spin motors
     &mdash; ESCs draw from the PDB. <b>A motor test needs the main battery.</b></div>
 
-<!-- ========== 4 CONNECTOR BLOCK ========== -->
-## 4 &middot; Receiver, compass and GPS &mdash; one block of pads
+<!-- ========== 3 CONNECTOR BLOCK ========== -->
+## 3 &middot; Receiver, compass and GPS &mdash; one block of pads
   <p class="sub">All three live on the bottom edge, lower row. Ten pads, three devices.</p>
   <div class="card diagram wide"><svg viewBox="0 0 920 640" xmlns="http://www.w3.org/2000/svg" role="img"
        aria-label="Connector block wiring from board pads to receiver, compass and GPS">
@@ -602,8 +531,8 @@
   <div class="ok"><b>Both <code>SCL</code>/<code>SDA</code> pairs are one bus</b> in parallel &mdash; use
     whichever is easier to reach. A compass here is what finally clears <code>COMPASS_DEV_ID=0</code>.</div>
 
-<!-- ========== 5 MOTORS ========== -->
-## 5 &middot; ESCs &amp; motors
+<!-- ========== 4 MOTORS ========== -->
+## 4 &middot; ESCs &amp; motors
   <p class="sub">Signal wires to <code>S1</code>&ndash;<code>S4</code>. ESC power comes from the PDB, not the FC.</p>
   <div class="card"><div class="frame">
       <div class="nose">▲ NOSE / FORWARD</div>
@@ -640,8 +569,8 @@
   <div class="warn"><b>ESC protocol is plain PWM</b> (<code>MOT_PWM_TYPE=0</code>). Correct for standard
     PWM ESCs. For BLHeli_S set <code>MOT_PWM_TYPE=6</code> (DShot600) &mdash; but only if the ESCs support it.</div>
 
-<!-- ========== 6 UART ========== -->
-## 6 &middot; UART reference
+<!-- ========== 5 UART ========== -->
+## 5 &middot; UART reference
   <div class="card scroll">
   <table>
     <tr><th>Serial</th><th>UART</th><th>Pads</th><th>Use</th><th>Baud</th></tr>
@@ -655,8 +584,8 @@
   </table>
   </div>
 
-<!-- ========== 7 BRINGUP ========== -->
-## 7 &middot; Bring-up order
+<!-- ========== 6 BRINGUP ========== -->
+## 6 &middot; Bring-up order
   <div class="card scroll">
   <table>
     <tr><th>#</th><th>Step</th><th>Confirms</th></tr>

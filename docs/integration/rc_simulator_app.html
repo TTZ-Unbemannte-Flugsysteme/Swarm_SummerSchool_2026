@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Drone Setup Simulation: Taranis QX7 & Betaflight</title>
+    <title>Drone Setup Simulation: FrSky Taranis QX7</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
@@ -18,80 +18,12 @@
             min-height: 100vh;
         }
 
-        /* Betaflight styled components */
-        .bf-panel {
+        /* Panel styling */
+        .panel {
             background-color: #1e293b;
             border: 1px solid #334155;
             border-radius: 0.5rem;
             box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-        }
-        
-        .bf-header {
-            background-color: #334155;
-            padding: 0.5rem 1rem;
-            border-top-left-radius: 0.5rem;
-            border-top-right-radius: 0.5rem;
-            font-weight: 600;
-            color: #cbd5e1;
-            text-transform: uppercase;
-            font-size: 0.875rem;
-            letter-spacing: 0.05em;
-        }
-
-        .bf-bar-container {
-            background-color: #334155;
-            height: 1.5rem;
-            border-radius: 0.25rem;
-            position: relative;
-            overflow: hidden;
-            border: 1px solid #475569;
-        }
-
-        .bf-bar-fill {
-            background-color: #f59e0b; /* Amber */
-            height: 100%;
-            width: 50%;
-            transition: width 0.3s ease;
-            position: relative;
-        }
-        
-        .bf-bar-marker {
-            position: absolute;
-            top: 0;
-            bottom: 0;
-            width: 2px;
-            background-color: #ef4444; /* Red center marker */
-            left: 50%;
-            transform: translateX(-50%);
-            z-index: 10;
-        }
-
-        .bf-range-slider {
-            position: relative;
-            height: 2rem;
-            background-color: #334155;
-            border-radius: 0.25rem;
-            margin-top: 0.5rem;
-            border: 1px solid #475569;
-        }
-
-        .bf-range-active {
-            position: absolute;
-            height: 100%;
-            background-color: rgba(245, 158, 11, 0.3); /* Amber semi-transparent */
-            border: 1px solid #f59e0b;
-            border-radius: 0.25rem;
-        }
-        
-        .bf-indicator {
-            position: absolute;
-            top: -0.5rem;
-            bottom: -0.5rem;
-            width: 4px;
-            background-color: #f59e0b;
-            z-index: 20;
-            transition: left 0.3s ease;
-            box-shadow: 0 0 5px rgba(245, 158, 11, 0.8);
         }
 
         /* Controller Styles */
@@ -243,19 +175,19 @@
 <body class="p-4 md:p-8">
 
     <header class="max-w-6xl mx-auto w-full mb-8 text-center">
-        <h1 class="text-3xl md:text-4xl font-bold text-white mb-2"><i class="fa-solid fa-gamepad text-blue-500 mr-3"></i>Betaflight Setup Simulator</h1>
-        <p class="text-slate-400">Interactive guide for setting up FrSky Taranis QX7 switches with Emax Tinyhawk.</p>
+        <h1 class="text-3xl md:text-4xl font-bold text-white mb-2"><i class="fa-solid fa-gamepad text-blue-500 mr-3"></i>FrSky Taranis QX7 Setup Simulator</h1>
+        <p class="text-slate-400">Interactive guide for assigning switches and mixer channels on the FrSky Taranis QX7.</p>
     </header>
 
-    <main class="max-w-6xl mx-auto w-full grid grid-cols-1 lg:grid-cols-3 gap-8 flex-grow">
+    <main class="max-w-6xl mx-auto w-full grid grid-cols-1 lg:grid-cols-2 gap-8 flex-grow">
         
         <!-- Left Column: Instructions -->
         <div class="lg:col-span-1 space-y-4 max-h-[80vh] overflow-y-auto pr-2" id="instructions-panel">
-            <div class="bf-panel p-4 mb-4 sticky top-0 z-10 border-b-2 border-blue-500">
+            <div class="panel p-4 mb-4 sticky top-0 z-10 border-b-2 border-blue-500">
                 <h2 class="text-xl font-bold text-white mb-2">Setup Progress</h2>
                 <div class="flex justify-between items-center">
                     <button id="prev-btn" class="px-4 py-2 bg-slate-700 hover:bg-slate-600 rounded text-sm disabled:opacity-50 disabled:cursor-not-allowed" onclick="prevStep()"><i class="fa-solid fa-arrow-left mr-2"></i>Back</button>
-                    <span id="step-counter" class="font-mono text-blue-400 font-bold">Step 1 of 5</span>
+                    <span id="step-counter" class="font-mono text-blue-400 font-bold">Step 1 of 3</span>
                     <button id="next-btn" class="px-4 py-2 bg-blue-600 hover:bg-blue-500 rounded text-sm disabled:opacity-50 disabled:cursor-not-allowed" onclick="nextStep()">Next<i class="fa-solid fa-arrow-right ml-2"></i></button>
                 </div>
             </div>
@@ -289,28 +221,7 @@
             </div>
 
             <div id="step-3" class="step-container step-inactive p-4 rounded-r-lg">
-                <h3 class="text-lg font-bold text-white mb-2">3. Betaflight Receiver Test</h3>
-                <p class="text-sm text-slate-300 mb-2">Connect to PC. Verify Betaflight reads the switches correctly.</p>
-                <div class="mt-3 p-2 bg-slate-800 rounded text-xs border border-slate-700">
-                    <i class="fa-solid fa-info-circle text-blue-400 mr-1"></i> Action: Toggle the physical switches on the controller and watch the AUX bars move in the Betaflight panel.
-                </div>
-            </div>
-
-            <div id="step-4" class="step-container step-inactive p-4 rounded-r-lg">
-                <h3 class="text-lg font-bold text-white mb-2">4. Betaflight Modes Setup</h3>
-                <p class="text-sm text-slate-300 mb-2">Configure logical modes based on switch positions.</p>
-                <ul class="text-sm text-slate-400 list-disc pl-5 space-y-1">
-                    <li><strong>ARM (AUX 1):</strong> Active when switch is UP.</li>
-                    <li><strong>ANGLE/HORIZON (AUX 2):</strong> Middle = Angle, Down = Horizon, Up = Acro (default).</li>
-                    <li><strong>BEEPER/FLIP (AUX 3):</strong> Middle = Flip, Down = Beeper.</li>
-                </ul>
-                 <div class="mt-3 p-2 bg-slate-800 rounded text-xs border border-slate-700">
-                    <i class="fa-solid fa-info-circle text-blue-400 mr-1"></i> Action: Observe the yellow indicators in the Modes tab as you flip switches.
-                </div>
-            </div>
-
-            <div id="step-5" class="step-container step-inactive p-4 rounded-r-lg">
-                <h3 class="text-lg font-bold text-white mb-2">5. Final Test</h3>
+                <h3 class="text-lg font-bold text-white mb-2">3. Final Test</h3>
                 <p class="text-sm text-slate-300 mb-2">Disconnect USB, plug in battery (simulated), and test functions.</p>
                 <div class="mt-3 p-2 bg-slate-800 rounded text-xs border border-slate-700">
                     <i class="fa-solid fa-info-circle text-blue-400 mr-1"></i> Action: Disarm all switches. Then Arm the drone to see props spin, or flip the Beeper switch to hear/see it beep.
@@ -436,134 +347,14 @@
                 <div id="drone-status" class="absolute bottom-2 text-xs font-mono font-bold text-slate-400 bg-slate-900 px-2 py-1 rounded">DISARMED</div>
             </div>
         </div>
-
-        <div class="lg:col-span-1 flex flex-col h-full">
-            <div id="bf-container" class="bf-panel flex flex-col flex-grow opacity-50 pointer-events-none transition-opacity duration-500 relative">
-                <!-- Overlay when inactive -->
-                <div id="bf-overlay" class="absolute inset-0 z-50 flex items-center justify-center bg-slate-900 bg-opacity-70 rounded-lg">
-                    <div class="text-center">
-                        <i class="fa-solid fa-usb text-4xl text-slate-500 mb-2"></i>
-                        <p class="text-sm font-bold text-slate-400">Waiting for Step 3...</p>
-                    </div>
-                </div>
-
-                <div class="bf-header flex justify-between items-center">
-                    <span><i class="fa-solid fa-helicopter mr-2"></i>Betaflight Configurator</span>
-                    <span class="text-xs bg-slate-700 px-2 py-1 rounded">COM3</span>
-                </div>
-                
-                <!-- Tabs simulation -->
-                <div class="flex border-b border-slate-700 bg-slate-800 text-xs font-bold text-slate-400">
-                    <div id="tab-receiver" class="px-4 py-2 cursor-pointer hover:bg-slate-700 border-b-2 border-transparent">Receiver</div>
-                    <div id="tab-modes" class="px-4 py-2 cursor-pointer hover:bg-slate-700 border-b-2 border-transparent">Modes</div>
-                </div>
-
-                <!-- Receiver View -->
-                <div id="view-receiver" class="p-4 hidden flex-col gap-3">
-                    <h3 class="text-white text-sm font-bold mb-2">Receiver Channels</h3>
-                    
-                    <!-- Channel Bars -->
-                    <div class="flex items-center gap-2">
-                        <span class="w-16 text-xs text-right text-slate-400 font-mono">Throttle</span>
-                        <div class="bf-bar-container flex-grow">
-                            <div class="bf-bar-fill bg-green-500" style="width: 10%;"></div>
-                            <div class="bf-bar-marker"></div>
-                            <span class="absolute right-2 top-0 text-[10px] text-white leading-6 font-mono">1000</span>
-                        </div>
-                    </div>
-                    
-                    <hr class="border-slate-700 my-1">
-                    
-                    <div class="flex items-center gap-2">
-                        <span class="w-16 text-xs text-right font-bold text-blue-400 font-mono">AUX 1 (ARM)</span>
-                        <div class="bf-bar-container flex-grow">
-                            <div id="bar-aux1" class="bf-bar-fill bg-blue-500" style="width: 10%;"></div>
-                            <div class="bf-bar-marker"></div>
-                            <span id="val-aux1" class="absolute right-2 top-0 text-[10px] text-white leading-6 font-mono">1000</span>
-                        </div>
-                    </div>
-                    <div class="flex items-center gap-2">
-                        <span class="w-16 text-xs text-right font-bold text-blue-400 font-mono">AUX 2 (MOD)</span>
-                        <div class="bf-bar-container flex-grow">
-                            <div id="bar-aux2" class="bf-bar-fill bg-blue-500" style="width: 50%;"></div>
-                            <div class="bf-bar-marker"></div>
-                            <span id="val-aux2" class="absolute right-2 top-0 text-[10px] text-white leading-6 font-mono">1500</span>
-                        </div>
-                    </div>
-                    <div class="flex items-center gap-2">
-                        <span class="w-16 text-xs text-right font-bold text-blue-400 font-mono">AUX 3 (BEP)</span>
-                        <div class="bf-bar-container flex-grow">
-                            <div id="bar-aux3" class="bf-bar-fill bg-blue-500" style="width: 50%;"></div>
-                            <div class="bf-bar-marker"></div>
-                            <span id="val-aux3" class="absolute right-2 top-0 text-[10px] text-white leading-6 font-mono">1500</span>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Modes View -->
-                <div id="view-modes" class="p-4 hidden flex-col gap-4 overflow-y-auto">
-                    <!-- ARM Mode -->
-                    <div class="bg-slate-800 p-3 rounded border border-slate-700">
-                        <div class="flex justify-between items-center mb-1">
-                            <span class="text-white font-bold text-sm">ARM</span>
-                            <span class="text-xs bg-slate-700 px-2 py-1 rounded text-slate-300">AUX 1</span>
-                        </div>
-                        <div class="bf-range-slider">
-                            <div class="bf-range-active" style="left: 60%; width: 40%;"></div> <!-- Active High -->
-                            <div id="ind-arm" class="bf-indicator" style="left: 10%;"></div>
-                        </div>
-                        <div class="flex justify-between text-[10px] text-slate-500 mt-1 font-mono">
-                            <span>900</span><span>1500</span><span>2100</span>
-                        </div>
-                    </div>
-
-                    <!-- ANGLE Mode -->
-                    <div class="bg-slate-800 p-3 rounded border border-slate-700">
-                        <div class="flex justify-between items-center mb-1">
-                            <span class="text-white font-bold text-sm">ANGLE</span>
-                            <span class="text-xs bg-slate-700 px-2 py-1 rounded text-slate-300">AUX 2</span>
-                        </div>
-                        <div class="bf-range-slider">
-                            <div class="bf-range-active" style="left: 40%; width: 20%;"></div> <!-- Active Mid -->
-                            <div id="ind-angle" class="bf-indicator" style="left: 50%;"></div>
-                        </div>
-                    </div>
-
-                    <!-- HORIZON Mode -->
-                    <div class="bg-slate-800 p-3 rounded border border-slate-700">
-                        <div class="flex justify-between items-center mb-1">
-                            <span class="text-white font-bold text-sm">HORIZON</span>
-                            <span class="text-xs bg-slate-700 px-2 py-1 rounded text-slate-300">AUX 2</span>
-                        </div>
-                        <div class="bf-range-slider">
-                            <div class="bf-range-active" style="left: 60%; width: 40%;"></div> <!-- Active High (Switch Down) -->
-                            <div id="ind-horizon" class="bf-indicator" style="left: 50%;"></div>
-                        </div>
-                    </div>
-
-                    <!-- BEEPER Mode -->
-                    <div class="bg-slate-800 p-3 rounded border border-slate-700">
-                        <div class="flex justify-between items-center mb-1">
-                            <span class="text-white font-bold text-sm">BEEPER</span>
-                            <span class="text-xs bg-slate-700 px-2 py-1 rounded text-slate-300">AUX 3</span>
-                        </div>
-                        <div class="bf-range-slider">
-                            <div class="bf-range-active" style="left: 60%; width: 40%;"></div> <!-- Active High (Switch Down) -->
-                            <div id="ind-beeper" class="bf-indicator" style="left: 50%;"></div>
-                        </div>
-                    </div>
-                </div>
-
-            </div>
-        </div>
     </main>
 
     <script>
         // State
         let currentStep = 1;
-        const totalSteps = 5;
+        const totalSteps = 3;
         
-        // Radio State mapped to Betaflight values (1000, 1500, 2000)
+        // Radio State: switch positions as RC channel values (1000, 1500, 2000)
         let radioState = {
             sf: 1000, // 2-pos: 1000 (down), 2000 (up)
             sa: 1000, // 3-pos: 1000 (up), 1500 (mid), 2000 (down)
@@ -617,65 +408,20 @@
         }
 
         function applyStepLogic() {
-            const bfContainer = document.getElementById('bf-container');
-            const bfOverlay = document.getElementById('bf-overlay');
-            const viewReceiver = document.getElementById('view-receiver');
-            const viewModes = document.getElementById('view-modes');
-            const tabReceiver = document.getElementById('tab-receiver');
-            const tabModes = document.getElementById('tab-modes');
-
-            // Reset tabs
-            tabReceiver.className = "px-4 py-2 cursor-pointer hover:bg-slate-700 border-b-2 border-transparent text-slate-400";
-            tabModes.className = "px-4 py-2 cursor-pointer hover:bg-slate-700 border-b-2 border-transparent text-slate-400";
-
             switch (currentStep) {
                 case 1:
+                    radioState.menuPage = 'inputs';
+                    break;
                 case 2:
-                    // Betaflight inactive
-                    bfContainer.classList.add('opacity-50', 'pointer-events-none');
-                    bfOverlay.classList.remove('hidden');
-                    if(currentStep === 1) radioState.menuPage = 'inputs';
-                    if(currentStep === 2) radioState.menuPage = 'mixer';
-                    updateRadioScreen();
+                    radioState.menuPage = 'mixer';
                     break;
                 case 3:
-                    // Betaflight active, Receiver tab
-                    bfContainer.classList.remove('opacity-50', 'pointer-events-none');
-                    bfOverlay.classList.add('hidden');
-                    
-                    viewReceiver.classList.remove('hidden');
-                    viewReceiver.classList.add('flex');
-                    viewModes.classList.add('hidden');
-                    viewModes.classList.remove('flex');
-                    
-                    tabReceiver.className = "px-4 py-2 cursor-pointer border-b-2 border-blue-500 text-white bg-slate-700";
+                    // Final test: back to the home screen, battery connected
                     radioState.menuPage = 'main';
-                    updateRadioScreen();
-                    break;
-                case 4:
-                    // Betaflight active, Modes tab
-                    bfContainer.classList.remove('opacity-50', 'pointer-events-none');
-                    bfOverlay.classList.add('hidden');
-                    
-                    viewReceiver.classList.add('hidden');
-                    viewReceiver.classList.remove('flex');
-                    viewModes.classList.remove('hidden');
-                    viewModes.classList.add('flex');
-                    
-                    tabModes.className = "px-4 py-2 cursor-pointer border-b-2 border-blue-500 text-white bg-slate-700";
-                    break;
-                case 5:
-                     // Final test (Betaflight can be considered "disconnected", focus on drone)
-                    bfContainer.classList.add('opacity-50', 'pointer-events-none');
-                    bfOverlay.classList.remove('hidden');
-                    bfOverlay.innerHTML = `<div class="text-center"><i class="fa-solid fa-battery-full text-4xl text-green-500 mb-2"></i><p class="text-sm font-bold text-white">Battery Connected</p><p class="text-xs text-slate-400">Test switches now</p></div>`;
-                    
-                    // Reset switches for safety
-                    setSwitchState('sf', 1000); // Disarm
+                    setSwitchState('sf', 1000); // Reset to disarmed for safety
                     break;
             }
-            
-            updateBetaflightData();
+            updateRadioScreen();
             checkDroneState();
         }
 
@@ -706,7 +452,6 @@
                 if(id === 'sd') document.getElementById('task-1-3').classList.add('text-green-400');
             }
 
-            updateBetaflightData();
             checkDroneState();
         }
 
@@ -718,7 +463,6 @@
              if(id === 'sf') {
                   el.classList.add(targetVal === 2000 ? 'switch-2-up' : 'switch-2-down');
              }
-             updateBetaflightData();
              checkDroneState();
         }
 
@@ -761,41 +505,8 @@
             }
         }
 
-        function updateBetaflightData() {
-            // Helper to map 1000-2000 range to percentage (10% to 90% for visual padding)
-            const valToPercent = (val) => ((val - 1000) / 1000) * 80 + 10;
-
-            // 1. Update Receiver Bars
-            // SF -> AUX 1
-            document.getElementById('bar-aux1').style.width = `${valToPercent(radioState.sf)}%`;
-            document.getElementById('val-aux1').innerText = radioState.sf;
-            
-            // SA -> AUX 2
-            document.getElementById('bar-aux2').style.width = `${valToPercent(radioState.sa)}%`;
-            document.getElementById('val-aux2').innerText = radioState.sa;
-            
-            // SD -> AUX 3
-            document.getElementById('bar-aux3').style.width = `${valToPercent(radioState.sd)}%`;
-            document.getElementById('val-aux3').innerText = radioState.sd;
-
-            // 2. Update Modes Indicators (using absolute percentages across container)
-            // Range 900-2100 mapped to 0-100%.
-            const valToIndicatorLeft = (val) => ((val - 900) / 1200) * 100;
-
-            document.getElementById('ind-arm').style.left = `${valToIndicatorLeft(radioState.sf)}%`;
-            
-            // AUX2 controls Angle/Horizon
-            let aux2Left = valToIndicatorLeft(radioState.sa);
-            document.getElementById('ind-angle').style.left = `${aux2Left}%`;
-            document.getElementById('ind-horizon').style.left = `${aux2Left}%`;
-
-            // AUX3 controls Beeper
-            let aux3Left = valToIndicatorLeft(radioState.sd);
-            document.getElementById('ind-beeper').style.left = `${aux3Left}%`;
-        }
-
         function checkDroneState() {
-            if (currentStep !== 5) return; // Only activate drone logic in final step
+            if (currentStep !== totalSteps) return; // Only activate drone logic in final step
 
             const props = document.querySelectorAll('.propeller');
             const statusLabel = document.getElementById('drone-status');

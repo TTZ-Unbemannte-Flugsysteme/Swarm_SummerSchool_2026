@@ -45,7 +45,7 @@ nav:
     - Overview: integration/index.md
     - Connection Guide: integration/connection_guide.md
     - Bind with Remote Control: integration/remote_control.md
-    - Betaflight Setup Simulator: integration/betaflight_simulator.md
+    - RC Setup Simulator: integration/betaflight_simulator.md
     - Communication Links: integration/communication_links.md
   - Software & Configuration:
     - Mission Planner: software/firmware.md
