@@ -68,8 +68,8 @@
             <h3 class="text-xl font-bold text-purple-400 mb-4">2. Frame & Motor Mounting</h3>
             <ul class="text-sm text-slate-300 space-y-4">
                 <li class="flex items-center bg-slate-900/50 p-3 rounded-lg"><i class="fa-solid fa-arrow-right text-purple-500/70 mr-3 text-sm"></i> Sandwich F450 Arms between PDB and Top Plate</li>
-                <li class="flex items-center bg-slate-900/50 p-3 rounded-lg"><i class="fa-solid fa-arrow-right text-purple-500/70 mr-3 text-sm"></i> Attach Landing Gear using 2.0mm Hex Screws</li>
-                <li class="flex items-center bg-slate-900/50 p-3 rounded-lg"><i class="fa-solid fa-arrow-right text-purple-500/70 mr-3 text-sm"></i> Mount 2212 Motors to Arms using 2.0mm Hex Screws</li>
+                <li class="flex items-center bg-slate-900/50 p-3 rounded-lg"><i class="fa-solid fa-arrow-right text-purple-500/70 mr-3 text-sm"></i> Attach Landing Gear using 2.5mm Hex Screws</li>
+                <li class="flex items-center bg-slate-900/50 p-3 rounded-lg"><i class="fa-solid fa-arrow-right text-purple-500/70 mr-3 text-sm"></i> Mount 2212 Motors to Arms using 2.5mm Hex Screws</li>
                 <li class="flex items-center bg-slate-900/50 p-3 rounded-lg"><i class="fa-solid fa-arrow-right text-purple-500/70 mr-3 text-sm"></i> Connect ESC bullet connectors to Motor wires</li>
             </ul>
         </div>
