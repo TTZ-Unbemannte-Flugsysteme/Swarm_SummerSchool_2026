@@ -111,7 +111,7 @@
 
 <!-- ========== 1 BOARD ========== -->
 ## 1 &middot; Board layout
-  <img src="../assets/H7A3-SLIM.jpeg" alt="Matek H7A3-SLIM top and bottom" style="width:100%;margin-bottom:12px;border-radius:8px">
+  <img src="../../assets/H7A3-SLIM.jpeg" alt="Matek H7A3-SLIM top and bottom" style="width:100%;margin-bottom:12px;border-radius:8px">
   <p class="sub">Official Matek photo — cross-check the silkscreen.</p>
   <p class="sub">Top view, forward arrow up. Pads colour-coded by what connects to them.</p>
   <div class="card">
