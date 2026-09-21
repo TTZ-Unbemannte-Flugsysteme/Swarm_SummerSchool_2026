@@ -578,7 +578,7 @@
     <tr><td><b>SERIAL3</b></td><td>USART3</td><td><code>Rx3 Tx3</code></td><td><b>GPS</b> &mdash; GEP-M10</td><td>57600</td></tr>
     <tr><td>SERIAL4</td><td>UART4</td><td><code>Rx4 Tx4</code></td><td>Free</td><td>230400</td></tr>
     <tr><td>SERIAL5</td><td>UART5</td><td><code>Rx5 Tx5</code></td><td>Free</td><td>57600</td></tr>
-    <tr><td>SERIAL6</td><td>USART6</td><td><code>Rx6 Tx6</code> (top)</td><td>Free</td><td>57600</td></tr>
+    <tr><td>SERIAL6</td><td>USART6</td><td><code>Rx6 Tx6</code> (top)</td><td>VTX &amp; camera &mdash; shares the top edge with the <code>Vtx</code>, <code>Cam</code> and <code>9V</code> pads</td><td>57600</td></tr>
   </table>
   </div>
 
