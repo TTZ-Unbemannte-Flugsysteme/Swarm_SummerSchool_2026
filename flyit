@@ -1,0 +1,240 @@
+#!/usr/bin/env bash
+# flyit - bring up the whole leader-follower simulation in one command.
+#
+#   flyit                 3 drones in Gazebo + flight log + dashboard
+#   flyit 2               two drones
+#   flyit --no-gazebo     headless physics (starts much faster)
+#   flyit --no-terms      background everything, no windows
+#   flyit --mp            also start Mission Planner
+#   flyit --stop          shut it all down
+#
+# Opens one terminal window per component so you can watch the logs, starts the
+# status dashboard, and points a browser at it. Runs from any directory.
+set -u
+
+# Resolve through symlinks so `flyit` works from anywhere on PATH: $0 would
+# otherwise be the symlink's own directory (~/.local/bin), where there is no
+# scripts/env.sh to source.
+SELF="$(readlink -f "${BASH_SOURCE[0]}")"
+cd "$(dirname "$SELF")" || exit 1
+
+# Stamp the session before sourcing env.sh, and export it so every component
+# this script starts - vehicles, relay, flight log, dashboard - writes into the
+# same directory instead of each inventing its own.
+export SWARM_SESSION="${SWARM_SESSION:-$(date +%Y%m%d-%H%M%S)}"
+source scripts/env.sh
+
+COUNT=3
+USE_GAZEBO=1
+USE_TERMS=1
+USE_MP=0
+
+for arg in "$@"; do
+  case "$arg" in
+    --stop)        ./scripts/stop_swarm.sh; exit $? ;;
+    --gazebo)      USE_GAZEBO=1 ;;
+    --no-gazebo)   USE_GAZEBO=0 ;;
+    --no-terms)    USE_TERMS=0 ;;
+    --mission-planner|--mp) USE_MP=1 ;;
+    -h|--help)     sed -n '2,12p' "$SELF" | sed 's/^# \{0,1\}//'; exit 0 ;;
+    [0-9]*)        COUNT="$arg" ;;
+    *) echo "unknown option: $arg (try --help)" >&2; exit 1 ;;
+  esac
+done
+
+# --- which terminal emulator do we have? -----------------------------------
+TERM_CMD=""
+if [ "$USE_TERMS" = "1" ] && [ -n "${DISPLAY:-}${WAYLAND_DISPLAY:-}" ]; then
+  for t in gnome-terminal xfce4-terminal konsole xterm; do
+    if command -v "$t" > /dev/null 2>&1; then TERM_CMD="$t"; break; fi
+  done
+  [ -z "$TERM_CMD" ] && echo "No terminal emulator found; running headless." >&2
+else
+  USE_TERMS=0
+fi
+
+# Open a titled terminal running a command that stays open afterwards.
+open_term() {
+  local title="$1" cmd="$2"
+  local keep="$cmd; echo; echo '--- $title finished. Press Enter to close. ---'; read _"
+  case "$TERM_CMD" in
+    gnome-terminal) gnome-terminal --title="$title" -- bash -lc "$keep" 2>/dev/null & ;;
+    xfce4-terminal) xfce4-terminal --title="$title" -e "bash -lc \"$keep\"" 2>/dev/null & ;;
+    konsole)        konsole -p tabtitle="$title" -e bash -lc "$keep" 2>/dev/null & ;;
+    xterm)          xterm -T "$title" -e bash -lc "$keep" 2>/dev/null & ;;
+    *) return 1 ;;
+  esac
+  return 0
+}
+
+echo "=============================================="
+echo " flyit - $COUNT vehicles, gazebo=$USE_GAZEBO, terminals=$USE_TERMS"
+echo "=============================================="
+
+require_ardupilot || exit 1
+
+echo
+echo "[0/5] Clearing any previous run..."
+kill_sim || exit 1
+LEFT=$(running_vehicles)
+if [ "$LEFT" != "0" ]; then
+  echo "ERROR: $LEFT SITL process(es) still alive. Refusing to stack more." >&2
+  exit 1
+fi
+init_session
+echo "      session $SESSION_ID  ->  .run/sessions/$SESSION_ID"
+
+# --- vehicles ---------------------------------------------------------------
+echo "[1/5] Starting $COUNT vehicle(s)..."
+GZ_ARG="plain"; [ "$USE_GAZEBO" = "1" ] && GZ_ARG="gazebo"
+# MAVProxy always runs with --daemon. Without it MAVProxy runs an interactive
+# command loop on stdin, and every vehicle here is started backgrounded from a
+# terminal - so stdin hits EOF and MAVProxy exits immediately, taking the
+# vehicle with it. Per-vehicle detail lives in .run/latest/vehicle*.log, and
+# the flight-log terminal already shows every drone's autopilot messages.
+if [ "$USE_TERMS" = "1" ] && open_term "swarm: vehicles + gazebo" \
+     "cd '$REPO' && ./scripts/launch_swarm.sh $COUNT $GZ_ARG"; then
+  echo "      -> its own terminal (Gazebo window opens from there)"
+else
+  setsid nohup ./scripts/launch_swarm.sh "$COUNT" "$GZ_ARG" \
+    > "$SESSION_DIR/launch.out" 2>&1 < /dev/null &
+  echo "      -> background, log: .run/latest/launch.out"
+fi
+
+echo "      waiting for MAVLink endpoints..."
+# Readiness means "a heartbeat actually arrived", not "a port is bound".
+# MAVProxy only SENDS to these ports, so checking whether they are bound
+# reports every vehicle as missing forever.
+if python3 - "$COUNT" << 'PY'
+import sys
+from pymavlink import mavutil
+count = int(sys.argv[1])
+for i in range(count):
+    port = 14551 + 10 * i          # control port; nothing else holds it yet
+    conn = mavutil.mavlink_connection(f"udpin:127.0.0.1:{port}")
+    hb = conn.wait_heartbeat(timeout=70)
+    conn.close()
+    if hb is None:
+        print(f"      vehicle {i} never sent a heartbeat on udp {port}")
+        sys.exit(1)
+sys.exit(0)
+PY
+then
+  echo "      all $COUNT vehicle(s) are streaming."
+else
+  echo "ERROR: vehicles did not come up." >&2
+  for i in $(seq 0 $((COUNT - 1))); do
+    vlog="$SESSION_DIR/vehicle$i.log"
+    [ -f "$vlog" ] || continue
+    if grep -q "MAVProxy exited\|Killing tasks" "$vlog" 2>/dev/null; then
+      echo "" >&2
+      echo "  vehicle $i died. Last lines of $(basename "$vlog"):" >&2
+      tail -6 "$vlog" | sed 's/^/    /' >&2
+    fi
+  done
+  echo "" >&2
+  echo "  Full logs: .run/latest/" >&2
+  exit 1
+fi
+
+# --- relay ------------------------------------------------------------------
+FOLLOWERS=""
+for i in $(seq 1 $((COUNT - 1))); do
+  FOLLOWERS="${FOLLOWERS:+$FOLLOWERS,}$(relay_port "$i")"
+done
+
+echo "[2/5] Starting the position relay (leader -> $FOLLOWERS)..."
+if [ -z "$FOLLOWERS" ]; then
+  echo "      only one vehicle; nothing to relay."
+elif [ "$USE_TERMS" = "1" ] && open_term "swarm: relay" \
+     "cd '$REPO' && python3 -u companion/swarm_agent/relay.py --leader $(relay_port 0) --followers $FOLLOWERS"; then
+  echo "      -> in its own terminal window"
+else
+  setsid nohup python3 -u companion/swarm_agent/relay.py \
+    --leader "$(relay_port 0)" --followers "$FOLLOWERS" \
+    > "$SESSION_DIR/relay.log" 2>&1 < /dev/null &
+  record_pid $!
+  echo "      -> background, log: .run/latest/relay.log"
+fi
+sleep 2
+
+# --- flight log -------------------------------------------------------------
+echo "[3/5] Starting the flight log..."
+if [ "$USE_TERMS" = "1" ] && open_term "swarm: flight log" \
+     "cd '$REPO' && python3 -u scripts/flight_log.py --vehicles $COUNT"; then
+  echo "      -> its own terminal (autopilot messages, modes, arming)"
+else
+  setsid nohup python3 -u scripts/flight_log.py --vehicles "$COUNT" --no-color \
+    > "$SESSION_DIR/flight_log.stdout" 2>&1 < /dev/null &
+  record_pid $!
+  echo "      -> background, log: .run/latest/flight_log.txt"
+fi
+
+# --- dashboard --------------------------------------------------------------
+echo "[4/5] Starting the status dashboard on port $DASHBOARD_HTTP_PORT..."
+if [ "$USE_TERMS" = "1" ] && open_term "swarm: dashboard" \
+     "cd '$REPO' && python3 -u dashboard/server.py --vehicles $COUNT --http-port $DASHBOARD_HTTP_PORT"; then
+  echo "      -> in its own terminal window"
+else
+  setsid nohup python3 -u dashboard/server.py --vehicles "$COUNT" \
+    --http-port "$DASHBOARD_HTTP_PORT" > "$SESSION_DIR/dashboard.log" 2>&1 < /dev/null &
+  record_pid $!
+  echo "      -> background, log: .run/latest/dashboard.log"
+fi
+
+URL="http://127.0.0.1:$DASHBOARD_HTTP_PORT"
+for _ in $(seq 1 15); do
+  sleep 1
+  if python3 -c "
+import sys,urllib.request
+try: urllib.request.urlopen('$URL/api/status', timeout=1); sys.exit(0)
+except Exception: sys.exit(1)" 2>/dev/null; then
+    echo "      dashboard is answering."
+    break
+  fi
+done
+
+if [ "$USE_MP" = "1" ] && [ -d "$MISSION_PLANNER" ]; then
+  echo "      starting Mission Planner (connect to UDP $(gcs_port 0))..."
+  ( cd "$MISSION_PLANNER" && setsid nohup mono MissionPlanner.exe \
+      > "$SESSION_DIR/missionplanner.log" 2>&1 < /dev/null & )
+fi
+
+# --- browser ----------------------------------------------------------------
+echo "[5/5] Opening $URL"
+if [ -n "${DISPLAY:-}${WAYLAND_DISPLAY:-}" ] && command -v xdg-open > /dev/null 2>&1; then
+  xdg-open "$URL" > /dev/null 2>&1 &
+fi
+
+cat << EOF
+
+==============================================
+ Everything is up.
+
+   Dashboard   $URL
+               telemetry, a camera per drone, manual + map + survey control
+   Vehicles    $COUNT (sysid 1..$COUNT)
+   Endpoints   relay $(relay_port 0)+  control $(control_port 0)+
+               dashboard $(dashboard_port 0)+  GCS $(gcs_port 0)+
+               flight log $(log_port 0)+
+   Session     .run/sessions/$SESSION_ID/  (= .run/latest/)
+   Flight log  .run/latest/flight_log.txt
+   Dataflash   .run/v*/logs/*.BIN
+
+ In the browser (wait ~1 min for GPS/EKF - the buttons enable themselves):
+   Arm + take off all  ->  Followers -> FOLLOW  ->  then any of:
+     Take control   hold W/A/S/D north/west/south/east, R/F climb, Q/E yaw
+     click the map  send the leader to that point
+     Mission        inspect the highway, or the whole area, and report
+                    any accident it finds with a position and a photo
+
+ Fly the scripted evaluation instead:
+   python3 scripts/leader_follower.py --vehicles $COUNT
+
+ Check the rig:
+   python3 scripts/check_vehicles.py $COUNT
+
+ Shut down:
+   ./flyit --stop
+==============================================
+EOF

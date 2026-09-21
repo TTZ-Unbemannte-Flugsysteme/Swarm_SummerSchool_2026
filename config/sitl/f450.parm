@@ -1,0 +1,10 @@
+# F450 quad-X, matching the built aircraft (see docs/architecture.html section 01).
+# Layered on top of the binary's embedded frame defaults at every launch, so an
+# isolated per-vehicle EEPROM still comes up armable.
+#
+# FRAME_CLASS/FRAME_TYPE cannot be changed over MAVLink without a reboot, which
+# is why these are passed at launch rather than set by a script.
+FRAME_CLASS      1
+FRAME_TYPE       1
+BATT_MONITOR     4
+SIM_BATT_VOLTAGE 16.2

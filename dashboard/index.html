@@ -1,0 +1,1007 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Swarm Status</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Condensed:wght@600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+  :root{
+    color-scheme: light;
+    --bg:#eef1f4;
+    --surface:#ffffff;
+    --panel:#e3e8ed;
+    --border:#c9d2da;
+    --text:#161d29;
+    --muted:#556170;
+    --grid:#d8dee5;
+    /* categorical series - validated all-pairs, light mode */
+    --s-leader:#eb6834;
+    --s-f1:#2a78d6;
+    --s-f2:#1baf7a;
+    /* status - reserved, never reused as a series colour */
+    --good:#1f7a46;
+    --warn:#8a6400;
+    --crit:#c0342c;
+    --good-bg:#e0f0e6;
+    --warn-bg:#f8eed6;
+    --crit-bg:#f8e2e0;
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      color-scheme: dark;
+      --bg:#0f1319;
+      --surface:#181e27;
+      --panel:#1d242f;
+      --border:#2d3744;
+      --text:#e9edf2;
+      --muted:#9aa7b5;
+      --grid:#28313d;
+      --s-leader:#d95926;
+      --s-f1:#3987e5;
+      --s-f2:#199e70;
+      --good:#6bcf92;
+      --warn:#e3b451;
+      --crit:#f08a80;
+      --good-bg:#16301f;
+      --warn-bg:#332714;
+      --crit-bg:#3a1d1a;
+    }
+  }
+  :root[data-theme="dark"]{
+    color-scheme: dark;
+    --bg:#0f1319; --surface:#181e27; --panel:#1d242f; --border:#2d3744;
+    --text:#e9edf2; --muted:#9aa7b5; --grid:#28313d;
+    --s-leader:#d95926; --s-f1:#3987e5; --s-f2:#199e70;
+    --good:#6bcf92; --warn:#e3b451; --crit:#f08a80;
+    --good-bg:#16301f; --warn-bg:#332714; --crit-bg:#3a1d1a;
+  }
+
+  *{box-sizing:border-box}
+  body{
+    margin:0; background:var(--bg); color:var(--text);
+    font-family:"IBM Plex Sans",ui-sans-serif,system-ui,sans-serif;
+    font-size:15px; line-height:1.6;
+  }
+  .wrap{max-width:1180px;margin:0 auto;padding:24px 22px 64px}
+  h1,h2{font-family:"IBM Plex Sans Condensed","IBM Plex Sans",sans-serif;margin:0;line-height:1.15}
+  h1{font-size:28px;font-weight:700}
+  h2{font-size:17px;font-weight:600;margin-bottom:12px}
+  .mono,code{font-family:"IBM Plex Mono",ui-monospace,monospace}
+
+  header{display:flex;align-items:baseline;gap:16px;flex-wrap:wrap;margin-bottom:6px}
+  .sub{color:var(--muted);font-size:14px;margin-bottom:22px}
+
+  .pill{
+    display:inline-flex;align-items:center;gap:7px;
+    font-family:"IBM Plex Mono";font-size:12px;font-weight:500;
+    padding:5px 11px;border-radius:999px;border:1px solid var(--border);
+    background:var(--panel);color:var(--muted);white-space:nowrap;
+  }
+  .pill.good{background:var(--good-bg);color:var(--good);border-color:transparent}
+  .pill.warn{background:var(--warn-bg);color:var(--warn);border-color:transparent}
+  .pill.crit{background:var(--crit-bg);color:var(--crit);border-color:transparent}
+  .dot{width:8px;height:8px;border-radius:50%;background:currentColor;flex:0 0 auto}
+
+  .cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(255px,1fr));gap:14px;margin-bottom:26px}
+  .card{
+    background:var(--surface);border:1px solid var(--border);border-radius:11px;
+    padding:15px 17px;border-top:3px solid var(--border);
+  }
+  .card.leader{border-top-color:var(--s-leader)}
+  .card.f1{border-top-color:var(--s-f1)}
+  .card.f2{border-top-color:var(--s-f2)}
+  .card.offline{opacity:.55}
+  .card-head{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:11px}
+  .vname{font-family:"IBM Plex Sans Condensed";font-size:17px;font-weight:700}
+  .role{font-family:"IBM Plex Mono";font-size:11px;letter-spacing:.06em;color:var(--muted)}
+  .kv{display:grid;grid-template-columns:auto 1fr;gap:3px 12px;font-size:13.5px}
+  .kv dt{color:var(--muted)}
+  .kv dd{margin:0;font-family:"IBM Plex Mono";font-size:13px;text-align:right;font-variant-numeric:tabular-nums}
+
+  .panels{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:18px}
+  @media (max-width:840px){.panels{grid-template-columns:minmax(0,1fr)}}
+  .panel{background:var(--surface);border:1px solid var(--border);border-radius:11px;padding:18px}
+  figure{margin:0}
+  figcaption{font-size:12.5px;color:var(--muted);margin-top:10px}
+  svg{display:block;width:100%;height:auto;overflow:visible}
+
+  .legend{display:flex;gap:16px;flex-wrap:wrap;font-size:12.5px;color:var(--muted);margin-bottom:10px}
+  .legend span{display:inline-flex;align-items:center;gap:6px}
+  .swatch{width:11px;height:11px;border-radius:3px;flex:0 0 auto}
+
+  table.status{width:100%;border-collapse:collapse;font-size:13px;margin-top:4px}
+  table.status th,table.status td{text-align:left;padding:7px 8px;border-bottom:1px solid var(--border)}
+  table.status th{font-family:"IBM Plex Mono";font-size:11px;text-transform:uppercase;
+    letter-spacing:.05em;color:var(--muted);font-weight:500}
+  table.status td{font-family:"IBM Plex Mono";font-variant-numeric:tabular-nums}
+  table.status tr:last-child td{border-bottom:none}
+
+  /* manual control */
+  .ctl{background:var(--surface);border:1px solid var(--border);border-radius:11px;
+       padding:18px;margin-bottom:18px;border-left:3px solid var(--border)}
+  .ctl.held{border-left-color:var(--s-leader)}
+  .ctl-head{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:14px}
+  .ctl-head h2{margin:0}
+  .btnrow{display:flex;gap:8px;flex-wrap:wrap}
+  button{
+    font-family:"IBM Plex Mono";font-size:12.5px;font-weight:500;
+    padding:7px 13px;border-radius:7px;cursor:pointer;
+    border:1px solid var(--border);background:var(--panel);color:var(--text);
+  }
+  button:hover:not(:disabled){border-color:var(--muted)}
+  button:disabled{opacity:.4;cursor:not-allowed}
+  button.primary{background:var(--s-leader);border-color:transparent;color:#fff}
+  button.danger{background:var(--crit-bg);color:var(--crit);border-color:transparent}
+  .keys{display:flex;gap:22px;flex-wrap:wrap;margin-top:15px;align-items:flex-start}
+  .keypad{display:grid;grid-template-columns:repeat(3,30px);gap:4px}
+  .keypad kbd,.keyline kbd{
+    font-family:"IBM Plex Mono";font-size:12px;font-weight:500;
+    display:flex;align-items:center;justify-content:center;
+    height:30px;min-width:30px;padding:0 7px;border-radius:6px;
+    border:1px solid var(--border);
+    background:var(--panel);color:var(--muted);
+  }
+  .keypad kbd{padding:0}
+  .keypad kbd.on,.keyline kbd.on{background:var(--s-leader);color:#fff;border-color:transparent}
+  .keypad kbd.gap{border:none;background:none}
+  .keyline{display:flex;gap:4px;align-items:center}
+  .keyhint{font-size:12px;color:var(--muted);font-family:"IBM Plex Mono";margin-top:5px}
+  .ctl-note{font-size:12.5px;color:var(--muted);margin-top:14px;max-width:80ch}
+  .vel{font-family:"IBM Plex Mono";font-size:13px;color:var(--muted);
+       font-variant-numeric:tabular-nums}
+
+  /* video */
+  .vids{display:grid;grid-template-columns:repeat(auto-fit,minmax(255px,1fr));
+        gap:14px;margin-bottom:22px}
+  .vid{background:var(--surface);border:1px solid var(--border);border-radius:11px;
+       overflow:hidden;border-top:3px solid var(--border)}
+  .vid.leader{border-top-color:var(--s-leader)}
+  .vid.f1{border-top-color:var(--s-f1)}
+  .vid.f2{border-top-color:var(--s-f2)}
+  .vid-head{display:flex;justify-content:space-between;align-items:center;
+            gap:8px;padding:10px 13px}
+  .vid-name{font-family:"IBM Plex Sans Condensed";font-size:15px;font-weight:700}
+  .vid figure{position:relative;background:#000;aspect-ratio:4/3;margin:0}
+  .vid img{display:block;width:100%;height:100%;object-fit:cover}
+  .vid .novid{
+    position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+    text-align:center;padding:14px;color:var(--muted);background:rgba(0,0,0,.45);
+    font-family:"IBM Plex Mono";font-size:11.5px;line-height:1.5;
+  }
+  /* Explicit: the rule above sets display, so [hidden] alone would not win. */
+  .vid .novid[hidden]{display:none}
+
+  /* mission + detections */
+  .mission{background:var(--surface);border:1px solid var(--border);border-radius:11px;
+           padding:18px;margin-bottom:18px;border-left:3px solid var(--border)}
+  .mission.running{border-left-color:var(--s-f1)}
+  .bar{height:7px;border-radius:4px;background:var(--panel);overflow:hidden;margin-top:13px}
+  .bar i{display:block;height:100%;background:var(--s-f1);width:0;transition:width .3s}
+  .mission-legs{font-family:"IBM Plex Mono";font-size:12.5px;color:var(--muted);margin-top:8px}
+  .hits{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px}
+  .hit{display:flex;gap:12px;background:var(--crit-bg);border-radius:9px;padding:11px 13px}
+  .hit img{width:104px;height:78px;object-fit:cover;border-radius:6px;flex:0 0 auto;background:#000}
+  .hit .who{font-weight:600;font-size:14px;color:var(--crit)}
+  .hit dl{display:grid;grid-template-columns:auto 1fr;gap:1px 9px;margin:4px 0 0;
+          font-size:12px;font-family:"IBM Plex Mono"}
+  .hit dt{color:var(--muted)}
+  .hit dd{margin:0}
+  .hit .act{margin-top:9px}
+  .hit button{font-size:11.5px;padding:5px 10px}
+  .point{margin-top:13px;font-family:"IBM Plex Mono";font-size:12px;color:var(--muted)}
+  .point b{color:var(--text);font-weight:500}
+  .point .bad{color:var(--warn)}
+  #plot{cursor:crosshair}
+  .plothint{font-size:12px;color:var(--muted);margin-top:8px;font-family:"IBM Plex Mono"}
+
+  .empty{color:var(--muted);font-size:14px;padding:18px 0}
+  footer{margin-top:28px;color:var(--muted);font-size:12.5px;font-family:"IBM Plex Mono"}
+  #tip{
+    position:fixed;pointer-events:none;opacity:0;transition:opacity .1s;
+    background:var(--surface);border:1px solid var(--border);border-radius:7px;
+    padding:7px 10px;font-family:"IBM Plex Mono";font-size:12px;
+    box-shadow:0 4px 14px rgba(0,0,0,.18);z-index:10;white-space:pre;
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>Swarm Status</h1>
+    <span class="pill" id="verdict"><span class="dot"></span><span id="verdict-txt">connecting</span></span>
+    <span class="pill" id="relay-pill"><span class="dot"></span><span id="relay-txt">relay</span></span>
+    <span class="pill" id="uptime-pill">uptime &mdash;</span>
+  </header>
+  <div class="sub">ArduPilot SITL leader-follower &middot; live from <code>/api/status</code></div>
+
+  <div class="cards" id="cards"></div>
+
+  <div class="ctl" id="ctl">
+    <div class="ctl-head">
+      <h2>Manual control &mdash; leader</h2>
+      <span class="pill" id="ctl-pill"><span class="dot"></span><span id="ctl-txt">not held</span></span>
+      <span class="vel" id="ctl-vel"></span>
+    </div>
+    <div class="btnrow">
+      <button id="b-take" class="primary">Take control</button>
+      <button id="b-release" disabled>Release</button>
+      <button id="b-takeoff">Arm + take off all (20 m)</button>
+      <button id="b-formation">Followers &rarr; FOLLOW</button>
+      <button id="b-rtl">RTL</button>
+      <button id="b-land" class="danger">Land all</button>
+    </div>
+    <div class="keys">
+      <div>
+        <div class="keypad">
+          <kbd class="gap"></kbd><kbd data-k="w">W</kbd><kbd class="gap"></kbd>
+          <kbd data-k="a">A</kbd><kbd data-k="s">S</kbd><kbd data-k="d">D</kbd>
+        </div>
+        <div class="keyhint">north / west / south / east</div>
+      </div>
+      <div>
+        <div class="keyline"><kbd data-k="r">R</kbd><kbd data-k="f">F</kbd></div>
+        <div class="keyhint">climb / descend</div>
+      </div>
+      <div>
+        <div class="keyline"><kbd data-k="q">Q</kbd><kbd data-k="e">E</kbd></div>
+        <div class="keyhint">yaw left / right</div>
+      </div>
+      <div>
+        <div class="keyline"><kbd data-k="shift">shift</kbd><kbd data-k=" ">space</kbd></div>
+        <div class="keyhint">faster / stop</div>
+      </div>
+    </div>
+    <p class="ctl-note" id="ctl-note"></p>
+  </div>
+
+  <div class="mission" id="mission">
+    <div class="ctl-head">
+      <h2>Mission</h2>
+      <span class="pill" id="mi-pill"><span class="dot"></span><span id="mi-txt">idle</span></span>
+    </div>
+    <div class="btnrow">
+      <button id="b-survey-hwy">Inspect the highway</button>
+      <button id="b-survey-area">Inspect the whole area</button>
+      <button id="b-stopnav" class="danger" disabled>Abort</button>
+    </div>
+    <div class="bar"><i id="mi-bar"></i></div>
+    <div class="mission-legs" id="mi-legs"></div>
+  </div>
+
+  <div class="vids" id="vids"></div>
+
+  <div class="mission" id="hits-panel" hidden>
+    <div class="ctl-head"><h2>Accidents found</h2>
+      <span class="pill crit" id="hits-pill"><span class="dot"></span><span id="hits-txt">0</span></span>
+    </div>
+    <div class="hits" id="hits"></div>
+  </div>
+
+  <div class="panels">
+    <div class="panel">
+      <h2>Formation, looking down</h2>
+      <div class="legend" id="plot-legend"></div>
+      <figure>
+        <svg id="plot" viewBox="0 0 440 400" role="img"
+             aria-label="Top-down view of vehicle positions relative to the leader, with each follower's commanded station shown as a ring."></svg>
+        <div class="plothint" id="plot-hint">Click the map to send the leader there.</div>
+        <figcaption>North is up. Rings are each follower's commanded station; the
+          line from a follower to its ring is the current error.</figcaption>
+      </figure>
+    </div>
+
+    <div class="panel">
+      <h2>Station-keeping error</h2>
+      <div class="legend" id="chart-legend"></div>
+      <figure>
+        <svg id="chart" viewBox="0 0 440 260" role="img"
+             aria-label="Each follower's distance from its commanded station over time."></svg>
+        <figcaption>Metres from the commanded station over the last 3 minutes.
+          Lower is tighter formation.</figcaption>
+      </figure>
+      <table class="status" id="errtable"></table>
+    </div>
+  </div>
+
+  <footer id="foot">&mdash;</footer>
+</div>
+<div id="tip"></div>
+
+<script>
+const SERIES = ["--s-leader", "--s-f1", "--s-f2"];
+const css = v => getComputedStyle(document.documentElement).getPropertyValue(v).trim();
+const seriesColor = i => css(SERIES[i % SERIES.length]);
+const el = id => document.getElementById(id);
+const fmt = (v, d = 1, unit = "") =>
+  (v === null || v === undefined) ? "&mdash;" : v.toFixed(d) + unit;
+
+let lastStatus = null;
+
+function colorFor(status, sysid) {
+  if (sysid === status.leader_sysid) return 0;
+  const order = status.followers.map(f => f.sysid).sort((a, b) => a - b);
+  return 1 + Math.max(0, order.indexOf(sysid));
+}
+
+function setPill(id, txtId, cls, text) {
+  const p = el(id);
+  p.className = "pill" + (cls ? " " + cls : "");
+  el(txtId).textContent = text;
+}
+
+function renderCards(s) {
+  const holder = el("cards");
+  holder.innerHTML = "";
+  const ordered = [...s.vehicles].sort((a, b) => (a.sysid || 99) - (b.sysid || 99));
+  for (const v of ordered) {
+    const isLeader = v.sysid === s.leader_sysid;
+    const ci = colorFor(s, v.sysid);
+    const follower = s.followers.find(f => f.sysid === v.sysid);
+    const card = document.createElement("div");
+    card.className = "card " + (ci === 0 ? "leader" : ci === 1 ? "f1" : "f2")
+                   + (v.online ? "" : " offline");
+    const gps = v.gps_fix === null ? "&mdash;"
+      : (v.gps_fix >= 3 ? `3D (${v.satellites ?? "?"} sats)` : `fix ${v.gps_fix}`);
+    card.innerHTML = `
+      <div class="card-head">
+        <div>
+          <div class="vname">${v.sysid ? "Drone " + v.sysid : "vehicle " + v.index}</div>
+          <div class="role">${isLeader ? "LEADER" : "FOLLOWER"} &middot; udp ${v.port}</div>
+        </div>
+        <span class="pill ${v.online ? (v.armed ? "good" : "") : "crit"}">
+          <span class="dot"></span>${v.online ? (v.armed ? "armed" : "disarmed") : "offline"}
+        </span>
+      </div>
+      <dl class="kv">
+        <dt>Mode</dt><dd>${v.mode ?? "&mdash;"}</dd>
+        <dt>Altitude</dt><dd>${fmt(v.alt, 1, " m")}</dd>
+        <dt>Ground speed</dt><dd>${fmt(v.groundspeed, 1, " m/s")}</dd>
+        <dt>Climb</dt><dd>${fmt(v.climb, 1, " m/s")}</dd>
+        <dt>Heading</dt><dd>${v.yaw === null ? "&mdash;"
+            : (Math.round(v.yaw) % 360) + "\u00b0"}</dd>
+        <dt>Roll / pitch</dt><dd>${fmt(v.roll, 0, "\u00b0")} / ${fmt(v.pitch, 0, "\u00b0")}</dd>
+        <dt>EKF</dt><dd>${v.ekf_ok === null ? "&mdash;" : (v.ekf_ok ? "ok" : "not ready")}</dd>
+        <dt>GPS</dt><dd>${gps}</dd>
+        <dt>Battery</dt><dd>${v.battery_v === null ? "&mdash;" : fmt(v.battery_v, 1, " V")}</dd>
+        ${follower ? `<dt>Station error</dt><dd>${follower.error_m === null
+            ? "not following" : fmt(follower.error_m, 1, " m")}</dd>
+        <dt>Height vs station</dt><dd>${follower.error_z === null
+            ? "&mdash;" : fmt(follower.error_z, 1, " m")}</dd>` : ""}
+      </dl>`;
+    holder.appendChild(card);
+  }
+}
+
+function renderLegends(s) {
+  const mk = (items) => items.map(i =>
+    `<span><span class="swatch" style="background:${i.c}"></span>${i.t}</span>`).join("");
+  const items = [];
+  if (s.leader) items.push({ c: seriesColor(0), t: `Drone ${s.leader.sysid} (leader)` });
+  for (const f of s.followers)
+    items.push({ c: seriesColor(colorFor(s, f.sysid)), t: `Drone ${f.sysid}` });
+  el("plot-legend").innerHTML = mk(items);
+  el("chart-legend").innerHTML = s.followers.length
+    ? mk(items.slice(1)) : "";
+}
+
+function renderPlot(s) {
+  const svg = el("plot");
+  const W = 440, H = 400, pad = 34;
+  if (!s.leader || s.leader.lat === null) {
+    svg.innerHTML = `<text x="${W/2}" y="${H/2}" text-anchor="middle"
+      font-size="13" fill="${css('--muted')}">waiting for position data</text>`;
+    return;
+  }
+  // Collect every point that must fit: leader at origin, followers, targets.
+  const pts = [{ n: 0, e: 0, sysid: s.leader.sysid, kind: "leader" }];
+  for (const f of s.followers) {
+    if (f.offset_n !== null)
+      pts.push({ n: f.offset_n, e: f.offset_e, sysid: f.sysid, kind: "follower" });
+    if (f.target_n !== null)
+      pts.push({ n: f.target_n, e: f.target_e, sysid: f.sysid, kind: "target" });
+  }
+  /* Anything the map draws has to fit inside it: a clicked target 300 m away,
+     a survey leg, a detected accident. Without these the marker is computed
+     correctly and then drawn off the edge, which reads as a broken click. */
+  const rel = (lat, lon) => {
+    const mn = 111320.0, me = 111320.0 * Math.cos(s.leader.lat * Math.PI / 180);
+    return { n: (lat - s.leader.lat) * mn, e: (lon - s.leader.lon) * me };
+  };
+  const c = s.control || {};
+  const navPt = c.nav ? rel(c.nav[0], c.nav[1]) : null;
+  if (navPt) pts.push({ n: navPt.n, e: navPt.e, kind: "nav" });
+  const legs = (c.mission && c.mission.waypoints) || [];
+  let legPts = [];
+  if (legs.length && s.leader.home_lat !== null && s.leader.home_lat !== undefined) {
+    const mn = 111320.0, me = 111320.0 * Math.cos(s.leader.home_lat * Math.PI / 180);
+    legPts = legs.map(w => ({
+      n: (s.leader.home_lat - s.leader.lat) * mn + w.north,
+      e: (s.leader.home_lon - s.leader.lon) * me + w.east,
+    }));
+    for (const p of legPts) pts.push({ n: p.n, e: p.e, kind: "leg" });
+  }
+  const hits = (s.detections || []).filter(d => d.lat !== null).map(d => rel(d.lat, d.lon));
+  for (const p of hits) pts.push({ n: p.n, e: p.e, kind: "hit" });
+
+  let span = 30;
+  for (const p of pts) span = Math.max(span, Math.abs(p.n) * 1.25, Math.abs(p.e) * 1.25);
+  const sc = (H / 2 - pad) / span;
+  const X = e => W / 2 + e * sc;
+  const Y = n => H / 2 - n * sc;
+
+  const g = css("--grid"), mu = css("--muted");
+  let out = "";
+  // grid every 10^k metres, whichever keeps 3-6 rings
+  let step = Math.pow(10, Math.floor(Math.log10(span)));
+  if (span / step < 2.5) step /= 2;
+
+  // Put the ring labels down whichever ray is furthest from every plotted
+  // vehicle and station. A fixed direction always eventually collides: the
+  // north axis fails a trailing formation, the south-west diagonal fails a V.
+  const bearings = pts.filter(p => p.n || p.e)
+                      .map(p => Math.atan2(p.e, p.n));
+  let bestAng = Math.PI, bestGap = -1;
+  for (let k = 0; k < 16; k++) {
+    const ang = -Math.PI + k * Math.PI / 8;
+    let gap = Math.PI;
+    for (const b of bearings) {
+      let d = Math.abs(ang - b) % (2 * Math.PI);
+      if (d > Math.PI) d = 2 * Math.PI - d;
+      gap = Math.min(gap, d);
+    }
+    if (gap > bestGap) { bestGap = gap; bestAng = ang; }
+  }
+  const ux = Math.sin(bestAng), un = Math.cos(bestAng);
+
+  for (let r = step; r <= span * 1.02; r += step) {
+    out += `<circle cx="${X(0)}" cy="${Y(0)}" r="${r * sc}" fill="none"
+             stroke="${g}" stroke-width="1"/>`;
+    out += `<text x="${X(r * ux)}" y="${Y(r * un) + 3}" font-size="9.5"
+             text-anchor="middle" font-family="IBM Plex Mono" fill="${mu}"
+             stroke="${css('--surface')}" stroke-width="3"
+             paint-order="stroke">${r}m</text>`;
+  }
+  out += `<line x1="${X(-span)}" y1="${Y(0)}" x2="${X(span)}" y2="${Y(0)}"
+           stroke="${g}" stroke-width="1"/>`;
+  out += `<line x1="${X(0)}" y1="${Y(-span)}" x2="${X(0)}" y2="${Y(span)}"
+           stroke="${g}" stroke-width="1"/>`;
+  out += `<text x="${X(0)}" y="14" text-anchor="middle" font-size="10"
+           font-family="IBM Plex Mono" fill="${mu}">N</text>`;
+
+  // error vectors first, so markers sit on top
+  for (const f of s.followers) {
+    if (f.offset_n === null || f.target_n === null) continue;
+    out += `<line x1="${X(f.offset_e)}" y1="${Y(f.offset_n)}"
+             x2="${X(f.target_e)}" y2="${Y(f.target_n)}"
+             stroke="${seriesColor(colorFor(s, f.sysid))}" stroke-width="1.5"
+             stroke-dasharray="3 3" opacity=".85"/>`;
+  }
+  // commanded stations
+  for (const f of s.followers) {
+    if (f.target_n === null) continue;
+    out += `<circle cx="${X(f.target_e)}" cy="${Y(f.target_n)}" r="9" fill="none"
+             stroke="${seriesColor(colorFor(s, f.sysid))}" stroke-width="1.8"
+             stroke-dasharray="2.5 2.5"/>`;
+  }
+  // vehicles - 2px surface ring so overlapping marks stay separable
+  const drawV = (e, n, ci, label) => {
+    const c = seriesColor(ci);
+    out += `<circle cx="${X(e)}" cy="${Y(n)}" r="8" fill="${c}"
+             stroke="${css('--surface')}" stroke-width="2"/>`;
+    out += `<text x="${X(e)}" y="${Y(n) - 14}" text-anchor="middle" font-size="11"
+             font-weight="600" font-family="IBM Plex Mono"
+             fill="${css('--text')}">${label}</text>`;
+  };
+  /* survey path, behind the vehicles */
+  if (legPts.length > 1) {
+    const d = legPts.map((p, i) => `${i ? "L" : "M"}${X(p.e)},${Y(p.n)}`).join(" ");
+    out += `<path d="${d}" fill="none" stroke="${seriesColor(1)}" stroke-width="1.6"
+             stroke-dasharray="6 4" opacity=".75"/>`;
+    const leg = (c.mission && c.mission.leg) || 1;
+    legPts.forEach((p, i) => {
+      const done = i < leg - 1;
+      out += `<circle cx="${X(p.e)}" cy="${Y(p.n)}" r="4"
+               fill="${done ? css("--grid") : seriesColor(1)}"
+               stroke="${css("--surface")}" stroke-width="1.5"/>`;
+    });
+  }
+  if (navPt) {
+    out += `<g stroke="${css("--text")}" stroke-width="2" fill="none">
+      <circle cx="${X(navPt.e)}" cy="${Y(navPt.n)}" r="10" stroke-dasharray="3 3"/>
+      <line x1="${X(navPt.e) - 14}" y1="${Y(navPt.n)}" x2="${X(navPt.e) + 14}" y2="${Y(navPt.n)}"/>
+      <line x1="${X(navPt.e)}" y1="${Y(navPt.n) - 14}" x2="${X(navPt.e)}" y2="${Y(navPt.n) + 14}"/>
+    </g>`;
+  }
+  hits.forEach((p, i) => {
+    const d = (s.detections || []).filter(x => x.lat !== null)[i];
+    out += `<g><circle cx="${X(p.e)}" cy="${Y(p.n)}" r="11" fill="none"
+             stroke="${css("--crit")}" stroke-width="2.5"/>
+      <text x="${X(p.e)}" y="${Y(p.n) + 4}" text-anchor="middle" font-size="11"
+             font-weight="700" font-family="IBM Plex Mono"
+             fill="${css("--crit")}">${d.id}</text></g>`;
+  });
+
+  drawV(0, 0, 0, String(s.leader.sysid));
+  for (const f of s.followers)
+    if (f.offset_n !== null) drawV(f.offset_e, f.offset_n, colorFor(s, f.sysid), String(f.sysid));
+
+  svg.innerHTML = out;
+  /* Remember the projection so a click can be turned back into a position. */
+  svg._proj = { W, H, sc, lat: s.leader.lat, lon: s.leader.lon, alt: s.leader.alt };
+}
+
+function renderChart(s) {
+  const svg = el("chart");
+  const W = 440, H = 260, L = 42, R = 14, T = 12, B = 30;
+  const hist = s.history || [];
+  const sysids = s.followers.map(f => String(f.sysid));
+  if (!hist.length || !sysids.length) {
+    svg.innerHTML = `<text x="${W/2}" y="${H/2}" text-anchor="middle" font-size="13"
+      fill="${css('--muted')}">no station-keeping data yet</text>`;
+    el("errtable").innerHTML = "";
+    return;
+  }
+  let maxE = 1;
+  for (const h of hist) for (const k of sysids)
+    if (h.errors[k] !== undefined) maxE = Math.max(maxE, h.errors[k]);
+  // round the top of the scale up so ticks land on whole numbers
+  const niceMax = (m) => { const p = Math.pow(10, Math.floor(Math.log10(m)));
+    return Math.ceil(m / p) * p; };
+  maxE = niceMax(maxE * 1.05);
+  const t0 = hist[0].t, t1 = Math.max(hist[hist.length - 1].t, t0 + 1);
+  const X = t => L + (t - t0) / (t1 - t0) * (W - L - R);
+  const Y = v => H - B - (v / maxE) * (H - T - B);
+
+  const g = css("--grid"), mu = css("--muted");
+  let out = "";
+  // Enough decimals that adjacent ticks never print the same number.
+  const tickStep = maxE / 4;
+  const dp = tickStep >= 1 ? 0 : tickStep >= 0.1 ? 1 : 2;
+  for (let i = 0; i <= 4; i++) {
+    const v = maxE * i / 4;
+    out += `<line x1="${L}" y1="${Y(v)}" x2="${W - R}" y2="${Y(v)}"
+             stroke="${g}" stroke-width="1"/>`;
+    out += `<text x="${L - 7}" y="${Y(v) + 3.5}" text-anchor="end" font-size="10"
+             font-family="IBM Plex Mono" fill="${mu}">${v.toFixed(dp)}</text>`;
+  }
+  out += `<text x="${L - 7}" y="${T + 2}" text-anchor="end" font-size="9.5"
+           font-family="IBM Plex Mono" fill="${mu}">m</text>`;
+  out += `<text x="${L}" y="${H - 9}" font-size="10" font-family="IBM Plex Mono"
+           fill="${mu}">${Math.round(t1 - t0)}s ago</text>`;
+  out += `<text x="${W - R}" y="${H - 9}" text-anchor="end" font-size="10"
+           font-family="IBM Plex Mono" fill="${mu}">now</text>`;
+
+  for (const f of s.followers) {
+    const k = String(f.sysid);
+    const pts = hist.filter(h => h.errors[k] !== undefined)
+                    .map(h => `${X(h.t).toFixed(1)},${Y(h.errors[k]).toFixed(1)}`);
+    if (pts.length < 2) continue;
+    const c = seriesColor(colorFor(s, f.sysid));
+    out += `<polyline points="${pts.join(" ")}" fill="none" stroke="${c}"
+             stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>`;
+    const last = hist.filter(h => h.errors[k] !== undefined).pop();
+    out += `<circle cx="${X(last.t)}" cy="${Y(last.errors[k])}" r="4" fill="${c}"
+             stroke="${css('--surface')}" stroke-width="2"/>`;
+    out += `<text x="${X(last.t) - 8}" y="${Y(last.errors[k]) - 9}" text-anchor="end"
+             font-size="11" font-weight="600" font-family="IBM Plex Mono"
+             fill="${css('--text')}">${last.errors[k].toFixed(1)}m</text>`;
+  }
+  svg.innerHTML = out;
+  svg._chart = { hist, sysids, X, Y, t0, t1, L, R, W };
+
+  el("errtable").innerHTML =
+    `<tr><th>Drone</th><th>Station</th><th>Now</th><th>Following</th></tr>` +
+    s.followers.map(f => `<tr>
+      <td>${f.sysid}</td>
+      <td>${f.target_n === null ? "&mdash;"
+          : `${f.target_n >= 0 ? "+" : ""}${f.target_n.toFixed(0)}N ${f.target_e >= 0 ? "+" : ""}${f.target_e.toFixed(0)}E`}</td>
+      <td>${f.error_m === null ? "&mdash;" : f.error_m.toFixed(1) + " m"}</td>
+      <td>${f.following ? "yes" : "no"}</td></tr>`).join("");
+}
+
+// hover readout on the error chart
+const chartSvg = el("chart"), tip = el("tip");
+chartSvg.addEventListener("mousemove", ev => {
+  const d = chartSvg._chart;
+  if (!d) return;
+  const r = chartSvg.getBoundingClientRect();
+  const vx = (ev.clientX - r.left) / r.width * d.W;
+  let best = null;
+  for (const h of d.hist) {
+    const dist = Math.abs(d.X(h.t) - vx);
+    if (!best || dist < best.dist) best = { h, dist };
+  }
+  if (!best || best.dist > 30) { tip.style.opacity = 0; return; }
+  const lines = [`t -${(d.t1 - best.h.t).toFixed(0)}s`];
+  for (const k of d.sysids)
+    if (best.h.errors[k] !== undefined)
+      lines.push(`drone ${k}: ${best.h.errors[k].toFixed(1)} m`);
+  tip.textContent = lines.join("\n");
+  tip.style.opacity = 1;
+  tip.style.left = (ev.clientX + 14) + "px";
+  tip.style.top = (ev.clientY - 10) + "px";
+});
+chartSvg.addEventListener("mouseleave", () => { tip.style.opacity = 0; });
+
+function render(s) {
+  lastStatus = s;
+  const n = s.online_count, want = s.expected_count;
+  if (n === 0) setPill("verdict", "verdict-txt", "crit", "no vehicles");
+  else if (n < want) setPill("verdict", "verdict-txt", "warn", `${n}/${want} vehicles`);
+  else setPill("verdict", "verdict-txt", "good", `${n}/${want} vehicles up`);
+
+  setPill("relay-pill", "relay-txt", s.relay_alive ? "good" : "warn",
+          s.relay_alive ? "relay running" : "relay stopped");
+  el("uptime-pill").textContent = `uptime ${Math.floor(s.uptime / 60)}m ${Math.floor(s.uptime % 60)}s`;
+
+  renderCards(s);
+  renderVideo(s);
+  renderControl(s);
+  renderLegends(s);
+  renderPlot(s);
+  const ready = renderReadiness(s);
+  renderMission(s);
+  renderHits(s);
+  renderChart(s);
+  el("foot").textContent =
+    `leader sysid ${s.leader_sysid ?? "?"} · ` +
+    s.vehicles.map(v => `drone ${v.sysid ?? "?"}:udp${v.port}`).join("  ") +
+    ` · polling /api/status`;
+}
+
+/* ---------------- video ------------------------------------------------ */
+/* The img elements are created once and never replaced: an MJPEG stream is a
+   single long-lived response, so re-rendering the tag would restart it and the
+   feed would visibly stutter on every poll. */
+const vidTiles = new Map();
+
+function renderVideo(s) {
+  const holder = el("vids");
+  const cams = (s.video && s.video.cameras) || [];
+  if (!cams.length) {
+    if (!holder.dataset.explained) {
+      holder.dataset.explained = "1";
+      holder.innerHTML = s.video && s.video.error
+        ? `<div class="empty">No video: ${s.video.error}</div>` : "";
+    }
+    return;
+  }
+  const ordered = [...s.vehicles].sort((a, b) => (a.sysid || 99) - (b.sysid || 99));
+  for (const cam of cams) {
+    const v = ordered.find(x => x.index === cam.index);
+    const ci = v ? colorFor(s, v.sysid) : cam.index;
+    let tile = vidTiles.get(cam.index);
+    if (!tile) {
+      const wrap = document.createElement("div");
+      wrap.className = "vid";
+      wrap.innerHTML = `
+        <div class="vid-head">
+          <span class="vid-name"></span>
+          <span class="pill"><span class="dot"></span><span class="vid-state"></span></span>
+        </div>
+        <figure>
+          <img alt="camera view from drone ${cam.index + 1}">
+          <div class="novid">waiting for frames</div>
+        </figure>`;
+      holder.appendChild(wrap);
+      tile = {
+        root: wrap,
+        name: wrap.querySelector(".vid-name"),
+        state: wrap.querySelector(".vid-state"),
+        pill: wrap.querySelector(".pill"),
+        img: wrap.querySelector("img"),
+        none: wrap.querySelector(".novid"),
+      };
+      tile.img.src = `/api/video/${cam.index}`;
+      vidTiles.set(cam.index, tile);
+    }
+    tile.root.className = "vid " + (ci === 0 ? "leader" : ci === 1 ? "f1" : "f2");
+    tile.name.textContent = v && v.sysid ? `Drone ${v.sysid}` : `camera ${cam.index}`;
+    tile.state.textContent = cam.live
+      ? `${cam.width}×${cam.height}` : (cam.error || "no frames");
+    tile.pill.className = "pill " + (cam.live ? "good" : "warn");
+    tile.none.hidden = cam.live;
+  }
+}
+
+/* ---------------- manual control --------------------------------------- */
+/* Velocities are NED: W is north, not "forward". That matches FOLL_OFS_TYPE=0,
+   which is what the real aircraft must use while they have no compass - the
+   formation does not rotate with the leader, so neither does the operator's
+   frame of reference. */
+const SPEED = 3.0, SPEED_FAST = 8.0, CLIMB = 1.5, YAW = 0.6;
+const CONTROL_KEYS = new Set(["w", "a", "s", "d", "r", "f", "q", "e", " "]);
+const down = new Set();
+let ctlHeld = false;
+let lastSent = 0;
+
+function velocity() {
+  const fast = down.has("shift");
+  const h = fast ? SPEED_FAST : SPEED;
+  let vn = 0, ve = 0, vd = 0, yaw = 0;
+  if (down.has("w")) vn += h;
+  if (down.has("s")) vn -= h;
+  if (down.has("d")) ve += h;
+  if (down.has("a")) ve -= h;
+  if (down.has("r")) vd -= CLIMB;     /* NED: down is positive */
+  if (down.has("f")) vd += CLIMB;
+  if (down.has("e")) yaw += YAW;
+  if (down.has("q")) yaw -= YAW;
+  return { vel: [vn, ve, vd], yaw_rate: yaw };
+}
+
+async function post(body) {
+  try {
+    const r = await fetch("/api/control", {
+      method: "POST", cache: "no-store",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    });
+    const j = await r.json();
+    if (j.error) el("ctl-note").textContent = j.error;
+    if (typeof j.held === "boolean") applyHeld(j);
+    return j;
+  } catch (e) {
+    el("ctl-note").textContent = "control request failed: " + e;
+  }
+}
+
+function sendMove() {
+  const v = velocity();
+  lastSent = Date.now();
+  post({ action: "move", vel: v.vel, yaw_rate: v.yaw_rate, keys: [...down] });
+}
+
+/* The server zeroes the setpoint after 500 ms of silence, so a held key has to
+   keep saying so. This is the browser half of that deadman. */
+setInterval(() => {
+  if (!ctlHeld) return;
+  if (!down.size) return;
+  if (Date.now() - lastSent > 200) sendMove();
+}, 100);
+
+function stopNow() {
+  down.clear();
+  paintKeys([]);
+  if (ctlHeld) sendMove();
+}
+
+window.addEventListener("keydown", ev => {
+  if (!ctlHeld) return;
+  const k = ev.key.length === 1 ? ev.key.toLowerCase() : ev.key.toLowerCase();
+  if (k === "shift") { down.add("shift"); paintKeys([...down]); sendMove(); return; }
+  if (!CONTROL_KEYS.has(k)) return;
+  ev.preventDefault();                 /* space must not scroll the page */
+  if (k === " ") { stopNow(); return; }
+  if (!down.has(k)) { down.add(k); paintKeys([...down]); sendMove(); }
+});
+
+window.addEventListener("keyup", ev => {
+  const k = ev.key.toLowerCase();
+  if (!down.has(k)) return;
+  down.delete(k);
+  paintKeys([...down]);
+  if (ctlHeld) sendMove();
+});
+
+/* Anything that means "the operator is no longer at the keyboard" stops the
+   vehicle, rather than waiting for the deadman to notice. */
+window.addEventListener("blur", stopNow);
+document.addEventListener("visibilitychange", () => { if (document.hidden) stopNow(); });
+
+function paintKeys(active) {
+  const set = new Set(active);
+  for (const kbd of document.querySelectorAll("[data-k]"))
+    kbd.classList.toggle("on", set.has(kbd.dataset.k));
+}
+
+function applyHeld(c) {
+  ctlHeld = !!c.held;
+  el("ctl").classList.toggle("held", ctlHeld);
+  el("b-take").disabled = ctlHeld || !c.enabled;
+  el("b-release").disabled = !ctlHeld;
+  if (!ctlHeld) { down.clear(); paintKeys([]); }
+}
+
+function renderControl(s) {
+  const c = s.control || {};
+  applyHeld(c);
+  const cls = !c.enabled ? "" : c.held ? "good" : "";
+  setPill("ctl-pill", "ctl-txt", cls,
+          !c.enabled ? "disabled" : c.held ? "YOU HAVE CONTROL" : "not held");
+  const [vn, ve, vd] = c.vel || [0, 0, 0];
+  el("ctl-vel").textContent = c.held
+    ? `N ${vn.toFixed(1)}  E ${ve.toFixed(1)}  down ${vd.toFixed(1)} m/s` +
+      `  yaw ${(c.yaw_rate || 0).toFixed(2)} rad/s` + (c.stopping ? "   [deadman: stopped]" : "")
+    : "";
+  /* Show any rejected arm/takeoff. These used to fail invisibly: the vehicle
+     just sat on the ground while the page looked like it had worked. */
+  const bad = Object.entries(c.last_takeoff || {})
+    .filter(([, r]) => r.arm !== "accepted" || r.takeoff !== "accepted")
+    .map(([id, r]) => `drone ${id}: arm ${r.arm}, takeoff ${r.takeoff}`);
+  if (bad.length) {
+    el("ctl-note").textContent = "Last take-off was refused - " + bad.join("; ")
+      + ". A swarm that landed while still armed can need ./flyit --stop and a restart.";
+    return;
+  }
+  if (!c.error && el("b-takeoff").disabled === false)
+    el("ctl-note").textContent = c.enabled
+      ? `Keys act only while control is held. Releasing, closing this tab or ` +
+        `switching away stops the leader - the server commands zero after ` +
+        `${c.deadman_s}s of silence, and ArduPilot expires a GUIDED setpoint on its own.`
+      : "Manual control is disabled on this server (--no-control).";
+  if (c.held) paintKeys(c.keys || []);
+}
+
+el("b-take").onclick = () => post({ action: "take" });
+el("b-release").onclick = () => post({ action: "release" });
+el("b-takeoff").onclick = () => post({ action: "takeoff", alt: 20 });
+el("b-land").onclick = () => post({ action: "land" });
+el("b-rtl").onclick = () => post({ action: "rtl" });
+el("b-formation").onclick = () => post({ action: "formation", on: true });
+
+/* ---------------- click the map to set a target ------------------------- */
+/* The map is drawn leader-centred, but a clicked target is stored as an
+   absolute lat/lon and re-projected every frame. Storing it as an offset would
+   make it slide across the ground as the leader moved towards it. */
+const plotSvg = el("plot");
+
+plotSvg.addEventListener("click", ev => {
+  const pr = plotSvg._proj;
+  if (!pr) return;
+  const r = plotSvg.getBoundingClientRect();
+  const vx = (ev.clientX - r.left) / r.width * pr.W;
+  const vy = (ev.clientY - r.top) / r.height * pr.H;
+  const east = (vx - pr.W / 2) / pr.sc;
+  const north = -(vy - pr.H / 2) / pr.sc;
+  const mn = 111320.0, me = 111320.0 * Math.cos(pr.lat * Math.PI / 180);
+  const lat = pr.lat + north / mn, lon = pr.lon + east / me;
+  el("plot-hint").textContent =
+    `sent: ${Math.round(north)} m north, ${Math.round(east)} m east of the leader`;
+  post({ action: "goto", lat: lat, lon: lon });
+});
+
+/* ---------------- mission + detections ---------------------------------- */
+function renderReadiness(s) {
+  /* ArduPilot needs about a minute after start before it will arm. Offering
+     the button before then just produces a refusal, so it waits. */
+  const vs = s.vehicles.filter(v => v.online);
+  const notReady = vs.filter(v => !v.flyable);
+  const ready = vs.length > 0 && notReady.length === 0;
+  for (const id of ["b-takeoff", "b-survey-hwy", "b-survey-area"])
+    el(id).disabled = !ready;
+  if (!ready) {
+    const why = vs.length === 0 ? "no vehicles yet"
+      : `waiting for ${notReady.map(v => "drone " + v.sysid).join(", ")} `
+        + "(EKF / GPS settling, about a minute from start)";
+    el("ctl-note").textContent = why;
+    return false;
+  }
+  return true;
+}
+
+function renderMission(s) {
+  const m = (s.control || {}).mission;
+  const nav = (s.control || {}).nav;
+  const running = !!(m && m.running);
+  el("mission").classList.toggle("running", running);
+  el("b-stopnav").disabled = !running && !nav;
+
+  if (running) {
+    setPill("mi-pill", "mi-txt", "good",
+            `${m.name} survey · leg ${m.leg}/${m.legs}`);
+    el("mi-bar").style.width = `${Math.round((m.leg - 1) / m.legs * 100)}%`;
+    const t = m.target;
+    el("mi-legs").textContent = t
+      ? `flying to ${Math.round(t.north)} m north, ${Math.round(t.east)} m east `
+        + `of home at ${t.alt} m · ${m.elapsed}s elapsed`
+      : `${m.elapsed}s elapsed`;
+  } else if (m) {
+    setPill("mi-pill", "mi-txt", m.aborted ? "warn" : "",
+            m.aborted ? "aborted" : "survey complete");
+    el("mi-bar").style.width = m.aborted ? el("mi-bar").style.width : "100%";
+    el("mi-legs").textContent = m.note || "";
+  } else if (nav) {
+    setPill("mi-pill", "mi-txt", "good", "flying to a target");
+    el("mi-bar").style.width = "0%";
+    el("mi-legs").textContent = "click the map again to retarget";
+  } else {
+    setPill("mi-pill", "mi-txt", "", "idle");
+    el("mi-bar").style.width = "0%";
+    el("mi-legs").textContent =
+      "Click anywhere on the formation map to send the leader there, "
+      + "or run a survey. The followers hold formation either way.";
+  }
+}
+
+function renderHits(s) {
+  const hits = s.detections || [];
+  el("hits-panel").hidden = hits.length === 0;
+  if (!hits.length) return;
+  el("hits-txt").textContent = hits.length === 1 ? "1 found" : `${hits.length} found`;
+  const holder = el("hits");
+  for (const d of hits) {
+    let card = holder.querySelector(`[data-hit="${d.id}"]`);
+    if (!card) {
+      card = document.createElement("div");
+      card.className = "hit";
+      card.dataset.hit = d.id;
+      /* cache-bust once per card, not per poll: the evidence frame is only
+         replaced when a closer look arrives */
+      card.innerHTML = `<img alt="evidence frame for detection ${d.id}">
+        <div><div class="who"></div><dl></dl>
+          <div class="act"><button class="look"></button></div></div>`;
+      card.querySelector(".look").onclick = () => {
+        const on = card.dataset.watching === "1";
+        post(on ? { action: "unwatch" }
+                : { action: "watch", detection: Number(card.dataset.hit) });
+      };
+      holder.appendChild(card);
+    }
+    card.querySelector(".who").textContent = `#${d.id} accident, highway`;
+    card.querySelector("dl").innerHTML = `
+      <dt>position</dt><dd>${d.lat === null ? "bearing only"
+        : d.lat.toFixed(6) + ", " + d.lon.toFixed(6)}</dd>
+      <dt>seen by</dt><dd>drone ${d.by.join(", ")}</dd>
+      <dt>sightings</dt><dd>${d.sightings} (${d.fixes} ranged)</dd>
+      <dt>range</dt><dd>${d.range_m === null || d.range_m === undefined
+        ? "&mdash;" : d.range_m + " m from " + Math.round(d.from_alt) + " m up"}</dd>`;
+    const img = card.querySelector("img");
+    const want = `/api/detection/${d.id}.jpg?a=${d.area_px}`;
+    if (img.getAttribute("src") !== want) img.src = want;
+
+    /* Aim every camera here. The formation keeps tracking the leader; only
+       the headings change, which is free while the offsets are in the NED
+       frame. */
+    const w = (s.control || {}).watch;
+    const watching = !!w && w.label === `accident #${d.id}`;
+    card.dataset.watching = watching ? "1" : "0";
+    const btn = card.querySelector(".look");
+    btn.textContent = watching ? "Stop pointing cameras" : "Point all cameras here";
+    btn.className = "look" + (watching ? "" : " primary");
+    btn.disabled = d.lat === null;
+
+    let pt = card.querySelector(".point");
+    if (watching) {
+      if (!pt) {
+        pt = document.createElement("div");
+        pt.className = "point";
+        card.lastElementChild.appendChild(pt);
+      }
+      const rows = Object.entries((s.control || {}).pointing || {})
+        .sort((a, b) => a[0] - b[0])
+        .map(([id, p]) => {
+          const off = Math.abs(p.off);
+          /* The lens is 69 degrees across, so anything past ~34 off-axis has
+             the target outside the frame entirely. */
+          const cls = off > 34 ? ' class="bad"' : "";
+          /* A bearing of 359.6 must not print as "360". */
+          const wrap = v => (Math.round(v) % 360);
+          return `<span${cls}>drone ${id}: ${wrap(p.yaw)}\u00b0 `
+               + `(want ${wrap(p.want)}\u00b0, off ${p.off.toFixed(0)}\u00b0)</span>`;
+        });
+      pt.innerHTML = "<b>cameras aimed</b> &middot; " + rows.join(" &middot; ");
+    } else if (pt) {
+      pt.remove();
+    }
+  }
+}
+
+el("b-survey-hwy").onclick = () => post({ action: "mission", survey: "highway" });
+el("b-survey-area").onclick = () => post({ action: "mission", survey: "area" });
+el("b-stopnav").onclick = () => post({ action: "stop_nav" });
+
+async function tick() {
+  try {
+    const r = await fetch("/api/status", { cache: "no-store" });
+    render(await r.json());
+  } catch (e) {
+    setPill("verdict", "verdict-txt", "crit", "server unreachable");
+  }
+}
+tick();
+setInterval(tick, 700);
+</script>
+</body>
+</html>

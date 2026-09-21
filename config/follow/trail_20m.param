@@ -1,0 +1,22 @@
+# Follower parameters - hold station 20 m north of the leader.
+#
+# Verified against the FOLL_ definitions in this ArduPilot tree. Load onto a
+# FOLLOWER only; the leader needs none of these (FOLL_ENABLE stays 0).
+# On the real aircraft these load through Mission Planner unchanged.
+#
+# OFS_TYPE is deliberately 0 (North-East-Down) rather than heading-relative:
+# the built aircraft have no compass wired, so leader heading is not
+# trustworthy enough to rotate a formation around. The consequence is that
+# this offset stays compass-aligned and does not swing as the leader turns.
+
+FOLL_ENABLE      1
+FOLL_SYSID       1
+FOLL_OFS_TYPE    0
+FOLL_OFS_X       20.0
+FOLL_OFS_Y       0.0
+FOLL_OFS_Z       0.0
+FOLL_ALT_TYPE    1
+FOLL_YAW_BEHAVE  0
+FOLL_DIST_MAX    1000
+FOLL_POS_P       0.1
+FOLL_TIMEOUT     3.0
