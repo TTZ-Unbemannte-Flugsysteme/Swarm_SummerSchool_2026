@@ -50,7 +50,7 @@
                 </div>
                 <div class="bg-slate-900/80 p-4 rounded-xl border border-slate-700/60 shadow-inner">
                     <div class="text-sm font-bold text-slate-200 mb-1">Weld VBAT Wire</div>
-                    <div class="text-xs text-sky-200/60">Voltage Sensor to FC</div>
+                    <div class="text-xs text-sky-200/60">Power to FC</div>
                 </div>
             </div>
         </div>
