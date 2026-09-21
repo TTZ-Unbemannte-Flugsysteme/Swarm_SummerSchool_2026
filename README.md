@@ -4,6 +4,12 @@ Leader-follower simulation for the F450 swarm, built on ArduPilot SITL and
 Gazebo. **The simulation runs on the NUT-HMT PC** — this repository is the
 source; `flyit` brings the whole thing up there.
 
+![Gazebo showing three quadrotors over the runway beside the operator dashboard with live telemetry, three camera feeds and the formation map](SC/Screenshot%20from%202026-09-21%2013-07-33.png)
+
+*Three drones in Gazebo and the operator dashboard, mid-session: telemetry and
+a camera per drone, keyboard control of the leader, the inspection surveys, and
+the formation holding 0.0 m station error.*
+
 Design rationale lives in [docs/architecture.html](docs/architecture.html);
 this file is the build, in the order you can check it.
 
