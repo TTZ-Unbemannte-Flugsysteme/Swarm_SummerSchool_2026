@@ -427,6 +427,7 @@
     <ul class="plain">
       <li><b>Frame:</b> quad in X layout &mdash; <code>FRAME_CLASS = 1</code>, <code>FRAME_TYPE = 1</code>. 450&nbsp;mm diagonal puts each motor about 159&nbsp;mm out in both axes from centre.</li>
       <li><b>Propulsion:</b> 2212 920&nbsp;KV on 1045 props, 4S. The SDF model's thrust curve and the real one should agree, or <code>FOLL_POS_P</code> tuned in simulation will not transfer.</li>
+      <li><b>Power wiring:</b> the ESCs are connected <b>directly to the board</b>, with <b>every XT60 connector removed</b> &mdash; none remain in the power path. That saves weight and space and deletes a failure point, and it is the arrangement the aircraft are actually built with, not a proposal. The trade is serviceability: swapping a motor or ESC in the field is now a desoldering job rather than an unplug.</li>
       <li><b>Mass:</b> the one number to measure rather than take from this page. An F450 built out like this typically lands somewhere around 1.5&nbsp;kg all-up, but weigh a finished aircraft &mdash; the sim is only as good as this figure.</li>
       <li><b>Every vehicle is a Copter</b>, which keeps <code>FOLLOW</code> available on all of them.</li>
       <li><b>Companion stack:</b> Ubuntu Server with MAVROS and ROS&nbsp;2, per the build documentation. Worth noting for <a href="#topology">Section&nbsp;08</a> &mdash; a ROS&nbsp;2 transport is much less of an imposition when ROS&nbsp;2 is already the intended stack.</li>
