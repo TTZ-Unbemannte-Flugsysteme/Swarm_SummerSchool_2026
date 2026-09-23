@@ -83,6 +83,8 @@ for i in $(seq 0 $((COUNT - 1))); do
   CPORT=$(control_port "$i")
   DPORT=$(dashboard_port "$i")
   GPORT=$(gcs_port "$i")
+  # Every vehicle also forwards to the one shared ground-station endpoint, so a
+  # single QGroundControl link shows the whole swarm instead of one drone.
   LPORT=$(log_port "$i")
   SYSID=$((i + 1))
   LON=$(awk -v b="$BASE_LON" -v i="$i" -v s="$SPACING_M" -v lat="$BASE_LAT" \
@@ -111,7 +113,7 @@ for i in $(seq 0 $((COUNT - 1))); do
     --use-dir "$RUNDIR/v$i" \
     "${LOC_ARGS[@]+"${LOC_ARGS[@]}"}" \
     --add-param-file="$REPO/config/sitl/f450.parm" \
-    -m "$MP_ARGS --out 127.0.0.1:$RPORT --out 127.0.0.1:$CPORT --out 127.0.0.1:$DPORT --out 127.0.0.1:$GPORT --out 127.0.0.1:$LPORT" \
+    -m "$MP_ARGS --out 127.0.0.1:$RPORT --out 127.0.0.1:$CPORT --out 127.0.0.1:$DPORT --out 127.0.0.1:$GPORT --out 127.0.0.1:$LPORT --out 127.0.0.1:$QGC_PORT" \
     > "$LOGDIR/vehicle$i.log" 2>&1 &
   record_pid $!
 

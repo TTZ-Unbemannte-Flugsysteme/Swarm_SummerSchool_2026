@@ -436,6 +436,34 @@ because the ground station is talking. If the dashboard stops, the followers
 hold their last commanded position — safe, but no longer following. That is why
 aiming is a temporary mode with an explicit hand-back rather than the default.
 
+## Ground station: QGroundControl or Mission Planner
+
+QGroundControl speaks ArduPilot, and one link shows the whole swarm:
+
+```bash
+flyit --qgc        # or: flyit --mp   for Mission Planner
+```
+
+Every vehicle forwards to **one shared endpoint, UDP 14540**, so a single
+comm link gives you all three drones as separate vehicles. The per-vehicle
+`14553 + 10i` ports are still there if you want a station bound to one drone.
+
+**QGroundControl needs its link adding once.** It auto-connects on UDP 14550,
+and here that port belongs to `relay.py` for drone 0 — two programs cannot bind
+one UDP port. So:
+
+> Application Settings → Comm Links → Add
+> Type **UDP**, Listening port **14540**, target hosts empty.
+> Name it `swarm`, tick *Automatically Connect on Start*, then Connect.
+
+It reconnects by itself on every run after that. Verified: all three sysids
+arrive on the one link, and a command addressed to drone 2 changes drone 2's
+mode and leaves 1 and 3 alone.
+
+`flyit` finds the AppImage in `~/` or `$SSS_ROOT` on its own; set
+`QGROUNDCONTROL` if yours is elsewhere. Where FUSE is missing it retries with
+`--appimage-extract-and-run`.
+
 ## What it needs
 
 `./install.sh` provides all of this; the table is what it is providing, and
@@ -493,8 +521,9 @@ Ports per vehicle `i`:
 | `14550 + 10i` | `relay.py` |
 | `14551 + 10i` | test scripts |
 | `14552 + 10i` | `dashboard/server.py` |
-| `14553 + 10i` | Mission Planner / QGroundControl |
+| `14553 + 10i` | a GCS bound to one specific vehicle |
 | `14554 + 10i` | `scripts/flight_log.py` |
+| `14540` | shared GCS link — **every** vehicle forwards here |
 
 Two endpoints because a UDP port has exactly one owner — the relay and a GCS
 cannot share one. On the aircraft, `mavlink-router` fans out the same way.

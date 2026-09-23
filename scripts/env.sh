@@ -25,6 +25,17 @@ fi
 : "${ARDUPILOT:=$SSS_ROOT/ardupilot}"
 : "${ARDUPILOT_GAZEBO:=$SSS_ROOT/ardupilot_gazebo}"
 : "${MISSION_PLANNER:=$SSS_ROOT/MissionPlanner}"
+
+# QGroundControl ships as a single AppImage, so there is no install directory
+# to point at - just a file, wherever it was downloaded to.
+if [ -z "${QGROUNDCONTROL:-}" ]; then
+  for _q in "$HOME"/QGroundControl*.AppImage "$SSS_ROOT"/QGroundControl*.AppImage \
+            "$HOME"/Applications/QGroundControl*.AppImage \
+            /usr/bin/qgroundcontrol /usr/local/bin/qgroundcontrol; do
+    if [ -x "$_q" ]; then QGROUNDCONTROL="$_q"; break; fi
+  done
+  unset _q
+fi
 RUNDIR="$REPO/.run"
 PIDFILE="$RUNDIR/pids"
 
@@ -51,7 +62,7 @@ init_session() {
 #   relay     14550 + 10i  - companion/swarm_agent/relay.py
 #   control   14551 + 10i  - test scripts (leader_follower.py)
 #   dashboard 14552 + 10i  - dashboard/server.py
-#   gcs       14553 + 10i  - Mission Planner / QGroundControl
+#   gcs       14553 + 10i  - a ground station bound to one specific vehicle
 #   log       14554 + 10i  - scripts/flight_log.py
 # One endpoint each because a UDP port has exactly one owner: two consumers on
 # one port silently steal each other's packets. On the real aircraft
@@ -61,6 +72,18 @@ control_port()   { echo $((14551 + 10 * $1)); }
 dashboard_port() { echo $((14552 + 10 * $1)); }
 gcs_port()       { echo $((14553 + 10 * $1)); }
 log_port()       { echo $((14554 + 10 * $1)); }
+# One shared endpoint that every vehicle also forwards to. A ground station
+# attached here sees all N drones as separate vehicles on a single link, which
+# is what you want for a swarm - the per-vehicle gcs ports above would need one
+# link each.
+#
+# Deliberately below every per-drone block (14550+10i .. 14554+10i) so it can
+# never collide as the drone count grows. It is NOT 14550, which is where
+# QGroundControl auto-connects: that port already belongs to relay.py for
+# drone 0, and two programs cannot bind one UDP port. Adding the link by hand
+# once is the price of keeping the relay where every other page says it is.
+QGC_PORT="${QGC_PORT:-14540}"
+
 DASHBOARD_HTTP_PORT="${DASHBOARD_HTTP_PORT:-8760}"
 
 # gz-transport discovers peers by multicast, and picks an interface to do it

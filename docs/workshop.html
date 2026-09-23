@@ -592,7 +592,8 @@
           <tr><td class="mono">14550 + 10i</td><td><code>relay.py</code></td><td>Carries the leader's position to the followers. Load-bearing: kill it and the formation stops.</td></tr>
           <tr><td class="mono">14551 + 10i</td><td>test scripts</td><td>So a measurement run never competes with the relay for packets.</td></tr>
           <tr><td class="mono">14552 + 10i</td><td>the dashboard</td><td>Also the only write path: manual control sends on this socket.</td></tr>
-          <tr><td class="mono">14553 + 10i</td><td>Mission Planner</td><td>A GCS expects to own its link. Sharing it with a script breaks both.</td></tr>
+          <tr><td class="mono">14553 + 10i</td><td>a GCS, one vehicle</td><td>A ground station expects to own its link. Sharing it with a script breaks both.</td></tr>
+          <tr><td class="mono">14540</td><td>a GCS, whole swarm</td><td>Shared: every vehicle forwards here too, so one QGroundControl link shows all of them. Not 14550 &mdash; QGroundControl auto-connects there, and the relay already owns it.</td></tr>
           <tr><td class="mono">14554 + 10i</td><td><code>flight_log.py</code></td><td>Reads every vehicle's messages without disturbing anything else.</td></tr>
         </tbody>
       </table>
