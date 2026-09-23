@@ -3,6 +3,7 @@
 #
 #   ./install.sh                     the lot: apt, Gazebo, ArduPilot, Python
 #   ./install.sh --deps-dir ~/x      put ArduPilot and the plugin somewhere else
+#                                    (or export SSS_ROOT=~/x, same thing)
 #   ./install.sh --no-gazebo         skip Gazebo (headless physics only)
 #   ./install.sh --no-apt            no sudo, no apt - you handle system packages
 #   ./install.sh --yes               don't ask before the long steps
@@ -67,7 +68,9 @@ ask() {
 # this one. scripts/env.sh looks here on its own, so this needs no config file
 # to work - local.env below just makes the choice explicit and survivable.
 if [ -z "$DEPS_DIR" ]; then
-  if [ -d "$REPO/../SSS_2026/ardupilot" ]; then
+  if [ -n "${SSS_ROOT:-}" ]; then
+    DEPS_DIR="$SSS_ROOT"                                 # same variable the scripts read
+  elif [ -d "$REPO/../SSS_2026/ardupilot" ]; then
     DEPS_DIR="$(cd "$REPO/../SSS_2026" && pwd)"          # existing rig, reuse it
   else
     DEPS_DIR="$HOME/swarm-deps"

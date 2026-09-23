@@ -22,6 +22,9 @@ itself, with `flyit --check`.
 
 ## Install
 
+**New here? [QUICKSTART.md](QUICKSTART.md) is the whole path from clone to
+flying on one page.** This section is the same thing with the reasoning kept in.
+
 On a fresh Ubuntu 22.04 or 24.04 machine, three commands:
 
 ```bash
