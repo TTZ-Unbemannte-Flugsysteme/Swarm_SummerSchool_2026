@@ -11,7 +11,9 @@ a camera per drone, keyboard control of the leader, the inspection surveys, and
 the formation holding 0.0 m station error.*
 
 Design rationale lives in [docs/architecture.html](docs/architecture.html);
-this file is the build, in the order you can check it.
+this file is the build, in the order you can check it. To *teach* it, open
+[docs/workshop.html](docs/workshop.html) — diagrams, SITL vs HIL, why ports
+decide everything, and a 16-slide deck with a presenter mode.
 
 Every step prints `RESULT: PASS` or `RESULT: FAIL` and exits non-zero on
 failure, so nothing here needs to be judged by eye.

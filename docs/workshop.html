@@ -1,0 +1,876 @@
+<!doctype html>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Build the Swarm Simulation &mdash; workshop</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Condensed:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+  :root{
+    --bg:#eef1f4;
+    --surface:#ffffff;
+    --panel:#e3e8ed;
+    --panel-line:#c3ccd5;
+    --border:#c9d2da;
+    --text:#161d29;
+    --muted:#556170;
+    --accent:#a8481a;
+    --accent-soft:#f6e0d2;
+    --accent-line:#c2571f;
+    --sim:#0c6b78;
+    --sim-soft:#d5ecef;
+    --sim-line:#12808f;
+    --good:#2a7048;
+    --warn:#8f6708;
+    --shadow:0 1px 2px rgba(20,30,45,.05), 0 10px 30px -16px rgba(20,30,45,.25);
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --bg:#0f1319;
+      --surface:#181e27;
+      --panel:#1d242f;
+      --panel-line:#303a48;
+      --border:#2d3744;
+      --text:#e9edf2;
+      --muted:#9aa7b5;
+      --accent:#ff9a5e;
+      --accent-soft:#3d2617;
+      --accent-line:#e07f44;
+      --sim:#63d8e8;
+      --sim-soft:#123840;
+      --sim-line:#2ba7bb;
+      --good:#6bcf92;
+      --warn:#e3b451;
+      --shadow:0 1px 2px rgba(0,0,0,.5), 0 10px 30px -16px rgba(0,0,0,.7);
+    }
+  }
+  :root[data-theme="dark"]{
+    --bg:#0f1319;
+    --surface:#181e27;
+    --panel:#1d242f;
+    --panel-line:#303a48;
+    --border:#2d3744;
+    --text:#e9edf2;
+    --muted:#9aa7b5;
+    --accent:#ff9a5e;
+    --accent-soft:#3d2617;
+    --accent-line:#e07f44;
+    --sim:#63d8e8;
+    --sim-soft:#123840;
+    --sim-line:#2ba7bb;
+    --good:#6bcf92;
+    --warn:#e3b451;
+    --shadow:0 1px 2px rgba(0,0,0,.5), 0 10px 30px -16px rgba(0,0,0,.7);
+  }
+
+  *{ box-sizing:border-box }
+
+  body{
+    margin:0;
+    background:var(--bg);
+    color:var(--text);
+    font-family:"IBM Plex Sans", ui-sans-serif, system-ui, sans-serif;
+    font-size:17px;
+    line-height:1.7;
+    -webkit-font-smoothing:antialiased;
+  }
+
+  .wrap{
+    max-width:1000px;
+    margin:0 auto;
+    padding-inline:28px;
+    padding-block:44px 96px;
+  }
+
+  h1,h2,h3{
+    font-family:"IBM Plex Sans Condensed","IBM Plex Sans",sans-serif;
+    text-wrap:balance;
+    line-height:1.15;
+    margin:0;
+  }
+  code,.mono{ font-family:"IBM Plex Mono", ui-monospace, monospace; }
+  code{ font-size:.88em; }
+  a{ color:var(--sim); text-underline-offset:3px; }
+
+  .kicker{
+    font-family:"IBM Plex Mono";
+    font-size:13px;
+    letter-spacing:.1em;
+    text-transform:uppercase;
+    color:var(--sim);
+    margin-bottom:14px;
+  }
+  h1{ font-size:clamp(31px,5vw,44px); font-weight:700; letter-spacing:-.01em; }
+  .dek{
+    font-size:19px;
+    color:var(--muted);
+    max-width:60ch;
+    margin:16px 0 0;
+  }
+  .facts{ display:flex; flex-wrap:wrap; gap:10px; margin-top:26px; }
+  .fact{
+    font-family:"IBM Plex Mono";
+    font-size:12.5px;
+    padding:6px 12px;
+    border:1px solid var(--border);
+    border-radius:999px;
+    color:var(--muted);
+    background:var(--surface);
+  }
+  .fact b{ color:var(--text); font-weight:500; }
+
+  .contents{
+    margin-top:40px;
+    border:1px solid var(--border);
+    border-radius:12px;
+    background:var(--surface);
+    padding:20px 22px 22px;
+    box-shadow:var(--shadow);
+  }
+  .contents h2{
+    font-family:"IBM Plex Mono";
+    font-size:12px;
+    letter-spacing:.1em;
+    text-transform:uppercase;
+    color:var(--muted);
+    font-weight:500;
+    margin-bottom:14px;
+  }
+  .contents ol{
+    list-style:none; margin:0; padding:0;
+    display:grid;
+    grid-template-columns:repeat(auto-fit, minmax(240px, 1fr));
+    gap:2px 22px;
+  }
+  .contents a{
+    display:flex; gap:12px;
+    padding:7px 0;
+    text-decoration:none;
+    color:var(--text);
+    font-size:16px;
+  }
+  .contents a:hover{ color:var(--sim); }
+  .contents a code{ font-size:.92em; background:none; padding:0; }
+  .contents .n{
+    font-family:"IBM Plex Mono";
+    font-size:13px;
+    color:var(--sim);
+    padding-top:2px;
+  }
+
+  section{ margin-top:72px; scroll-margin-top:24px; }
+  .eyebrow{
+    font-family:"IBM Plex Mono";
+    font-size:13px;
+    letter-spacing:.06em;
+    color:var(--sim);
+    margin-bottom:8px;
+  }
+  h2{ font-size:27px; font-weight:600; }
+  section > h2{ margin-bottom:18px; }
+  h3{ font-size:18px; font-weight:600; margin:32px 0 8px; }
+  p{ margin:0 0 18px; max-width:66ch; }
+  p:last-child{ margin-bottom:0; }
+  ul.plain{ max-width:66ch; padding-left:1.15em; margin:0 0 18px; }
+  ul.plain li{ margin-bottom:8px; }
+
+  .note{
+    border:1px solid var(--border);
+    border-left:4px solid var(--accent-line);
+    background:var(--accent-soft);
+    border-radius:10px;
+    padding:22px 24px;
+    margin:24px 0 0;
+    max-width:78ch;
+  }
+  .note .tag,.rec .tag{
+    display:block;
+    font-family:"IBM Plex Mono";
+    font-size:12px;
+    letter-spacing:.08em;
+    text-transform:uppercase;
+    font-weight:500;
+    margin-bottom:10px;
+  }
+  .note .tag{ color:var(--accent); }
+  .note p,.rec p{ max-width:none; }
+  .rec{
+    border:1px solid var(--border);
+    border-left:4px solid var(--sim-line);
+    background:var(--sim-soft);
+    border-radius:10px;
+    padding:22px 24px;
+    max-width:78ch;
+  }
+  .rec .tag{ color:var(--sim); }
+
+  figure{ margin:28px 0 0; }
+  figure:not(:last-child){ margin-bottom:30px; }
+  .frame{
+    background:var(--surface);
+    border:1px solid var(--border);
+    border-radius:12px;
+    padding:22px 20px;
+    box-shadow:var(--shadow);
+    overflow-x:auto;
+  }
+  svg.arch{ display:block; width:100%; min-width:640px; height:auto; }
+  figcaption{
+    font-size:15px;
+    line-height:1.6;
+    color:var(--muted);
+    margin-top:14px;
+    max-width:70ch;
+  }
+  figcaption b{ color:var(--text); font-weight:600; }
+
+  .table-wrap{
+    margin-top:24px;
+    border:1px solid var(--border);
+    border-radius:12px;
+    overflow-x:auto;
+    background:var(--surface);
+  }
+  table{ border-collapse:collapse; width:100%; font-size:15px; }
+  th,td{
+    text-align:left;
+    padding:14px 16px;
+    border-bottom:1px solid var(--border);
+    vertical-align:top;
+  }
+  thead th{
+    background:var(--panel);
+    font-family:"IBM Plex Mono";
+    font-weight:500;
+    font-size:12px;
+    letter-spacing:.05em;
+    text-transform:uppercase;
+    color:var(--muted);
+    line-height:1.5;
+  }
+  thead th span{ display:block; text-transform:none; letter-spacing:0; opacity:.8; }
+  tbody tr:last-child td{ border-bottom:none; }
+  td.mono{ font-size:13.5px; }
+  .ok{ color:var(--good); font-weight:500; }
+  .mid{ color:var(--warn); font-weight:500; }
+  .bad{ color:var(--accent); font-weight:500; }
+
+  pre.tree{
+    margin:24px 0 0;
+    background:var(--panel);
+    border:1px solid var(--border);
+    border-radius:12px;
+    padding:22px 24px;
+    font-family:"IBM Plex Mono";
+    font-size:13.5px;
+    line-height:1.75;
+    overflow-x:auto;
+    color:var(--text);
+  }
+  pre.tree .c{ color:var(--muted); }
+  pre.tree .r{ color:var(--sim); }
+  pre.tree .new{ color:var(--accent); }
+
+  .checklist{
+    list-style:none; margin:24px 0 0; padding:0;
+    border:1px solid var(--border);
+    border-radius:12px;
+    background:var(--surface);
+    overflow:hidden;
+  }
+  .checklist li{ border-bottom:1px solid var(--border); }
+  .checklist li:last-child{ border-bottom:none; }
+  .checklist label{
+    display:flex; gap:14px; align-items:flex-start;
+    padding:16px 20px;
+    cursor:pointer;
+  }
+  .checklist label:hover{ background:var(--panel); }
+  .checklist input{
+    margin:5px 0 0; width:17px; height:17px;
+    accent-color:var(--sim-line); flex:0 0 auto;
+  }
+  .checklist .n{
+    font-family:"IBM Plex Mono";
+    font-size:13px; color:var(--muted);
+    flex:0 0 auto; padding-top:1px;
+  }
+  .checklist .body{ min-width:0; }
+  .checklist .q{ display:block; font-size:16.5px; }
+  .checklist .why{ display:block; color:var(--muted); font-size:14.5px; margin-top:2px; }
+  .checklist input:checked ~ .body .q{ color:var(--muted); text-decoration:line-through; }
+
+  footer{
+    margin-top:72px;
+    padding-top:26px;
+    border-top:1px solid var(--border);
+    color:var(--muted);
+    font-size:15px;
+    max-width:70ch;
+  }
+
+  @media (max-width:640px){
+    body{ font-size:16px; }
+    .wrap{ padding-inline:18px; padding-block:32px 64px; }
+    section{ margin-top:56px; }
+    .note,.rec{ padding:18px; }
+    .frame{ padding:16px 14px; }
+  }
+</style>
+
+<style>
+  /* ---- workshop additions ---------------------------------------- */
+  .lede{font-size:19px;color:var(--muted);max-width:62ch;margin:16px 0 0}
+  .audience{
+    margin-top:26px;padding:14px 18px;border-radius:10px;
+    background:var(--sim-soft);border:1px solid var(--sim-line);
+    font-size:15px;max-width:78ch;
+  }
+  .audience b{color:var(--sim)}
+
+  .steps{counter-reset:step;list-style:none;padding:0;margin:24px 0 0;max-width:78ch}
+  .steps li{
+    counter-increment:step;position:relative;padding:0 0 0 46px;margin-bottom:20px;
+  }
+  .steps li::before{
+    content:counter(step,decimal-leading-zero);position:absolute;left:0;top:1px;
+    font-family:"IBM Plex Mono";font-size:12px;color:var(--sim);
+    border:1px solid var(--border);border-radius:7px;padding:3px 7px;background:var(--surface);
+  }
+  .steps b{display:block;margin-bottom:3px}
+
+  pre.cmd{
+    margin:18px 0 0;background:var(--panel);border:1px solid var(--border);
+    border-radius:10px;padding:16px 18px;font-family:"IBM Plex Mono";
+    font-size:13px;line-height:1.7;overflow-x:auto;color:var(--text);
+  }
+  pre.cmd .c{color:var(--muted)}
+  pre.cmd .p{color:var(--sim)}
+
+  /* ---- slide deck -------------------------------------------------- */
+  .deckbar{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:22px 0 6px}
+  .deckbar button{
+    font-family:"IBM Plex Mono";font-size:13px;padding:8px 15px;border-radius:8px;
+    border:1px solid var(--border);background:var(--surface);color:var(--text);cursor:pointer;
+  }
+  .deckbar button.primary{background:var(--sim-line);border-color:transparent;color:#fff}
+  .deckbar .hint{font-family:"IBM Plex Mono";font-size:12px;color:var(--muted)}
+
+  .deck{display:grid;gap:16px;margin-top:10px}
+  .slide{
+    border:1px solid var(--border);border-radius:12px;background:var(--surface);
+    padding:22px 24px;box-shadow:var(--shadow);position:relative;
+  }
+  .slide .n{
+    font-family:"IBM Plex Mono";font-size:11.5px;letter-spacing:.08em;
+    color:var(--sim);text-transform:uppercase;
+  }
+  .slide h3{font-size:21px;margin:6px 0 10px}
+  .slide p{font-size:15.5px;max-width:70ch}
+  .slide ul{margin:0 0 0 0;padding-left:1.2em;max-width:70ch;font-size:15.5px}
+  .slide li{margin-bottom:7px}
+  .slide code{background:var(--panel);padding:1px 5px;border-radius:4px}
+  .slide .say{
+    margin-top:14px;padding-top:12px;border-top:1px dashed var(--border);
+    font-size:13.5px;color:var(--muted);max-width:74ch;
+  }
+  .slide .say b{color:var(--text);font-weight:600}
+
+  body.presenting{overflow:hidden}
+  body.presenting .wrap > *:not(#deck){display:none}
+  body.presenting #deck > *:not(#deckwrap){display:none}
+  body.presenting #deckwrap > *:not(.deck){display:none}
+  body.presenting .deck{display:block;margin:0}
+  body.presenting .slide{display:none}
+  body.presenting .slide.current{
+    display:block;position:fixed;inset:0;z-index:60;border-radius:0;border:none;
+    padding:7vh 9vw;overflow-y:auto;background:var(--bg);box-shadow:none;
+  }
+  body.presenting .slide.current h3{font-size:clamp(26px,3.6vw,44px);margin-bottom:18px}
+  body.presenting .slide.current p,
+  body.presenting .slide.current li{font-size:clamp(16px,1.7vw,23px)}
+  body.presenting .slide.current .n{font-size:14px}
+  body.presenting .slide.current .say{display:none}
+  #pcount{
+    position:fixed;right:20px;bottom:16px;z-index:61;display:none;
+    font-family:"IBM Plex Mono";font-size:13px;color:var(--muted);
+  }
+  body.presenting #pcount{display:block}
+
+  @media print{
+    .deckbar,nav.contents,#pcount{display:none}
+    .slide{page-break-inside:avoid;break-inside:avoid}
+  }
+</style>
+
+
+<div class="wrap">
+  <header>
+    <div class="kicker">Swarm_SummerSchool_2026 &middot; teaching material</div>
+    <h1>Build the swarm simulation</h1>
+    <p class="lede">Three ArduPilot drones flying a formation in Gazebo, with a browser that flies the leader and finds things on the ground. This page is the lesson: the diagrams to show, the ideas to land, and a deck you can present as it stands.</p>
+    <div class="facts">
+      <span class="fact"><b>For</b> summer-school participants</span>
+      <span class="fact"><b>Needs</b> one Linux laptop</span>
+      <span class="fact"><b>Length</b> about half a day</span>
+      <span class="fact"><b>Slides</b> 16</span>
+    </div>
+    <div class="audience">
+      <b>How to use this page.</b> Sections 01&ndash;04 are the material you need to understand before teaching it &mdash; read them once. Section 05 is a deck: press <b>Present</b> and drive it with the arrow keys. Every slide carries a &ldquo;Say&rdquo; note that is hidden while presenting.
+    </div>
+
+    <nav class="contents">
+      <h2>Contents</h2>
+      <ol>
+        <li><a href="#build"><span class="n">01</span> What you are building</a></li>
+        <li><a href="#loops"><span class="n">02</span> SITL, HIL and real flight</a></li>
+        <li><a href="#config"><span class="n">03</span> Why IP and port decide everything</a></li>
+        <li><a href="#startup"><span class="n">04</span> What <code>flyit</code> actually does</a></li>
+        <li><a href="#deck"><span class="n">05</span> The slides</a></li>
+      </ol>
+    </nav>
+  </header>
+
+  <section id="build">
+    <div class="eyebrow">01 &mdash; The system</div>
+    <h2>What you are building</h2>
+    <p>Three drones, each one a stack of three processes: a vehicle model inside Gazebo, an ArduPilot flight-code process, and a MAVProxy that copies the resulting MAVLink stream to everything that wants it. The formation itself is not a program &mdash; it is a handful of parameters inside each follower's flight controller.</p>
+    <figure>
+      <div class="frame"><svg class="arch" viewBox="0 0 830 330" role="img" aria-label="One drone's full path: a vehicle model inside Gazebo exchanges flight-dynamics packets with an ArduPilot SITL process over UDP port 9002, SITL's MAVLink goes to MAVProxy, and MAVProxy fans it out to five consumer ports - the relay, test scripts, the dashboard, a ground station and the flight log. The whole row repeats per drone with every port ten higher.">
+  <defs>
+    <marker id="f1a" markerWidth="9" markerHeight="9" refX="7.5" refY="4.5" orient="auto-start-reverse">
+      <path d="M0,0.5 L8.5,4.5 L0,8.5 Z" fill="currentColor"/>
+    </marker>
+  </defs>
+  <g font-family="IBM Plex Sans, sans-serif">
+    <rect x="16" y="46" width="188" height="96" rx="10" fill="var(--panel)" stroke="var(--panel-line)" stroke-width="1.3"/>
+    <text x="24" y="36" font-family="IBM Plex Mono" font-size="11" letter-spacing=".04em" fill="var(--muted)">GAZEBO &#183; ONE WORLD</text>
+    <text x="110" y="82" text-anchor="middle" font-size="13.5" font-weight="600" fill="var(--text)">iris_v0</text>
+    <text x="110" y="100" text-anchor="middle" font-size="11.5" fill="var(--muted)">airframe + camera</text>
+    <text x="110" y="122" text-anchor="middle" font-family="IBM Plex Mono" font-size="10.5" fill="var(--muted)">fdm_port_in 9002</text>
+
+    <line x1="208" y1="94" x2="262" y2="94" stroke="currentColor" stroke-width="1.7" marker-start="url(#f1a)" marker-end="url(#f1a)"/>
+    <text x="235" y="82" text-anchor="middle" font-family="IBM Plex Mono" font-size="10" fill="var(--muted)">UDP</text>
+    <text x="235" y="112" text-anchor="middle" font-family="IBM Plex Mono" font-size="10" fill="var(--sim)">lock-step</text>
+
+    <rect x="266" y="46" width="188" height="96" rx="10" fill="var(--accent-soft)" stroke="var(--accent-line)" stroke-width="1.3"/>
+    <text x="360" y="78" text-anchor="middle" font-size="13.5" font-weight="600" fill="var(--text)">ArduPilot SITL</text>
+    <text x="360" y="96" text-anchor="middle" font-size="11.5" fill="var(--muted)">the real flight code</text>
+    <text x="360" y="118" text-anchor="middle" font-family="IBM Plex Mono" font-size="10.5" fill="var(--accent)">sysid 1 &#183; -I 0</text>
+
+    <line x1="458" y1="94" x2="512" y2="94" stroke="currentColor" stroke-width="1.7" marker-end="url(#f1a)"/>
+    <text x="485" y="82" text-anchor="middle" font-family="IBM Plex Mono" font-size="10" fill="var(--muted)">MAVLink</text>
+
+    <rect x="516" y="46" width="130" height="96" rx="10" fill="var(--sim-soft)" stroke="var(--sim-line)" stroke-width="1.3"/>
+    <text x="581" y="86" text-anchor="middle" font-size="13" font-weight="600" fill="var(--text)">MAVProxy</text>
+    <text x="581" y="104" text-anchor="middle" font-size="11.5" fill="var(--muted)">fan-out</text>
+
+    <g font-family="IBM Plex Mono" font-size="10.5">
+      <line x1="650" y1="94" x2="690" y2="60"  stroke="currentColor" stroke-width="1.4" marker-end="url(#f1a)"/>
+      <line x1="650" y1="94" x2="690" y2="77"  stroke="currentColor" stroke-width="1.4" marker-end="url(#f1a)"/>
+      <line x1="650" y1="94" x2="690" y2="94"  stroke="currentColor" stroke-width="1.4" marker-end="url(#f1a)"/>
+      <line x1="650" y1="94" x2="690" y2="111" stroke="currentColor" stroke-width="1.4" marker-end="url(#f1a)"/>
+      <line x1="650" y1="94" x2="690" y2="128" stroke="currentColor" stroke-width="1.4" marker-end="url(#f1a)"/>
+      <text x="696" y="63"  fill="var(--text)">14550 relay.py</text>
+      <text x="696" y="80"  fill="var(--text)">14551 test scripts</text>
+      <text x="696" y="97"  fill="var(--text)">14552 dashboard</text>
+      <text x="696" y="114" fill="var(--text)">14553 Mission Planner</text>
+      <text x="696" y="131" fill="var(--text)">14554 flight log</text>
+    </g>
+
+    <rect x="16" y="186" width="798" height="52" rx="9" fill="none" stroke="var(--border)" stroke-width="1.3" stroke-dasharray="5 4"/>
+    <text x="30" y="207" font-size="13" font-weight="600" fill="var(--text)">&#215; one row per drone</text>
+    <text x="30" y="226" font-family="IBM Plex Mono" font-size="11" fill="var(--muted)">drone i: FDM 9002 + 10i &#183; MAVLink 14550 + 10i &#8230; 14554 + 10i &#183; sysid i + 1</text>
+
+    <rect x="16" y="256" width="798" height="56" rx="9" fill="var(--accent-soft)" stroke="var(--accent-line)" stroke-width="1.2"/>
+    <text x="30" y="278" font-size="13" font-weight="600" fill="var(--text)">The rule that makes the whole column work</text>
+    <text x="30" y="297" font-size="12" fill="var(--muted)">A UDP port has exactly one owner. Two programs on one port do not share it &#8212; they steal packets from each other.</text>
+  </g>
+</svg></div>
+      <figcaption><b>Fig. 1</b> &mdash; One drone's full path, which is the whole system: multiply the row by three and add ten to every port. Worth dwelling on which box holds the flight code &mdash; it is the same ArduPilot that runs on the real Matek board, compiled for a laptop instead of for ARM.</figcaption>
+    </figure>
+  </section>
+
+  <section id="loops">
+    <div class="eyebrow">02 &mdash; The concept students most often get wrong</div>
+    <h2>Software in the loop, hardware in the loop, and real flight</h2>
+    <p>&ldquo;Simulation&rdquo; is not one activity. It is a ladder, and each rung replaces one more simulated layer with a real one. Knowing which rung you are standing on tells you exactly which class of bug you are able to find &mdash; and which you are still blind to.</p>
+    <figure>
+      <div class="frame"><svg class="arch" viewBox="0 0 830 404" role="img" aria-label="Three columns comparing software in the loop, hardware in the loop and real flight. In SITL every layer is simulated software on the PC. In HIL the flight controller and its firmware are the real board, while sensors and airframe are still simulated and injected over a serial link. In real flight every layer is real.">
+  <g font-family="IBM Plex Sans, sans-serif">
+    <text x="140" y="34" text-anchor="middle" font-size="14.5" font-weight="700" fill="var(--text)">Software in the loop</text>
+    <text x="140" y="52" text-anchor="middle" font-family="IBM Plex Mono" font-size="10.5" fill="var(--muted)">SITL - what this repo runs</text>
+    <rect x="20" y="68" width="240" height="46" rx="8" fill="var(--sim-soft)" stroke="var(--sim-line)" stroke-width="1.2"/>
+    <text x="32" y="87" font-size="12.5" font-weight="600" fill="var(--text)">Flight code</text>
+    <text x="32" y="104" font-family="IBM Plex Mono" font-size="10" fill="var(--sim)">real ArduPilot, compiled for x86</text>
+    <rect x="20" y="122" width="240" height="46" rx="8" fill="var(--sim-soft)" stroke="var(--sim-line)" stroke-width="1.2"/>
+    <text x="32" y="141" font-size="12.5" font-weight="600" fill="var(--text)">Flight controller</text>
+    <text x="32" y="158" font-family="IBM Plex Mono" font-size="10" fill="var(--sim)">a process on the PC</text>
+    <rect x="20" y="176" width="240" height="46" rx="8" fill="var(--sim-soft)" stroke="var(--sim-line)" stroke-width="1.2"/>
+    <text x="32" y="195" font-size="12.5" font-weight="600" fill="var(--text)">Sensors</text>
+    <text x="32" y="212" font-family="IBM Plex Mono" font-size="10" fill="var(--sim)">simulated IMU, GNSS, camera</text>
+    <rect x="20" y="230" width="240" height="46" rx="8" fill="var(--sim-soft)" stroke="var(--sim-line)" stroke-width="1.2"/>
+    <text x="32" y="249" font-size="12.5" font-weight="600" fill="var(--text)">Airframe + physics</text>
+    <text x="32" y="266" font-family="IBM Plex Mono" font-size="10" fill="var(--sim)">Gazebo</text>
+    <rect x="20" y="284" width="240" height="46" rx="8" fill="var(--sim-soft)" stroke="var(--sim-line)" stroke-width="1.2"/>
+    <text x="32" y="303" font-size="12.5" font-weight="600" fill="var(--text)">Link</text>
+    <text x="32" y="320" font-family="IBM Plex Mono" font-size="10" fill="var(--sim)">UDP on localhost</text>
+    <text x="415" y="34" text-anchor="middle" font-size="14.5" font-weight="700" fill="var(--text)">Hardware in the loop</text>
+    <text x="415" y="52" text-anchor="middle" font-family="IBM Plex Mono" font-size="10.5" fill="var(--muted)">HIL - the real board, fake world</text>
+    <rect x="295" y="68" width="240" height="46" rx="8" fill="var(--accent-soft)" stroke="var(--accent-line)" stroke-width="1.2"/>
+    <text x="307" y="87" font-size="12.5" font-weight="600" fill="var(--text)">Flight code</text>
+    <text x="307" y="104" font-family="IBM Plex Mono" font-size="10" fill="var(--accent)">real ArduPilot, ARM binary</text>
+    <rect x="295" y="122" width="240" height="46" rx="8" fill="var(--accent-soft)" stroke="var(--accent-line)" stroke-width="1.2"/>
+    <text x="307" y="141" font-size="12.5" font-weight="600" fill="var(--text)">Flight controller</text>
+    <text x="307" y="158" font-family="IBM Plex Mono" font-size="10" fill="var(--accent)">the actual Matek H7A3</text>
+    <rect x="295" y="176" width="240" height="46" rx="8" fill="var(--sim-soft)" stroke="var(--sim-line)" stroke-width="1.2"/>
+    <text x="307" y="195" font-size="12.5" font-weight="600" fill="var(--text)">Sensors</text>
+    <text x="307" y="212" font-family="IBM Plex Mono" font-size="10" fill="var(--sim)">simulated, injected to the board</text>
+    <rect x="295" y="230" width="240" height="46" rx="8" fill="var(--sim-soft)" stroke="var(--sim-line)" stroke-width="1.2"/>
+    <text x="307" y="249" font-size="12.5" font-weight="600" fill="var(--text)">Airframe + physics</text>
+    <text x="307" y="266" font-family="IBM Plex Mono" font-size="10" fill="var(--sim)">Gazebo</text>
+    <rect x="295" y="284" width="240" height="46" rx="8" fill="var(--accent-soft)" stroke="var(--accent-line)" stroke-width="1.2"/>
+    <text x="307" y="303" font-size="12.5" font-weight="600" fill="var(--text)">Link</text>
+    <text x="307" y="320" font-family="IBM Plex Mono" font-size="10" fill="var(--accent)">USB / UART to the board</text>
+    <text x="690" y="34" text-anchor="middle" font-size="14.5" font-weight="700" fill="var(--text)">Real flight</text>
+    <text x="690" y="52" text-anchor="middle" font-family="IBM Plex Mono" font-size="10.5" fill="var(--muted)">the F450 in the air</text>
+    <rect x="570" y="68" width="240" height="46" rx="8" fill="var(--accent-soft)" stroke="var(--accent-line)" stroke-width="1.2"/>
+    <text x="582" y="87" font-size="12.5" font-weight="600" fill="var(--text)">Flight code</text>
+    <text x="582" y="104" font-family="IBM Plex Mono" font-size="10" fill="var(--accent)">real ArduPilot, ARM binary</text>
+    <rect x="570" y="122" width="240" height="46" rx="8" fill="var(--accent-soft)" stroke="var(--accent-line)" stroke-width="1.2"/>
+    <text x="582" y="141" font-size="12.5" font-weight="600" fill="var(--text)">Flight controller</text>
+    <text x="582" y="158" font-family="IBM Plex Mono" font-size="10" fill="var(--accent)">the actual Matek H7A3</text>
+    <rect x="570" y="176" width="240" height="46" rx="8" fill="var(--accent-soft)" stroke="var(--accent-line)" stroke-width="1.2"/>
+    <text x="582" y="195" font-size="12.5" font-weight="600" fill="var(--text)">Sensors</text>
+    <text x="582" y="212" font-family="IBM Plex Mono" font-size="10" fill="var(--accent)">real IMU, M10 GNSS, camera</text>
+    <rect x="570" y="230" width="240" height="46" rx="8" fill="var(--accent-soft)" stroke="var(--accent-line)" stroke-width="1.2"/>
+    <text x="582" y="249" font-size="12.5" font-weight="600" fill="var(--text)">Airframe + physics</text>
+    <text x="582" y="266" font-family="IBM Plex Mono" font-size="10" fill="var(--accent)">the actual aircraft and air</text>
+    <rect x="570" y="284" width="240" height="46" rx="8" fill="var(--accent-soft)" stroke="var(--accent-line)" stroke-width="1.2"/>
+    <text x="582" y="303" font-size="12.5" font-weight="600" fill="var(--text)">Link</text>
+    <text x="582" y="320" font-family="IBM Plex Mono" font-size="10" fill="var(--accent)">Wi-Fi, ESP32 bridge, RC</text>
+    <rect x="20" y="342" width="790" height="50" rx="8" fill="var(--panel)" stroke="var(--panel-line)" stroke-width="1.2"/>
+    <text x="34" y="363" font-size="12.5" fill="var(--text)">Orange is real hardware, teal is simulated.</text>
+    <text x="34" y="381" font-size="12.5" fill="var(--muted)">Each step to the right makes one more layer real, and catches only that layer's bugs.</text>
+  </g>
+</svg></div>
+      <figcaption><b>Fig. 2</b> &mdash; The same flight code appears in all three columns; that is what makes the ladder worth climbing rather than three separate projects. What changes underneath it is how much of the world is real.</figcaption>
+    </figure>
+
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Question</th><th>SITL<span>this repo</span></th><th>HIL<span>real board</span></th><th>Real flight</th></tr></thead>
+        <tbody>
+          <tr><td>Is my formation logic right?</td><td class="ok">yes</td><td class="ok">yes</td><td class="ok">yes</td></tr>
+          <tr><td>Are my ports and message routing right?</td><td class="ok">yes</td><td class="ok">yes</td><td class="ok">yes</td></tr>
+          <tr><td>Does the firmware fit and run on the board?</td><td class="bad">no</td><td class="ok">yes</td><td class="ok">yes</td></tr>
+          <tr><td>Is the board fast enough in real time?</td><td class="bad">no</td><td class="ok">yes</td><td class="ok">yes</td></tr>
+          <tr><td>Is my wiring and power sound?</td><td class="bad">no</td><td class="mid">partly</td><td class="ok">yes</td></tr>
+          <tr><td>Do two real GNSS receivers agree?</td><td class="bad">no</td><td class="bad">no</td><td class="ok">yes</td></tr>
+          <tr><td>Cost of getting it wrong</td><td class="ok">restart a script</td><td class="mid">a bench session</td><td class="bad">an aircraft</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="note">
+      <span class="tag">The trap to warn them about</span>
+      <p>Our followers hold <b>0.0&nbsp;m</b> of station error. Students read that as success; it is the opposite. SITL gives both vehicles one perfect shared position truth, so the number measures the plumbing and nothing else. Real aircraft carry <em>independent</em> metre-class GNSS receivers, and it is the <em>relative</em> error between two of them that sets how tightly you may fly. Teach the number and the caveat in the same breath, or the first outdoor flight teaches it for you.</p>
+    </div>
+  </section>
+
+  <section id="config">
+    <div class="eyebrow">03 &mdash; Configuration</div>
+    <h2>Why IP and port decide whether any of this works</h2>
+    <p>Almost every confusing failure in a day like this comes back to one of two things: two programs fighting over a port, or a packet going to an address nobody is listening on. Both fail <em>quietly</em>. Neither raises an error, and both look like a flaky link.</p>
+
+    <h3>One port, one owner</h3>
+    <p>A UDP socket is not a broadcast. When two processes bind the same port, the operating system does not duplicate the traffic &mdash; it hands each datagram to one of them. Each program sees a random fraction of the stream, and the symptom is a vehicle that answers every other request, or a test that passes twice and fails once.</p>
+    <p>That is why every consumer here gets a port of its own and MAVProxy does the copying. On the real aircraft <code>mavlink-router</code> does the same job for the same reason.</p>
+
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Port for drone <code>i</code></th><th>Sole owner</th><th>Why it is separate</th></tr></thead>
+        <tbody>
+          <tr><td class="mono">9002 + 10i</td><td>Gazebo &#8596; SITL</td><td>Flight dynamics, not MAVLink. Each vehicle model hard-codes one port, which is why the world generator clones the model per drone.</td></tr>
+          <tr><td class="mono">14550 + 10i</td><td><code>relay.py</code></td><td>Carries the leader's position to the followers. Load-bearing: kill it and the formation stops.</td></tr>
+          <tr><td class="mono">14551 + 10i</td><td>test scripts</td><td>So a measurement run never competes with the relay for packets.</td></tr>
+          <tr><td class="mono">14552 + 10i</td><td>the dashboard</td><td>Also the only write path: manual control sends on this socket.</td></tr>
+          <tr><td class="mono">14553 + 10i</td><td>Mission Planner</td><td>A GCS expects to own its link. Sharing it with a script breaks both.</td></tr>
+          <tr><td class="mono">14554 + 10i</td><td><code>flight_log.py</code></td><td>Reads every vehicle's messages without disturbing anything else.</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3>And the address</h3>
+    <p>Everything in this simulation is on one machine, so everything belongs on <code>127.0.0.1</code>. Two consequences are worth stating to a room:</p>
+    <ul class="plain">
+      <li>Binding a control endpoint to <code>0.0.0.0</code> exposes it to the whole network. In a classroom that means anyone present can command your drones. The dashboard binds loopback only, deliberately.</li>
+      <li>Gazebo does not use a fixed address at all &mdash; it <b>discovers</b> peers by multicast, and chooses a network interface to do it on. It can choose a dead one.</li>
+    </ul>
+
+    <div class="note">
+      <span class="tag">A real failure from this build &mdash; worth telling as a story</span>
+      <p>The camera topics were listed correctly by <code>gz topic -l</code>. The subscriber connected without error. Not one frame ever arrived. Buried in the Gazebo log was <code>Exception sending a multicast message: Network is unreachable</code> &mdash; a disconnected ethernet port and an idle <code>docker0</code> were enough for discovery to pick an interface that could not carry it. The fix is one line, <code>GZ_IP=127.0.0.1</code>, and it is in <code>scripts/env.sh</code> so nobody has to rediscover it.</p>
+      <p>The lesson generalises: when a data path is silent but nothing reports an error, suspect the <em>address</em> before you suspect the code.</p>
+    </div>
+
+    <h3>Configuration files, and what belongs in them</h3>
+    <p>Three kinds of setting, kept apart on purpose:</p>
+    <pre class="cmd"><span class="c"># scripts/env.sh    - addresses, ports, paths. Where things are.</span>
+relay_port()  { echo $((14550 + 10 * $1)); }
+export GZ_IP="${GZ_IP:-127.0.0.1}"
+
+<span class="c"># config/sitl/f450.parm  - what the aircraft IS. Frame, battery.</span>
+FRAME_CLASS   1
+FRAME_TYPE    1
+
+<span class="c"># config/follow/trail_20m.param  - what the formation SHOULD DO.</span>
+FOLL_ENABLE   1
+FOLL_SYSID    1
+FOLL_OFS_X  -20</pre>
+    <p>The split matters because the middle and bottom files transfer to the real aircraft unchanged &mdash; you type those same values into Mission Planner. Only the top file is simulation-specific. Mixing them is how a simulation-only setting ends up on a flying drone.</p>
+  </section>
+
+  <section id="startup">
+    <div class="eyebrow">04 &mdash; One command, in slow motion</div>
+    <h2>What <code>flyit</code> actually does</h2>
+    <p>Students will type one command and see a lot of output. This is what is underneath it, in order. Two steps are worth pausing on: the lock-step loop in the middle, and the heartbeat wait near the end.</p>
+    <figure>
+      <div class="frame">        <svg class="arch" viewBox="0 0 830 608" role="img" aria-label="Sequence: typing flyit clears any previous run, generates a Gazebo world with one cloned vehicle model per drone, starts Gazebo, then starts one ArduPilot SITL process per drone. Each SITL exchanges flight-dynamics packets with its own model over its own UDP port, MAVProxy fans each vehicle's MAVLink out to five consumer ports, and flyit waits for a real heartbeat from every vehicle before opening the dashboard.">
+          <defs>
+            <marker id="w1m" markerWidth="9" markerHeight="9" refX="7.5" refY="4.5" orient="auto">
+              <path d="M0,0.5 L8.5,4.5 L0,8.5 Z" fill="currentColor"/>
+            </marker>
+          </defs>
+          <line x1="120" y1="88" x2="120" y2="600" stroke="var(--border)" stroke-width="1.4" stroke-dasharray="3 5"/>
+          <line x1="322" y1="88" x2="322" y2="600" stroke="var(--border)" stroke-width="1.4" stroke-dasharray="3 5"/>
+          <line x1="524" y1="88" x2="524" y2="600" stroke="var(--border)" stroke-width="1.4" stroke-dasharray="3 5"/>
+          <line x1="726" y1="88" x2="726" y2="600" stroke="var(--border)" stroke-width="1.4" stroke-dasharray="3 5"/>
+          <rect x="40" y="336" width="776" height="84" rx="7" fill="none" stroke="var(--sim-line)" stroke-width="1.1" stroke-dasharray="4 4" opacity=".75"/>
+          <rect x="40" y="336" width="258" height="19" rx="6" fill="var(--sim-soft)" stroke="var(--sim-line)" stroke-width="1.1"/>
+          <text x="46" y="349.5" font-family="IBM Plex Mono" font-size="10" letter-spacing=".03em" fill="var(--sim)">loop  every physics step, both directions</text>
+          <g font-family="IBM Plex Sans, sans-serif">
+            <rect x="34" y="34" width="172" height="54" rx="8" fill="var(--surface)" stroke="var(--border)" stroke-width="1.3"/>
+            <text x="120" y="56" text-anchor="middle" font-size="13" font-weight="600" fill="var(--text)">You</text>
+            <text x="120" y="73" text-anchor="middle" font-family="IBM Plex Mono" font-size="10" fill="var(--muted)">a terminal</text>
+            <rect x="236" y="34" width="172" height="54" rx="8" fill="var(--sim-soft)" stroke="var(--sim-line)" stroke-width="1.3"/>
+            <text x="322" y="56" text-anchor="middle" font-size="13" font-weight="600" fill="var(--text)">flyit</text>
+            <text x="322" y="73" text-anchor="middle" font-family="IBM Plex Mono" font-size="10" fill="var(--muted)">one command</text>
+            <rect x="438" y="34" width="172" height="54" rx="8" fill="var(--panel)" stroke="var(--panel-line)" stroke-width="1.3"/>
+            <text x="524" y="56" text-anchor="middle" font-size="13" font-weight="600" fill="var(--text)">Gazebo</text>
+            <text x="524" y="73" text-anchor="middle" font-family="IBM Plex Mono" font-size="10" fill="var(--muted)">physics + rendering</text>
+            <rect x="640" y="34" width="172" height="54" rx="8" fill="var(--accent-soft)" stroke="var(--accent-line)" stroke-width="1.3"/>
+            <text x="726" y="56" text-anchor="middle" font-size="13" font-weight="600" fill="var(--text)">SITL + MAVProxy</text>
+            <text x="726" y="73" text-anchor="middle" font-family="IBM Plex Mono" font-size="10" fill="var(--muted)">one pair per drone</text>
+          </g>
+          <g font-family="IBM Plex Mono" font-size="10.5">
+            <text x="26" y="140" text-anchor="end" font-size="10" fill="var(--muted)" opacity=".8">01</text>
+            <line x1="120" y1="136" x2="322" y2="136" stroke="currentColor" stroke-width="1.6" marker-end="url(#w1m)"/>
+            <text x="221" y="129" text-anchor="middle" fill="var(--text)">flyit 3</text>
+            <text x="26" y="180" text-anchor="end" font-size="10" fill="var(--muted)" opacity=".8">02</text>
+            <path d="M322,176 h34 v20 h-34" fill="none" stroke="currentColor" stroke-width="1.6" marker-end="url(#w1m)"/>
+            <text x="366" y="193" text-anchor="start" fill="var(--muted)">stop anything still running, stamp a session</text>
+            <text x="26" y="234" text-anchor="end" font-size="10" fill="var(--muted)" opacity=".8">03</text>
+            <line x1="322" y1="230" x2="524" y2="230" stroke="currentColor" stroke-width="1.6" marker-end="url(#w1m)"/>
+            <text x="423" y="223" text-anchor="middle" fill="var(--text)">make_swarm_world.py 3</text>
+            <text x="423" y="245" text-anchor="middle" font-size="10" fill="var(--muted)">one model per drone, port 9002+10i</text>
+            <text x="26" y="274" text-anchor="end" font-size="10" fill="var(--muted)" opacity=".8">04</text>
+            <line x1="322" y1="270" x2="524" y2="270" stroke="currentColor" stroke-width="1.6" marker-end="url(#w1m)"/>
+            <text x="423" y="263" text-anchor="middle" fill="var(--text)">gz sim swarm_runway.sdf</text>
+            <text x="26" y="314" text-anchor="end" font-size="10" fill="var(--muted)" opacity=".8">05</text>
+            <line x1="322" y1="310" x2="726" y2="310" stroke="currentColor" stroke-width="1.6" marker-end="url(#w1m)"/>
+            <text x="524" y="303" text-anchor="middle" fill="var(--text)">sim_vehicle.py -I i --use-dir .run/vi</text>
+            <text x="524" y="325" text-anchor="middle" font-size="10" fill="var(--muted)">its own parameter store</text>
+            <text x="26" y="366" text-anchor="end" font-size="10" fill="var(--muted)" opacity=".8">06</text>
+            <line x1="726" y1="362" x2="524" y2="362" stroke="currentColor" stroke-width="1.6" marker-end="url(#w1m)"/>
+            <text x="625" y="355" text-anchor="middle" fill="var(--text)">flight dynamics on udp 9002+10i</text>
+            <text x="26" y="406" text-anchor="end" font-size="10" fill="var(--muted)" opacity=".8">07</text>
+            <line x1="524" y1="402" x2="726" y2="402" stroke="currentColor" stroke-width="1.6" stroke-dasharray="5 4" marker-end="url(#w1m)"/>
+            <text x="625" y="395" text-anchor="middle" fill="var(--text)">forces, poses - lock-stepped</text>
+            <text x="26" y="460" text-anchor="end" font-size="10" fill="var(--muted)" opacity=".8">08</text>
+            <path d="M726,456 h-34 v20 h34" fill="none" stroke="currentColor" stroke-width="1.6" marker-end="url(#w1m)"/>
+            <text x="682" y="473" text-anchor="end" fill="var(--muted)">MAVProxy fans MAVLink out to 14550+10i .. 14554+10i</text>
+            <text x="26" y="514" text-anchor="end" font-size="10" fill="var(--muted)" opacity=".8">09</text>
+            <line x1="726" y1="510" x2="322" y2="510" stroke="currentColor" stroke-width="1.6" stroke-dasharray="5 4" marker-end="url(#w1m)"/>
+            <text x="524" y="503" text-anchor="middle" fill="var(--text)">HEARTBEAT</text>
+            <text x="524" y="525" text-anchor="middle" font-size="10" fill="var(--muted)">readiness means this, not an open port</text>
+            <text x="26" y="554" text-anchor="end" font-size="10" fill="var(--muted)" opacity=".8">10</text>
+            <line x1="322" y1="550" x2="120" y2="550" stroke="currentColor" stroke-width="1.6" stroke-dasharray="5 4" marker-end="url(#w1m)"/>
+            <text x="221" y="543" text-anchor="middle" fill="var(--text)">dashboard on :8760</text>
+          </g>
+        </svg></div>
+      <figcaption><b>Fig. 3</b> &mdash; Step&nbsp;09 is the one people get wrong when they build this themselves. Waiting for a <em>port to be open</em> proves nothing, because MAVProxy only ever sends to those ports &mdash; nothing binds them until a consumer starts. Readiness has to mean a heartbeat actually arrived.</figcaption>
+    </figure>
+    <pre class="cmd"><span class="p">$</span> flyit 3              <span class="c"># three drones in Gazebo</span>
+<span class="p">$</span> flyit --no-gazebo    <span class="c"># physics only, starts far faster</span>
+<span class="p">$</span> flyit --stop         <span class="c"># shut everything down</span>
+<span class="p">$</span> SWARM_ACCIDENT=0 flyit 3   <span class="c"># the detector's negative control</span></pre>
+  </section>
+
+  <section id="deck">
+    <div class="eyebrow">05 &mdash; Present it</div>
+    <h2>The slides</h2>
+    <p>16 slides, in teaching order. Press <b>Present</b> for one-at-a-time full screen; navigate with <b>&#8592;</b> and <b>&#8594;</b> or space, and leave with <b>Esc</b>. The &ldquo;Say&rdquo; notes are for you and are hidden while presenting. Printing this page gives you a handout.</p>
+    <div id="deckwrap">
+      <div class="deckbar">
+        <button id="present" class="primary">Present</button>
+        <button id="printit">Print handout</button>
+        <span class="hint">&#8592; &#8594; or space to move &middot; Esc to exit</span>
+      </div>
+      <div class="deck">
+      <article class="slide" data-slide="1">
+        <div class="n">Slide 01 / 16</div>
+        <h3>Where we are going</h3>
+        <p>By the end of this session you will have three simulated drones flying a formation, a camera on each, and a browser page that flies the leader and reports what the swarm found on the ground.</p><ul><li>Nothing here needs a drone. It all runs on one laptop.</li><li>Everything is measured: each step prints <code>PASS</code> or <code>FAIL</code>.</li><li>The parameters you tune here are the ones you type into the real aircraft.</li></ul>
+        <div class="say"><b>Say:</b> Open with the screenshot in the README. People need to see the destination before the parts list.</div>
+      </article>
+      <article class="slide" data-slide="2">
+        <div class="n">Slide 02 / 16</div>
+        <h3>Why simulate at all</h3>
+        <p>A mistake in a formation is not one broken aircraft. Followers chase the leader, so a bad offset or a lost link is a <em>fleet-wide</em> event.</p><ul><li>An F450 costs money; a session costs a day.</li><li>Failures you must rehearse &mdash; lost leader, brown-out, bad offset &mdash; are exactly the ones too dangerous to try outdoors.</li><li>In simulation you can kill the link mid-flight on purpose. We do, and it is the most useful test in the repo.</li></ul>
+        <div class="say"><b>Say:</b> Ask the group: what happens to two followers if the leader's Pi browns out? That is the UBEC single point of failure in the hardware list.</div>
+      </article>
+      <article class="slide" data-slide="3">
+        <div class="n">Slide 03 / 16</div>
+        <h3>Three ways to test, only one of them is cheap</h3>
+        <p>Simulation is not one thing. There are three rungs, and each swaps one more simulated layer for a real one.</p><ul><li><b>SITL</b> &mdash; software in the loop. Everything is software on the PC.</li><li><b>HIL</b> &mdash; hardware in the loop. The real flight controller, a fake world.</li><li><b>Real flight</b> &mdash; everything real, one shot at a time.</li></ul><p>Each rung only catches the bugs that live in the layer it just made real.</p>
+        <div class="say"><b>Say:</b> Point at Figure 2. Orange is real, teal is simulated. Do not let anyone leave thinking SITL proves the aircraft flies.</div>
+      </article>
+      <article class="slide" data-slide="4">
+        <div class="n">Slide 04 / 16</div>
+        <h3>What SITL cannot tell you</h3>
+        <ul><li>Whether your solder joints hold.</li><li>Whether the UBEC survives a loaded Pi.</li><li>Whether the real GNSS receivers agree with each other.</li><li>Whether the airframe you built matches the model you flew.</li></ul><p>Our followers hold <b>0.0 m</b> station error. That number is a warning, not a triumph &mdash; SITL has no GNSS noise, so both vehicles share one perfect truth.</p>
+        <div class="say"><b>Say:</b> This slide is the honesty slide. Students who believe 0.0 m will be surprised outdoors. Relative GNSS error is what sets minimum safe spacing.</div>
+      </article>
+      <article class="slide" data-slide="5">
+        <div class="n">Slide 05 / 16</div>
+        <h3>The one thing that breaks everything: ports</h3>
+        <p>A UDP port has exactly <b>one owner</b>. Two programs bound to the same port do not share the traffic &mdash; they steal packets from each other, each seeing a random half.</p><p>This does not raise an error. It looks like a flaky link, a vehicle that half-responds, a test that fails intermittently.</p>
+        <div class="say"><b>Say:</b> This is the single most common thing that will go wrong today. Say it twice.</div>
+      </article>
+      <article class="slide" data-slide="6">
+        <div class="n">Slide 06 / 16</div>
+        <h3>The port map</h3>
+        <p>One SITL process, one MAVProxy, five consumers &mdash; each with its own port, each port ten higher for the next drone.</p><pre class="cmd">drone i:  FDM        9002 + 10i   <span class="c">Gazebo &#8596; SITL</span>
+          relay      14550 + 10i   <span class="c">relay.py</span>
+          scripts    14551 + 10i   <span class="c">leader_follower.py</span>
+          dashboard  14552 + 10i   <span class="c">the web page</span>
+          GCS        14553 + 10i   <span class="c">Mission Planner</span>
+          flight log 14554 + 10i   <span class="c">flight_log.py</span></pre>
+        <div class="say"><b>Say:</b> Have them compute the ports for drone 3 out loud. 9022, 14570 to 14574. It sticks better than reading it.</div>
+      </article>
+      <article class="slide" data-slide="7">
+        <div class="n">Slide 07 / 16</div>
+        <h3>IP matters too, and fails more quietly</h3>
+        <p>Everything here is on one machine, so everything should be on <code>127.0.0.1</code>.</p><ul><li>Bind to <code>0.0.0.0</code> and your drone control is on the room's Wi-Fi.</li><li>Gazebo discovers peers by <b>multicast</b>, and picks an interface to do it on. A disconnected ethernet port was enough to make it choose a dead one.</li></ul><p>Symptom: camera topics listed fine and <em>no frame ever arrived</em>. Fix: <code>GZ_IP=127.0.0.1</code>.</p>
+        <div class="say"><b>Say:</b> A real bug from this build. The topic existed, the subscriber existed, and nothing moved. Worth telling as a story.</div>
+      </article>
+      <article class="slide" data-slide="8">
+        <div class="n">Slide 08 / 16</div>
+        <h3>Anatomy of one drone</h3>
+        <p>Gazebo owns the physics. SITL is the real ArduPilot firmware compiled for your laptop. MAVProxy copies one MAVLink stream to five places.</p><p>Multiply by three, add ten to every port. That is the entire system.</p>
+        <div class="say"><b>Say:</b> Figure 1. Ask where the flight code runs. The answer 'the same code as the real drone' is the point of SITL.</div>
+      </article>
+      <article class="slide" data-slide="9">
+        <div class="n">Slide 09 / 16</div>
+        <h3>Lock-step: the sim clock is not your clock</h3>
+        <p>Gazebo and SITL share one clock. If the renderer falls behind, time itself slows down &mdash; the flight stays correct, it just takes longer in the room.</p><ul><li>Measured here: <b>RTF 0.61&ndash;0.66</b> with three drones and the GUI open.</li><li>So a sensor set to 10 Hz delivered 6.3 frames a second of <em>wall</em> time.</li><li>Your stopwatch and the log will disagree. The log is right.</li></ul>
+        <div class="say"><b>Say:</b> Counter-intuitive and worth dwelling on: low real-time factor does not corrupt the physics under lock-step.</div>
+      </article>
+      <article class="slide" data-slide="10">
+        <div class="n">Slide 10 / 16</div>
+        <h3>One command</h3>
+        <pre class="cmd"><span class="p">$</span> flyit 3</pre><p>Clears the last run, generates a world with one model per drone, starts Gazebo, starts three SITL instances, waits for a real <b>heartbeat</b> from each, then opens the dashboard.</p><p>Readiness means a heartbeat arrived &mdash; not that a port is open. An open port proves nothing.</p>
+        <div class="say"><b>Say:</b> Figure 3 is this slide in detail. Run it live here and let it come up while you talk through the sequence.</div>
+      </article>
+      <article class="slide" data-slide="11">
+        <div class="n">Slide 11 / 16</div>
+        <h3>Leader and followers</h3>
+        <p>The formation is not a program. It is three parameters inside each follower's flight controller.</p><pre class="cmd">FOLL_ENABLE  1        <span class="c"># follow someone</span>
+FOLL_SYSID   1        <span class="c"># specifically drone 1</span>
+FOLL_OFS_X  -25       <span class="c"># 25 m behind</span>
+FOLL_OFS_Y  &#177;20       <span class="c"># 20 m to the side</span></pre><p>Set those, switch to <code>FOLLOW</code>, and the follower does the rest on its own.</p>
+        <div class="say"><b>Say:</b> Emphasise: no ground station is in the loop. A follower that can hear the leader keeps station even if your laptop dies.</div>
+      </article>
+      <article class="slide" data-slide="12">
+        <div class="n">Slide 12 / 16</div>
+        <h3>The leader's position has to arrive</h3>
+        <p><code>FOLLOW</code> needs the leader's <code>GLOBAL_POSITION_INT</code> to reach each follower's flight controller. <code>relay.py</code> carries it.</p><p>It forwards the <b>raw bytes</b>, because rewriting the sender's system ID would stop it matching <code>FOLL_SYSID</code> and the formation would silently never form.</p>
+        <div class="say"><b>Say:</b> On the aircraft this same script runs on the Pi. Same code, different transport.</div>
+      </article>
+      <article class="slide" data-slide="13">
+        <div class="n">Slide 13 / 16</div>
+        <h3>Prove it, do not trust it</h3>
+        <pre class="cmd"><span class="p">$</span> python3 scripts/leader_follower.py --vehicles 3 --kill-relay-at 48</pre><p>Arms, climbs, forms up, flies the leader 120 m &mdash; then <b>kills the relay on purpose</b>.</p><ul><li>While relaying: error stays near zero.</li><li>Relay dead: the follower freezes and the leader flies on alone, 120 m away.</li></ul><p>That second half is the real result. It proves the formation is built on the relayed position and nothing else.</p>
+        <div class="say"><b>Say:</b> Negative controls are the habit to teach. Anyone can show a thing working.</div>
+      </article>
+      <article class="slide" data-slide="14">
+        <div class="n">Slide 14 / 16</div>
+        <h3>Fly it yourself</h3>
+        <p>In the browser: <b>Arm + take off all</b>, then <b>Followers &#8594; FOLLOW</b>, then <b>Take control</b>.</p><ul><li><code>W A S D</code> north / west / south / east, <code>R</code> / <code>F</code> climb, <code>Q</code> / <code>E</code> yaw.</li><li>Let go of the key and the leader stops. Close the tab and it stops.</li></ul><p>The page sends a velocity setpoint five times a second. Stop talking to ArduPilot and it stops moving &mdash; that is the safety feature, not a limitation.</p>
+        <div class="say"><b>Say:</b> Let everyone fly. Then ask what happens if the wifi drops mid-command. The deadman is the answer.</div>
+      </article>
+      <article class="slide" data-slide="15">
+        <div class="n">Slide 15 / 16</div>
+        <h3>Find something</h3>
+        <p><b>Inspect the highway</b> flies the survey. A staged accident sits on the runway; the cameras look for it, and the dashboard reports a position and a photo.</p><ul><li>Located to <b>1.8&ndash;2.6 m</b> against the known ground truth.</li><li>Run it again with <code>SWARM_ACCIDENT=0</code>: zero detections. That is the control.</li></ul><p>The detector is a colour threshold. It works because nothing else here is red &mdash; it would not survive real video for a minute.</p>
+        <div class="say"><b>Say:</b> Good moment to discuss what a demo proves and what it does not.</div>
+      </article>
+      <article class="slide" data-slide="16">
+        <div class="n">Slide 16 / 16</div>
+        <h3>What will go wrong today</h3>
+        <ul><li><b>Two things on one port</b> &mdash; flaky, intermittent, no error. Check with <code>check_vehicles.py</code>.</li><li><b>Armed on the ground</b> &mdash; ArduPilot refuses a fresh takeoff. <code>./flyit --stop</code> and start again.</li><li><b>Arm refused</b> &mdash; wait a minute. EKF and GNSS need to settle.</li><li><b>No camera frames</b> &mdash; <code>GZ_IP=127.0.0.1</code>.</li></ul><p>When something misbehaves, read <code>.run/latest/flight_log.txt</code> before touching anything.</p>
+        <div class="say"><b>Say:</b> Close here. Reading the log first is the habit that will save them the most time.</div>
+      </article>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    Teaching material for Swarm_SummerSchool_2026. The system it describes lives in the same repository &mdash; <code>README.md</code> is the build in the order you can check it, and <code>docs/architecture.html</code> is the design rationale with ten sequence diagrams. Every measured figure quoted on this page came from a run on the NUT&#8209;HMT PC.
+  </footer>
+</div>
+
+<div id="pcount"></div>
+
+<script>
+(function(){
+  var slides = Array.prototype.slice.call(document.querySelectorAll('.slide'));
+  var idx = 0, on = false;
+  var count = document.getElementById('pcount');
+
+  function show(i){
+    idx = Math.max(0, Math.min(slides.length - 1, i));
+    slides.forEach(function(s, n){ s.classList.toggle('current', on && n === idx); });
+    count.textContent = (idx + 1) + ' / ' + slides.length;
+    if (on) slides[idx].scrollTop = 0;
+  }
+  function start(){
+    on = true;
+    document.body.classList.add('presenting');
+    show(idx);
+  }
+  function stop(){
+    on = false;
+    document.body.classList.remove('presenting');
+    slides.forEach(function(s){ s.classList.remove('current'); });
+    slides[idx].scrollIntoView({block:'center'});
+  }
+
+  document.getElementById('present').addEventListener('click', start);
+  document.getElementById('printit').addEventListener('click', function(){
+    if (on) stop();
+    window.print();
+  });
+  /* Clicking a slide in the list starts the deck at that slide. */
+  slides.forEach(function(s, n){
+    s.addEventListener('click', function(){ if (!on) { idx = n; start(); } });
+  });
+
+  document.addEventListener('keydown', function(e){
+    if (!on) return;
+    if (e.key === 'Escape') { stop(); e.preventDefault(); }
+    else if (e.key === 'ArrowRight' || e.key === ' ' || e.key === 'PageDown') { show(idx + 1); e.preventDefault(); }
+    else if (e.key === 'ArrowLeft' || e.key === 'PageUp') { show(idx - 1); e.preventDefault(); }
+    else if (e.key === 'Home') { show(0); e.preventDefault(); }
+    else if (e.key === 'End') { show(slides.length - 1); e.preventDefault(); }
+  });
+})();
+</script>
