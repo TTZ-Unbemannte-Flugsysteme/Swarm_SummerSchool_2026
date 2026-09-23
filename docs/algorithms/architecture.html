@@ -1,0 +1,1435 @@
+<!doctype html>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Leader-Follower Swarm Simulation</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Condensed:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+  :root{
+    --bg:#eef1f4;
+    --surface:#ffffff;
+    --panel:#e3e8ed;
+    --panel-line:#c3ccd5;
+    --border:#c9d2da;
+    --text:#161d29;
+    --muted:#556170;
+    --accent:#a8481a;
+    --accent-soft:#f6e0d2;
+    --accent-line:#c2571f;
+    --sim:#0c6b78;
+    --sim-soft:#d5ecef;
+    --sim-line:#12808f;
+    --good:#2a7048;
+    --warn:#8f6708;
+    --shadow:0 1px 2px rgba(20,30,45,.05), 0 10px 30px -16px rgba(20,30,45,.25);
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --bg:#0f1319;
+      --surface:#181e27;
+      --panel:#1d242f;
+      --panel-line:#303a48;
+      --border:#2d3744;
+      --text:#e9edf2;
+      --muted:#9aa7b5;
+      --accent:#ff9a5e;
+      --accent-soft:#3d2617;
+      --accent-line:#e07f44;
+      --sim:#63d8e8;
+      --sim-soft:#123840;
+      --sim-line:#2ba7bb;
+      --good:#6bcf92;
+      --warn:#e3b451;
+      --shadow:0 1px 2px rgba(0,0,0,.5), 0 10px 30px -16px rgba(0,0,0,.7);
+    }
+  }
+  :root[data-theme="dark"]{
+    --bg:#0f1319;
+    --surface:#181e27;
+    --panel:#1d242f;
+    --panel-line:#303a48;
+    --border:#2d3744;
+    --text:#e9edf2;
+    --muted:#9aa7b5;
+    --accent:#ff9a5e;
+    --accent-soft:#3d2617;
+    --accent-line:#e07f44;
+    --sim:#63d8e8;
+    --sim-soft:#123840;
+    --sim-line:#2ba7bb;
+    --good:#6bcf92;
+    --warn:#e3b451;
+    --shadow:0 1px 2px rgba(0,0,0,.5), 0 10px 30px -16px rgba(0,0,0,.7);
+  }
+
+  *{ box-sizing:border-box }
+
+  body{
+    margin:0;
+    background:var(--bg);
+    color:var(--text);
+    font-family:"IBM Plex Sans", ui-sans-serif, system-ui, sans-serif;
+    font-size:17px;
+    line-height:1.7;
+    -webkit-font-smoothing:antialiased;
+  }
+
+  .wrap{
+    max-width:1000px;
+    margin:0 auto;
+    padding-inline:28px;
+    padding-block:44px 96px;
+  }
+
+  h1,h2,h3{
+    font-family:"IBM Plex Sans Condensed","IBM Plex Sans",sans-serif;
+    text-wrap:balance;
+    line-height:1.15;
+    margin:0;
+  }
+  code,.mono{ font-family:"IBM Plex Mono", ui-monospace, monospace; }
+  code{ font-size:.88em; }
+  a{ color:var(--sim); text-underline-offset:3px; }
+
+  .kicker{
+    font-family:"IBM Plex Mono";
+    font-size:13px;
+    letter-spacing:.1em;
+    text-transform:uppercase;
+    color:var(--sim);
+    margin-bottom:14px;
+  }
+  h1{ font-size:clamp(31px,5vw,44px); font-weight:700; letter-spacing:-.01em; }
+  .dek{
+    font-size:19px;
+    color:var(--muted);
+    max-width:60ch;
+    margin:16px 0 0;
+  }
+  .facts{ display:flex; flex-wrap:wrap; gap:10px; margin-top:26px; }
+  .fact{
+    font-family:"IBM Plex Mono";
+    font-size:12.5px;
+    padding:6px 12px;
+    border:1px solid var(--border);
+    border-radius:999px;
+    color:var(--muted);
+    background:var(--surface);
+  }
+  .fact b{ color:var(--text); font-weight:500; }
+
+  .contents{
+    margin-top:40px;
+    border:1px solid var(--border);
+    border-radius:12px;
+    background:var(--surface);
+    padding:20px 22px 22px;
+    box-shadow:var(--shadow);
+  }
+  .contents h2{
+    font-family:"IBM Plex Mono";
+    font-size:12px;
+    letter-spacing:.1em;
+    text-transform:uppercase;
+    color:var(--muted);
+    font-weight:500;
+    margin-bottom:14px;
+  }
+  .contents ol{
+    list-style:none; margin:0; padding:0;
+    display:grid;
+    grid-template-columns:repeat(auto-fit, minmax(240px, 1fr));
+    gap:2px 22px;
+  }
+  .contents a{
+    display:flex; gap:12px;
+    padding:7px 0;
+    text-decoration:none;
+    color:var(--text);
+    font-size:16px;
+  }
+  .contents a:hover{ color:var(--sim); }
+  .contents .n{
+    font-family:"IBM Plex Mono";
+    font-size:13px;
+    color:var(--sim);
+    padding-top:2px;
+  }
+
+  section{ margin-top:72px; scroll-margin-top:24px; }
+  .eyebrow{
+    font-family:"IBM Plex Mono";
+    font-size:13px;
+    letter-spacing:.06em;
+    color:var(--sim);
+    margin-bottom:8px;
+  }
+  h2{ font-size:27px; font-weight:600; }
+  section > h2{ margin-bottom:18px; }
+  h3{ font-size:18px; font-weight:600; margin:32px 0 8px; }
+  p{ margin:0 0 18px; max-width:66ch; }
+  p:last-child{ margin-bottom:0; }
+  ul.plain{ max-width:66ch; padding-left:1.15em; margin:0 0 18px; }
+  ul.plain li{ margin-bottom:8px; }
+
+  .note{
+    border:1px solid var(--border);
+    border-left:4px solid var(--accent-line);
+    background:var(--accent-soft);
+    border-radius:10px;
+    padding:22px 24px;
+    margin:24px 0 0;
+    max-width:78ch;
+  }
+  .note .tag,.rec .tag{
+    display:block;
+    font-family:"IBM Plex Mono";
+    font-size:12px;
+    letter-spacing:.08em;
+    text-transform:uppercase;
+    font-weight:500;
+    margin-bottom:10px;
+  }
+  .note .tag{ color:var(--accent); }
+  .note p,.rec p{ max-width:none; }
+  .rec{
+    border:1px solid var(--border);
+    border-left:4px solid var(--sim-line);
+    background:var(--sim-soft);
+    border-radius:10px;
+    padding:22px 24px;
+    max-width:78ch;
+  }
+  .rec .tag{ color:var(--sim); }
+
+  figure{ margin:28px 0 0; }
+  figure:not(:last-child){ margin-bottom:30px; }
+  .frame{
+    background:var(--surface);
+    border:1px solid var(--border);
+    border-radius:12px;
+    padding:22px 20px;
+    box-shadow:var(--shadow);
+    overflow-x:auto;
+  }
+  svg.arch{ display:block; width:100%; min-width:640px; height:auto; }
+  figcaption{
+    font-size:15px;
+    line-height:1.6;
+    color:var(--muted);
+    margin-top:14px;
+    max-width:70ch;
+  }
+  figcaption b{ color:var(--text); font-weight:600; }
+
+  .table-wrap{
+    margin-top:24px;
+    border:1px solid var(--border);
+    border-radius:12px;
+    overflow-x:auto;
+    background:var(--surface);
+  }
+  table{ border-collapse:collapse; width:100%; font-size:15px; }
+  th,td{
+    text-align:left;
+    padding:14px 16px;
+    border-bottom:1px solid var(--border);
+    vertical-align:top;
+  }
+  thead th{
+    background:var(--panel);
+    font-family:"IBM Plex Mono";
+    font-weight:500;
+    font-size:12px;
+    letter-spacing:.05em;
+    text-transform:uppercase;
+    color:var(--muted);
+    line-height:1.5;
+  }
+  thead th span{ display:block; text-transform:none; letter-spacing:0; opacity:.8; }
+  tbody tr:last-child td{ border-bottom:none; }
+  td.mono{ font-size:13.5px; }
+  .ok{ color:var(--good); font-weight:500; }
+  .mid{ color:var(--warn); font-weight:500; }
+  .bad{ color:var(--accent); font-weight:500; }
+
+  pre.tree{
+    margin:24px 0 0;
+    background:var(--panel);
+    border:1px solid var(--border);
+    border-radius:12px;
+    padding:22px 24px;
+    font-family:"IBM Plex Mono";
+    font-size:13.5px;
+    line-height:1.75;
+    overflow-x:auto;
+    color:var(--text);
+  }
+  pre.tree .c{ color:var(--muted); }
+  pre.tree .r{ color:var(--sim); }
+  pre.tree .new{ color:var(--accent); }
+
+  .checklist{
+    list-style:none; margin:24px 0 0; padding:0;
+    border:1px solid var(--border);
+    border-radius:12px;
+    background:var(--surface);
+    overflow:hidden;
+  }
+  .checklist li{ border-bottom:1px solid var(--border); }
+  .checklist li:last-child{ border-bottom:none; }
+  .checklist label{
+    display:flex; gap:14px; align-items:flex-start;
+    padding:16px 20px;
+    cursor:pointer;
+  }
+  .checklist label:hover{ background:var(--panel); }
+  .checklist input{
+    margin:5px 0 0; width:17px; height:17px;
+    accent-color:var(--sim-line); flex:0 0 auto;
+  }
+  .checklist .n{
+    font-family:"IBM Plex Mono";
+    font-size:13px; color:var(--muted);
+    flex:0 0 auto; padding-top:1px;
+  }
+  .checklist .body{ min-width:0; }
+  .checklist .q{ display:block; font-size:16.5px; }
+  .checklist .why{ display:block; color:var(--muted); font-size:14.5px; margin-top:2px; }
+  .checklist input:checked ~ .body .q{ color:var(--muted); text-decoration:line-through; }
+
+  footer{
+    margin-top:72px;
+    padding-top:26px;
+    border-top:1px solid var(--border);
+    color:var(--muted);
+    font-size:15px;
+    max-width:70ch;
+  }
+
+  @media (max-width:640px){
+    body{ font-size:16px; }
+    .wrap{ padding-inline:18px; padding-block:32px 64px; }
+    section{ margin-top:56px; }
+    .note,.rec{ padding:18px; }
+    .frame{ padding:16px 14px; }
+  }
+</style>
+
+<div class="wrap">
+
+  <header>
+    <div class="kicker">Swarm-Simulation-SSS &middot; draft for review</div>
+    <h1>One leader, N followers, none of them real yet</h1>
+    <p class="dek">A Gazebo simulation of leader-follower flight across three-or-more ArduPilot vehicles, their Raspberry&nbsp;Pi / DroneBridge companions, and one Mission Planner ground station &mdash; built so the parameters and code transfer to the real aircraft unchanged.</p>
+    <div class="facts">
+      <span class="fact"><b>Pattern</b> leader + N followers</span>
+      <span class="fact"><b>Airframe</b> F450 quad, 4S</span>
+      <span class="fact"><b>Mechanism</b> ArduPilot FOLLOW mode</span>
+      <span class="fact"><b>GCS</b> Mission Planner</span>
+      <span class="fact"><b>Status</b> flying in SITL &middot; 3 drones</span>
+    </div>
+
+    <nav class="contents">
+      <h2>Contents</h2>
+      <ol>
+        <li><a href="#scope"><span class="n">00</span> What this is for</a></li>
+        <li><a href="#hardware"><span class="n">01</span> The hardware we have</a></li>
+        <li><a href="#real"><span class="n">02</span> The real platform today</a></li>
+        <li><a href="#needs"><span class="n">03</span> What leader-follower needs</a></li>
+        <li><a href="#constraint"><span class="n">04</span> The constraint to confirm</a></li>
+        <li><a href="#mapping"><span class="n">05</span> Sim-to-real mapping</a></li>
+        <li><a href="#simarch"><span class="n">06</span> Simulation architecture</a></li>
+        <li><a href="#logic"><span class="n">07</span> Where the formation logic lives</a></li>
+        <li><a href="#topology"><span class="n">08</span> Transport topology</a></li>
+        <li><a href="#recommendation"><span class="n">09</span> Recommendation</a></li>
+        <li><a href="#operator"><span class="n">10</span> Operator interface</a></li>
+        <li><a href="#inspection"><span class="n">11</span> Autonomous inspection</a></li>
+        <li><a href="#layout"><span class="n">12</span> Proposed repo layout</a></li>
+        <li><a href="#checklist"><span class="n">13</span> Validation checklist</a></li>
+      </ol>
+    </nav>
+  </header>
+
+  <section id="scope">
+    <div class="eyebrow">00 &mdash; Scope</div>
+    <h2>What this document is for</h2>
+    <p>The agreed scenario is leader-follower: one vehicle flies the mission, the others hold formation on it. You already have the hardware stack &mdash; ArduPilot on the flight controller, a Raspberry&nbsp;Pi running DroneBridge as the companion and telemetry bridge, Mission Planner on a PC &mdash; and all of it shares one Wi&#8209;Fi network.</p>
+    <p>The good news is that leader-follower is not something this project has to invent. ArduPilot ships a <code>FOLLOW</code> flight mode that does exactly this, driven entirely by parameters. That decision shapes the rest of the design: the simulation's main job becomes proving the <i>plumbing</i> &mdash; that each follower actually receives the leader's position often enough and fast enough to hold station &mdash; rather than writing formation control from scratch.</p>
+    <p>Nothing here is implemented yet. It is meant to be read, argued with, and narrowed to one option before code lands in this repo.</p>
+  </section>
+
+  <section id="hardware">
+    <div class="eyebrow">01 &mdash; Bill of materials</div>
+    <h2>The hardware we have</h2>
+    <p>One airframe's worth of parts, replicated per vehicle. Most of this list is settled and needs no debate &mdash; but several items quietly set limits on how tight a formation can be flown, and one of them is a swarm-wide single point of failure. Those are called out in the third column.</p>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>Component</th><th>What it is</th><th>What it constrains here</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>F450 DIY kit</td>
+            <td>450&nbsp;mm quad frame, 4&#215; 2212 920&nbsp;KV motors, 4&#215; 30&nbsp;A ESC, 1045 props</td>
+            <td>Settles the Gazebo model and the frame parameters. A well-characterised combo: roughly 2.3:1 thrust-to-weight on 4S, hovering near 40&nbsp;% throttle.</td>
+          </tr>
+          <tr>
+            <td>Matek H7A3-SLIM</td>
+            <td>STM32H7-class flight controller running ArduCopter&nbsp;4.7.0, 8S-capable, 11&#215; PWM</td>
+            <td>Runs full ArduPilot including <code>FOLLOW</code>, so the formation logic needs no companion compute. It now has <b>four</b> serial consumers to budget for: GNSS, receiver, Pi, and the ESP32 telemetry bridge.</td>
+          </tr>
+          <tr>
+            <td>Raspberry&nbsp;Pi 4 Model B</td>
+            <td>2&nbsp;GB RAM companion computer, on its own spare FC UART at 921600&nbsp;baud</td>
+            <td>Carries the mission software and, in the design below, the swarm traffic. 2&nbsp;GB runs ROS&nbsp;2 and MAVROS but without much headroom &mdash; worth measuring early if that stack is staying.</td>
+          </tr>
+          <tr>
+            <td>GEPRC M10 GNSS</td>
+            <td>u-blox M10-class multi-constellation module, 22&#215;22&nbsp;mm</td>
+            <td><b>The binding constraint on formation spacing.</b> Non-RTK GNSS gives metre-level absolute accuracy, and the <i>relative</i> error between two vehicles is what FOLLOW actually flies on. Offsets have to be sized well above that error.</td>
+          </tr>
+          <tr>
+            <td>4S 5000&nbsp;mAh LiPo</td>
+            <td>14.8&nbsp;V, ~74&nbsp;Wh per vehicle</td>
+            <td>Sets the mission window at roughly 12&ndash;15&nbsp;min usable per aircraft. The swarm has to be down before the <i>weakest</i> pack is spent, and a follower hitting low-battery mid-formation is a failure mode worth testing in simulation.</td>
+          </tr>
+          <tr>
+            <td>UBEC</td>
+            <td>4S &#8594; 5&nbsp;V regulator feeding the Pi</td>
+            <td><b>Swarm-wide single point of failure.</b> A Pi 4 with camera can pull close to 3&nbsp;A at 5&nbsp;V in bursts. If the <i>leader's</i> UBEC browns out its Pi, every follower loses its position source at once. Check the continuous rating, not the peak.</td>
+          </tr>
+          <tr>
+            <td>FrSky Archer Plus R8</td>
+            <td>8-channel receiver, SBUS to the flight controller</td>
+            <td>The manual-override path. One transmitter generally flies one aircraft, so with three vehicles the abort story for the other two runs through the GCS or their failsafes &mdash; a procedure to decide, not a default.</td>
+          </tr>
+          <tr>
+            <td>Pi Camera Module v2</td>
+            <td>8&nbsp;MP CSI camera</td>
+            <td>Not used by leader-follower &mdash; FOLLOW flies on GNSS position, not vision. Worth noting that streaming it competes with the leader's position stream for the same Wi&#8209;Fi.</td>
+          </tr>
+          <tr>
+            <td>32&nbsp;GB microSD, Class&nbsp;10</td>
+            <td>Pi system disk and log storage</td>
+            <td>Fine for OS and logs. SD corruption on power loss is the most common Pi field failure, so it is worth planning log rotation before the first long session.</td>
+          </tr>
+          <tr>
+            <td>XIAO-ESP32-C6<br>+ DroneBridge</td>
+            <td>Telemetry-only MAVLink bridge over standard Wi&#8209;Fi, on its own spare FC UART</td>
+            <td>Carries flight-controller telemetry to the ground station and nothing else. Because it is DroneBridge for ESP32 rather than the Raspberry&nbsp;Pi variant, everything rides ordinary IP &mdash; which is what makes drone-to-drone traffic straightforward. See <a href="#constraint">Section&nbsp;04</a>.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3>What this pins down for the simulation</h3>
+    <p>Several questions that were open in the earlier draft now have answers, which means the Gazebo model and SITL parameters can be specified rather than guessed:</p>
+    <ul class="plain">
+      <li><b>Frame:</b> quad in X layout &mdash; <code>FRAME_CLASS = 1</code>, <code>FRAME_TYPE = 1</code>. 450&nbsp;mm diagonal puts each motor about 159&nbsp;mm out in both axes from centre.</li>
+      <li><b>Propulsion:</b> 2212 920&nbsp;KV on 1045 props, 4S. The SDF model's thrust curve and the real one should agree, or <code>FOLL_POS_P</code> tuned in simulation will not transfer.</li>
+      <li><b>Power wiring:</b> the ESCs are connected <b>directly to the board</b>, with <b>every XT60 connector removed</b> &mdash; none remain in the power path. That saves weight and space and deletes a failure point, and it is the arrangement the aircraft are actually built with, not a proposal. The trade is serviceability: swapping a motor or ESC in the field is now a desoldering job rather than an unplug.</li>
+      <li><b>Mass:</b> the one number to measure rather than take from this page. An F450 built out like this typically lands somewhere around 1.5&nbsp;kg all-up, but weigh a finished aircraft &mdash; the sim is only as good as this figure.</li>
+      <li><b>Every vehicle is a Copter</b>, which keeps <code>FOLLOW</code> available on all of them.</li>
+      <li><b>Companion stack:</b> Ubuntu Server with MAVROS and ROS&nbsp;2, per the build documentation. Worth noting for <a href="#topology">Section&nbsp;08</a> &mdash; a ROS&nbsp;2 transport is much less of an imposition when ROS&nbsp;2 is already the intended stack.</li>
+      <li><b>Pi&nbsp;&#8596;&nbsp;FC link:</b> <code>/dev/serial0</code> at 921600&nbsp;baud, with <code>SERIALx_PROTOCOL = 2</code> and <code>SERIALx_BAUD = 921</code> &mdash; ample for a high-rate position stream.</li>
+      <li><b>No compass is wired yet</b> (<code>COMPASS_DEV_ID = 0</code>), which has direct consequences for the formation &mdash; see below.</li>
+    </ul>
+
+    <div class="note">
+      <span class="tag">The constraint worth internalising</span>
+      <p><b>Your GNSS choice sets the minimum safe formation spacing.</b> <code>FOLLOW</code> steers to an offset from the leader's reported position, so the error that matters is the <i>relative</i> error between two independent receivers &mdash; not the datasheet's absolute figure. With metre-level non-RTK modules, offsets of a few metres put the aircraft inside each other's position uncertainty, and the formation will breathe in and out by roughly the same magnitude as the spacing you asked for.</p>
+      <p>Start deliberately loose &mdash; think tens of metres rather than single digits &mdash; measure how much the formation actually wanders in simulation and then in the air, and only tighten from evidence. Genuinely tight formation flight needs RTK or relative positioning, which is a hardware change, not a parameter change. Better to discover that now than after a close pass.</p>
+      <p>For a search-and-rescue sweep this lands softly: wide, loose spacing is what covers ground efficiently, so the constraint pushes the formation in the direction the mission wants anyway. It would only really hurt a tight display formation.</p>
+    </div>
+
+    <div class="note">
+      <span class="tag">Consequence of no compass</span>
+      <p>The build shows <code>COMPASS_DEV_ID = 0</code> &mdash; no magnetometer wired, with the I&#178;C pads free. Heading therefore comes from the EKF's GNSS-based estimate, which is workable in forward flight but weak at hover and slow speed.</p>
+      <p>That rules out heading-relative offsets in practice. <code>FOLL_OFS_TYPE</code> should stay in the North-East-Down frame, which means <b>the formation will not rotate as the leader turns</b> &mdash; followers hold a fixed compass-aligned offset regardless of heading. Fine for a sweep pattern; surprising if you were expecting a V that pivots with the leader. If the M10 module has a magnetometer on board, wiring it to those free I&#178;C pads is the cheapest capability upgrade available here.</p>
+    </div>
+  </section>
+
+  <section id="real">
+    <div class="eyebrow">02 &mdash; Baseline</div>
+    <h2>The real platform, as it exists today</h2>
+    <p>Each aircraft is a three-box stack, and the shape of it matters: the flight controller does attitude and position control, while <i>two</i> independent radios hang off separate serial ports &mdash; a Raspberry&nbsp;Pi 4 carrying the mission software, and a XIAO-ESP32-C6 running DroneBridge for ground telemetry. Both speak MAVLink over ordinary Wi&#8209;Fi, and the ground PC is another client on the same medium. The only thing the leader-follower decision adds is a role per airframe.</p>
+
+    <figure>
+      <div class="frame">
+        <svg class="arch" viewBox="0 0 700 496" role="img" aria-label="Three aircraft, one leader and two followers. Each flight controller has two independent serial links: one to a Raspberry Pi 4 running mission software, and one to a XIAO ESP32-C6 running DroneBridge for telemetry. All radios join the same shared Wi-Fi network, as does the ground PC running Mission Planner.">
+          <defs>
+            <marker id="a1" markerWidth="9" markerHeight="9" refX="7.5" refY="4.5" orient="auto-start-reverse">
+              <path d="M0,0.5 L8.5,4.5 L0,8.5 Z" fill="currentColor"/>
+            </marker>
+          </defs>
+
+          <rect x="24" y="40" width="36" height="430" rx="10" fill="var(--sim-soft)" stroke="var(--sim-line)" stroke-width="1.5"/>
+          <text transform="rotate(-90 42 255)" x="42" y="255" text-anchor="middle" font-family="IBM Plex Mono" font-size="12" letter-spacing=".05em" fill="var(--sim)">SHARED WI-FI &#183; MAVLINK OVER IP</text>
+
+          <g font-family="IBM Plex Sans, sans-serif">
+            <!-- aircraft 1, leader -->
+            <line x1="62" y1="70" x2="114" y2="70" stroke="currentColor" stroke-width="1.6" marker-start="url(#a1)" marker-end="url(#a1)"/>
+            <rect x="118" y="48" width="172" height="44" rx="8" fill="var(--surface)" stroke="var(--border)" stroke-width="1.2"/>
+            <text x="204" y="67" text-anchor="middle" font-size="13.5" font-weight="600" fill="var(--text)">Raspberry Pi 4</text>
+            <text x="204" y="83" text-anchor="middle" font-size="11" fill="var(--muted)">mission software</text>
+            <line x1="62" y1="118" x2="114" y2="118" stroke="currentColor" stroke-width="1.6" marker-start="url(#a1)" marker-end="url(#a1)"/>
+            <rect x="118" y="96" width="172" height="44" rx="8" fill="var(--surface)" stroke="var(--border)" stroke-width="1.2"/>
+            <text x="204" y="115" text-anchor="middle" font-size="13.5" font-weight="600" fill="var(--text)">XIAO ESP32-C6</text>
+            <text x="204" y="131" text-anchor="middle" font-size="11" fill="var(--muted)">DroneBridge telemetry</text>
+            <line x1="294" y1="70" x2="346" y2="70" stroke="currentColor" stroke-width="1.6" marker-start="url(#a1)" marker-end="url(#a1)"/>
+            <text x="320" y="62" text-anchor="middle" font-family="IBM Plex Mono" font-size="10" fill="var(--muted)">921k UART</text>
+            <line x1="294" y1="118" x2="346" y2="118" stroke="currentColor" stroke-width="1.6" marker-start="url(#a1)" marker-end="url(#a1)"/>
+            <text x="320" y="110" text-anchor="middle" font-family="IBM Plex Mono" font-size="10" fill="var(--muted)">UART</text>
+            <rect x="350" y="48" width="176" height="92" rx="8" fill="var(--accent-soft)" stroke="var(--accent-line)" stroke-width="1.2"/>
+            <text x="438" y="88" text-anchor="middle" font-size="13.5" font-weight="600" fill="var(--text)">Matek H7A3-SLIM</text>
+            <text x="438" y="106" text-anchor="middle" font-size="11" fill="var(--muted)">ArduCopter 4.7</text>
+            <text x="536" y="88" font-family="IBM Plex Mono" font-size="11.5" letter-spacing=".05em" fill="var(--muted)">DRONE 1</text>
+            <text x="536" y="104" font-family="IBM Plex Mono" font-size="11.5" letter-spacing=".05em" fill="var(--accent)">LEADER</text>
+
+            <!-- aircraft 2 -->
+            <line x1="62" y1="200" x2="114" y2="200" stroke="currentColor" stroke-width="1.6" marker-start="url(#a1)" marker-end="url(#a1)"/>
+            <rect x="118" y="178" width="172" height="44" rx="8" fill="var(--surface)" stroke="var(--border)" stroke-width="1.2"/>
+            <text x="204" y="197" text-anchor="middle" font-size="13.5" font-weight="600" fill="var(--text)">Raspberry Pi 4</text>
+            <text x="204" y="213" text-anchor="middle" font-size="11" fill="var(--muted)">mission software</text>
+            <line x1="62" y1="248" x2="114" y2="248" stroke="currentColor" stroke-width="1.6" marker-start="url(#a1)" marker-end="url(#a1)"/>
+            <rect x="118" y="226" width="172" height="44" rx="8" fill="var(--surface)" stroke="var(--border)" stroke-width="1.2"/>
+            <text x="204" y="245" text-anchor="middle" font-size="13.5" font-weight="600" fill="var(--text)">XIAO ESP32-C6</text>
+            <text x="204" y="261" text-anchor="middle" font-size="11" fill="var(--muted)">DroneBridge telemetry</text>
+            <line x1="294" y1="200" x2="346" y2="200" stroke="currentColor" stroke-width="1.6" marker-start="url(#a1)" marker-end="url(#a1)"/>
+            <line x1="294" y1="248" x2="346" y2="248" stroke="currentColor" stroke-width="1.6" marker-start="url(#a1)" marker-end="url(#a1)"/>
+            <rect x="350" y="178" width="176" height="92" rx="8" fill="var(--accent-soft)" stroke="var(--accent-line)" stroke-width="1.2"/>
+            <text x="438" y="218" text-anchor="middle" font-size="13.5" font-weight="600" fill="var(--text)">Matek H7A3-SLIM</text>
+            <text x="438" y="236" text-anchor="middle" font-size="11" fill="var(--muted)">ArduCopter 4.7</text>
+            <text x="536" y="218" font-family="IBM Plex Mono" font-size="11.5" letter-spacing=".05em" fill="var(--muted)">DRONE 2</text>
+            <text x="536" y="234" font-family="IBM Plex Mono" font-size="11.5" letter-spacing=".05em" fill="var(--muted)">FOLLOWER</text>
+
+            <!-- aircraft 3 -->
+            <line x1="62" y1="330" x2="114" y2="330" stroke="currentColor" stroke-width="1.6" marker-start="url(#a1)" marker-end="url(#a1)"/>
+            <rect x="118" y="308" width="172" height="44" rx="8" fill="var(--surface)" stroke="var(--border)" stroke-width="1.2"/>
+            <text x="204" y="327" text-anchor="middle" font-size="13.5" font-weight="600" fill="var(--text)">Raspberry Pi 4</text>
+            <text x="204" y="343" text-anchor="middle" font-size="11" fill="var(--muted)">mission software</text>
+            <line x1="62" y1="378" x2="114" y2="378" stroke="currentColor" stroke-width="1.6" marker-start="url(#a1)" marker-end="url(#a1)"/>
+            <rect x="118" y="356" width="172" height="44" rx="8" fill="var(--surface)" stroke="var(--border)" stroke-width="1.2"/>
+            <text x="204" y="375" text-anchor="middle" font-size="13.5" font-weight="600" fill="var(--text)">XIAO ESP32-C6</text>
+            <text x="204" y="391" text-anchor="middle" font-size="11" fill="var(--muted)">DroneBridge telemetry</text>
+            <line x1="294" y1="330" x2="346" y2="330" stroke="currentColor" stroke-width="1.6" marker-start="url(#a1)" marker-end="url(#a1)"/>
+            <line x1="294" y1="378" x2="346" y2="378" stroke="currentColor" stroke-width="1.6" marker-start="url(#a1)" marker-end="url(#a1)"/>
+            <rect x="350" y="308" width="176" height="92" rx="8" fill="var(--accent-soft)" stroke="var(--accent-line)" stroke-width="1.2"/>
+            <text x="438" y="348" text-anchor="middle" font-size="13.5" font-weight="600" fill="var(--text)">Matek H7A3-SLIM</text>
+            <text x="438" y="366" text-anchor="middle" font-size="11" fill="var(--muted)">ArduCopter 4.7</text>
+            <text x="536" y="348" font-family="IBM Plex Mono" font-size="11.5" letter-spacing=".05em" fill="var(--muted)">DRONE 3</text>
+            <text x="536" y="364" font-family="IBM Plex Mono" font-size="11.5" letter-spacing=".05em" fill="var(--muted)">FOLLOWER</text>
+
+            <!-- ground pc -->
+            <line x1="62" y1="440" x2="114" y2="440" stroke="currentColor" stroke-width="1.6" marker-start="url(#a1)" marker-end="url(#a1)"/>
+            <rect x="118" y="414" width="280" height="52" rx="8" fill="var(--surface)" stroke="var(--border)" stroke-width="1.2"/>
+            <text x="258" y="437" text-anchor="middle" font-size="14" font-weight="600" fill="var(--text)">Ground PC &#183; Mission Planner</text>
+            <text x="258" y="455" text-anchor="middle" font-size="11" fill="var(--muted)">all vehicles at once</text>
+            <text x="414" y="446" font-family="IBM Plex Mono" font-size="11.5" letter-spacing=".05em" fill="var(--muted)">MAIN CONTROL</text>
+          </g>
+        </svg>
+      </div>
+      <figcaption><b>Fig. 1</b> &mdash; Two independent paths off every flight controller: the ESP32 carries telemetry to the ground station, the Pi carries mission software. Both are ordinary IP over the shared Wi&#8209;Fi, which is what makes the leader's position reachable by the followers at all.</figcaption>
+    </figure>
+  </section>
+
+  <section id="needs">
+    <div class="eyebrow">03 &mdash; The mechanism</div>
+    <h2>What leader-follower actually needs</h2>
+    <p>ArduPilot's <code>FOLLOW</code> mode works by having the follower listen for the leader's MAVLink position messages and steer to a fixed offset from them. The leader is not configured as a leader at all &mdash; it just flies its mission and streams telemetry, exactly as it always has. Every bit of the formation behaviour lives in the followers' parameters.</p>
+    <p>That gives the simulation a sharp job to do. There is no formation algorithm to debug; there is a <i>delivery</i> problem to prove: each follower's flight controller must receive <code>GLOBAL_POSITION_INT</code> from the leader, continuously, at a few Hz, with low enough latency that the follower is not chasing a stale position.</p>
+
+    <h3>The parameters that define the formation</h3>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>Parameter</th><th>What it does</th><th>For this setup</th></tr>
+        </thead>
+        <tbody>
+          <tr><td class="mono">FOLL_ENABLE</td><td>Turns the follow library on</td><td>1 on every follower, 0 on the leader</td></tr>
+          <tr><td class="mono">FOLL_SYSID</td><td>MAVLink system ID of the vehicle to follow</td><td>Set to the leader's <code>SYSID_THISMAV</code>. Never leave it at 0 in a swarm &mdash; a follower would lock onto whatever it hears first</td></tr>
+          <tr><td class="mono">FOLL_OFS_X/Y/Z</td><td>Offset to hold from the leader, in metres</td><td>Defines the formation shape. Choose values that keep followers clear of each other</td></tr>
+          <tr><td class="mono">FOLL_OFS_TYPE</td><td>Offsets in North-East-Down, or relative to the leader's heading</td><td>Heading-relative if the formation should rotate as the leader turns</td></tr>
+          <tr><td class="mono">FOLL_ALT_TYPE</td><td>Altitude frame the offset is applied in</td><td>Must be consistent across vehicles, or the formation sits at the wrong height</td></tr>
+          <tr><td class="mono">FOLL_DIST_MAX</td><td>Ignore the leader beyond this distance</td><td>Guards against stale or bogus positions</td></tr>
+          <tr><td class="mono">FOLL_YAW_BEHAVE</td><td>Where the follower points</td><td>Matching the leader's heading usually looks and flies best in formation</td></tr>
+          <tr><td class="mono">FOLL_POS_P</td><td>How hard it corrects position error</td><td>Tune in simulation first &mdash; this is the parameter the sim exists to de-risk</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3>What this forces on the rest of the design</h3>
+    <ul class="plain">
+      <li><b>Distinct system IDs.</b> Every vehicle needs its own <code>SYSID_THISMAV</code>, in simulation and on the real aircraft, or the followers cannot tell anyone apart.</li>
+      <li><b>The leader's stream has to reach the followers.</b> Not just the GCS. On the leader, the position stream rate on the link that reaches the followers must actually be set &mdash; a link streaming at a fraction of a Hz will produce visibly laggy, sawing formation flight.</li>
+      <li><b>No collision avoidance between followers.</b> FOLLOW holds an offset; it does not know the other followers exist. Separation is entirely a property of the offsets you choose.</li>
+      <li><b>A leader-loss behaviour has to be decided.</b> If the stream stops, the follower stops receiving updates. What it should then do &mdash; hold, return, land &mdash; is a design decision, not a default to inherit silently.</li>
+    </ul>
+  </section>
+
+  <section id="constraint">
+    <div class="eyebrow">04 &mdash; Resolved</div>
+    <h2>The old blocker is gone. Here is what replaces it.</h2>
+    <p>Earlier drafts of this document treated one question as a blocker: whether DroneBridge was running in <i>wifibroadcast</i> mode, injecting raw 802.11 frames point-to-point, which would have meant followers could never hear the leader directly. The assembled hardware settles it.</p>
+    <div class="rec">
+      <span class="tag">Settled by the build</span>
+      <p>DroneBridge runs on a <b>XIAO-ESP32-C6</b>, not on the Raspberry&nbsp;Pi &mdash; the ESP32 variant, which bridges MAVLink over <b>standard Wi&#8209;Fi</b>. There is no monitor mode and no raw injection anywhere in the stack. Everything is ordinary IP on a shared network, so any node can address any other node, and drone-to-drone delivery of the leader's position is a routing question rather than a physics one.</p>
+    </div>
+    <p>What the build also shows is that each flight controller has <b>two independent serial links</b>, and they are doing different jobs: the ESP32 is described as telemetry-only to the ground station, while the Pi has its own UART at 921600&nbsp;baud for the mission software. That separation is useful, and it suggests where the swarm traffic belongs.</p>
+
+    <h3>Put the swarm plane on the Pi network</h3>
+    <p>The leader's position should reach the followers <b>Pi to Pi</b> over Wi&#8209;Fi, with each follower's Pi injecting it into its own flight controller through that 921600&nbsp;baud link. Three reasons:</p>
+    <ul class="plain">
+      <li><b>It leaves the telemetry link alone.</b> The ESP32 bridge keeps doing the one job it is built for. Formation traffic and ground telemetry stop competing for the same radio, and a busy GCS session cannot starve the thing keeping the formation together.</li>
+      <li><b>The bandwidth is already there.</b> 921600&nbsp;baud on the Pi link is far more headroom than a position stream needs, where a telemetry-grade link would have to be rationed.</li>
+      <li><b>It is the layer you control.</b> The Pi is where you can rate-limit, timestamp, log, and deliberately degrade the stream for testing. An ESP32 bridge is a fixed appliance by comparison.</li>
+    </ul>
+    <p>The open questions that remain are smaller and concrete: whether the ESP32 radios and the Pi radios join the same SSID or separate networks, whether the Pis get static addresses or discover each other, and whether the ESP32 acts as an access point or joins an existing one. Those are configuration decisions, not architectural ones.</p>
+  </section>
+
+  <section id="mapping">
+    <div class="eyebrow">05 &mdash; Translation</div>
+    <h2>Sim-to-real mapping</h2>
+    <p>Every simulated piece stands in for a real one, chosen so that what you tune in simulation is what you flash, set, or copy onto the real aircraft.</p>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>Real component</th><th>Role</th><th>Simulated stand-in</th><th>Notes</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Flight controller</td>
+            <td>Attitude and position control, and FOLLOW mode on the followers</td>
+            <td class="mono">ArduPilot SITL, one process per vehicle</td>
+            <td>Same firmware, same <code>FOLL_*</code> parameters. This is the big win: the formation config transfers verbatim.</td>
+          </tr>
+          <tr>
+            <td>F450 airframe</td>
+            <td>Physical dynamics</td>
+            <td class="mono">SDF quad-X model, 450&nbsp;mm, 1045 props</td>
+            <td>Geometry and propulsion are known (see <a href="#hardware">Section&nbsp;01</a>). Measured all-up mass is the input that still has to come from a real aircraft.</td>
+          </tr>
+          <tr>
+            <td>Raspberry&nbsp;Pi + DroneBridge</td>
+            <td>Companion compute, Wi&#8209;Fi bridge, telemetry relay</td>
+            <td class="mono">companion agent process per vehicle</td>
+            <td>Talks to its SITL over UDP MAVLink exactly as it will talk to the real FC over serial.</td>
+          </tr>
+          <tr>
+            <td>Shared Wi&#8209;Fi network</td>
+            <td>Carries the leader's position to every follower</td>
+            <td class="mono">mavlink-router / UDP broadcast / DDS</td>
+            <td>See <a href="#topology">Section&nbsp;08</a>. This is the part the simulation is really testing.</td>
+          </tr>
+          <tr>
+            <td>PC + Mission Planner</td>
+            <td>Configuration, parameter sets, mission upload, monitoring all vehicles</td>
+            <td class="mono">Mission Planner, unchanged</td>
+            <td>Same app you already use, pointed at new UDP endpoints. It can hold a connection to every vehicle at once.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section id="simarch">
+    <div class="eyebrow">06 &mdash; Proposed system</div>
+    <h2>Simulation architecture</h2>
+    <p>One Gazebo world holds the physics for every vehicle. Each vehicle gets its own SITL process and its own companion-agent process &mdash; one per drone, mirroring one Pi per drone &mdash; and all of them meet on a virtual network layer standing in for the shared Wi&#8209;Fi. The leader-follower relationship shows up as parameters inside the follower SITL instances, not as extra infrastructure.</p>
+
+    <figure>
+      <div class="frame">
+        <svg class="arch" viewBox="0 0 830 402" role="img" aria-label="A virtual network layer connects three companion agents, each paired with its own ArduPilot SITL process and a vehicle model inside one shared Gazebo world. SITL instance one is the leader streaming position; instances two and three run FOLLOW mode pointed at system ID one. A ground PC running Mission Planner joins the same network layer.">
+          <defs>
+            <marker id="a2" markerWidth="9" markerHeight="9" refX="7.5" refY="4.5" orient="auto-start-reverse">
+              <path d="M0,0.5 L8.5,4.5 L0,8.5 Z" fill="currentColor"/>
+            </marker>
+          </defs>
+
+          <rect x="24" y="46" width="36" height="334" rx="10" fill="var(--sim-soft)" stroke="var(--sim-line)" stroke-width="1.5"/>
+          <text transform="rotate(-90 42 213)" x="42" y="213" text-anchor="middle" font-family="IBM Plex Mono" font-size="11.5" letter-spacing=".04em" fill="var(--sim)">VIRTUAL NETWORK LAYER &#183; mavlink-router</text>
+
+          <rect x="556" y="46" width="200" height="254" rx="10" fill="var(--panel)" stroke="var(--panel-line)" stroke-width="1.2"/>
+          <text x="556" y="36" font-family="IBM Plex Mono" font-size="11.5" letter-spacing=".04em" fill="var(--muted)">GAZEBO &#183; ONE SHARED WORLD</text>
+
+          <g font-family="IBM Plex Sans, sans-serif">
+            <!-- leader row, center 91 -->
+            <line x1="62" y1="91" x2="106" y2="91" stroke="currentColor" stroke-width="1.6" marker-start="url(#a2)" marker-end="url(#a2)"/>
+            <rect x="110" y="60" width="170" height="62" rx="8" fill="var(--surface)" stroke="var(--border)" stroke-width="1.2"/>
+            <text x="195" y="84" text-anchor="middle" font-size="13.5" font-weight="600" fill="var(--text)">companion agent</text>
+            <text x="195" y="102" text-anchor="middle" font-size="11.5" fill="var(--muted)">Pi-bound code</text>
+
+            <line x1="284" y1="91" x2="336" y2="91" stroke="currentColor" stroke-width="1.6" marker-start="url(#a2)" marker-end="url(#a2)"/>
+            <text x="310" y="81" text-anchor="middle" font-family="IBM Plex Mono" font-size="10.5" fill="var(--muted)">MAVLink</text>
+            <rect x="340" y="60" width="170" height="62" rx="8" fill="var(--accent-soft)" stroke="var(--accent-line)" stroke-width="1.2"/>
+            <text x="425" y="81" text-anchor="middle" font-size="13.5" font-weight="600" fill="var(--text)">ArduPilot SITL</text>
+            <text x="425" y="98" text-anchor="middle" font-family="IBM Plex Mono" font-size="10.5" fill="var(--muted)">sysid 1 &#183; udp:14550</text>
+            <text x="425" y="113" text-anchor="middle" font-family="IBM Plex Mono" font-size="10.5" fill="var(--accent)">streams position</text>
+
+            <line x1="514" y1="91" x2="566" y2="91" stroke="currentColor" stroke-width="1.6" marker-start="url(#a2)" marker-end="url(#a2)"/>
+            <text x="540" y="81" text-anchor="middle" font-family="IBM Plex Mono" font-size="10.5" fill="var(--muted)">physics</text>
+            <rect x="570" y="60" width="170" height="62" rx="8" fill="var(--surface)" stroke="var(--border)" stroke-width="1.2"/>
+            <text x="655" y="86" text-anchor="middle" font-size="13.5" font-weight="600" fill="var(--text)">Vehicle model 1</text>
+            <text x="655" y="104" text-anchor="middle" font-size="11.5" fill="var(--muted)">SDF airframe</text>
+            <text x="766" y="86" font-family="IBM Plex Mono" font-size="11" letter-spacing=".04em" fill="var(--muted)">DRONE 1</text>
+            <text x="766" y="102" font-family="IBM Plex Mono" font-size="11" letter-spacing=".04em" fill="var(--accent)">LEADER</text>
+
+            <!-- follower row 1, center 173 -->
+            <line x1="62" y1="173" x2="106" y2="173" stroke="currentColor" stroke-width="1.6" marker-start="url(#a2)" marker-end="url(#a2)"/>
+            <rect x="110" y="142" width="170" height="62" rx="8" fill="var(--surface)" stroke="var(--border)" stroke-width="1.2"/>
+            <text x="195" y="166" text-anchor="middle" font-size="13.5" font-weight="600" fill="var(--text)">companion agent</text>
+            <text x="195" y="184" text-anchor="middle" font-size="11.5" fill="var(--muted)">Pi-bound code</text>
+            <line x1="284" y1="173" x2="336" y2="173" stroke="currentColor" stroke-width="1.6" marker-start="url(#a2)" marker-end="url(#a2)"/>
+            <rect x="340" y="142" width="170" height="62" rx="8" fill="var(--accent-soft)" stroke="var(--accent-line)" stroke-width="1.2"/>
+            <text x="425" y="163" text-anchor="middle" font-size="13.5" font-weight="600" fill="var(--text)">ArduPilot SITL</text>
+            <text x="425" y="180" text-anchor="middle" font-family="IBM Plex Mono" font-size="10.5" fill="var(--muted)">sysid 2 &#183; udp:14560</text>
+            <text x="425" y="195" text-anchor="middle" font-family="IBM Plex Mono" font-size="10.5" fill="var(--sim)">FOLLOW &#8594; sysid 1</text>
+            <line x1="514" y1="173" x2="566" y2="173" stroke="currentColor" stroke-width="1.6" marker-start="url(#a2)" marker-end="url(#a2)"/>
+            <rect x="570" y="142" width="170" height="62" rx="8" fill="var(--surface)" stroke="var(--border)" stroke-width="1.2"/>
+            <text x="655" y="168" text-anchor="middle" font-size="13.5" font-weight="600" fill="var(--text)">Vehicle model 2</text>
+            <text x="655" y="186" text-anchor="middle" font-size="11.5" fill="var(--muted)">SDF airframe</text>
+            <text x="766" y="168" font-family="IBM Plex Mono" font-size="11" letter-spacing=".04em" fill="var(--muted)">DRONE 2</text>
+            <text x="766" y="184" font-family="IBM Plex Mono" font-size="11" letter-spacing=".04em" fill="var(--muted)">FOLLOWER</text>
+
+            <!-- follower row 2, center 255 -->
+            <line x1="62" y1="255" x2="106" y2="255" stroke="currentColor" stroke-width="1.6" marker-start="url(#a2)" marker-end="url(#a2)"/>
+            <rect x="110" y="224" width="170" height="62" rx="8" fill="var(--surface)" stroke="var(--border)" stroke-width="1.2"/>
+            <text x="195" y="248" text-anchor="middle" font-size="13.5" font-weight="600" fill="var(--text)">companion agent</text>
+            <text x="195" y="266" text-anchor="middle" font-size="11.5" fill="var(--muted)">Pi-bound code</text>
+            <line x1="284" y1="255" x2="336" y2="255" stroke="currentColor" stroke-width="1.6" marker-start="url(#a2)" marker-end="url(#a2)"/>
+            <rect x="340" y="224" width="170" height="62" rx="8" fill="var(--accent-soft)" stroke="var(--accent-line)" stroke-width="1.2"/>
+            <text x="425" y="245" text-anchor="middle" font-size="13.5" font-weight="600" fill="var(--text)">ArduPilot SITL</text>
+            <text x="425" y="262" text-anchor="middle" font-family="IBM Plex Mono" font-size="10.5" fill="var(--muted)">sysid 3 &#183; udp:14570</text>
+            <text x="425" y="277" text-anchor="middle" font-family="IBM Plex Mono" font-size="10.5" fill="var(--sim)">FOLLOW &#8594; sysid 1</text>
+            <line x1="514" y1="255" x2="566" y2="255" stroke="currentColor" stroke-width="1.6" marker-start="url(#a2)" marker-end="url(#a2)"/>
+            <rect x="570" y="224" width="170" height="62" rx="8" fill="var(--surface)" stroke="var(--border)" stroke-width="1.2"/>
+            <text x="655" y="250" text-anchor="middle" font-size="13.5" font-weight="600" fill="var(--text)">Vehicle model 3</text>
+            <text x="655" y="268" text-anchor="middle" font-size="11.5" fill="var(--muted)">SDF airframe</text>
+            <text x="766" y="250" font-family="IBM Plex Mono" font-size="11" letter-spacing=".04em" fill="var(--muted)">DRONE 3</text>
+            <text x="766" y="266" font-family="IBM Plex Mono" font-size="11" letter-spacing=".04em" fill="var(--muted)">FOLLOWER</text>
+
+            <!-- ground pc, center 353 -->
+            <line x1="62" y1="353" x2="106" y2="353" stroke="currentColor" stroke-width="1.6" marker-start="url(#a2)" marker-end="url(#a2)"/>
+            <rect x="110" y="326" width="280" height="54" rx="8" fill="var(--surface)" stroke="var(--border)" stroke-width="1.2"/>
+            <text x="250" y="349" text-anchor="middle" font-size="14" font-weight="600" fill="var(--text)">Ground PC</text>
+            <text x="250" y="367" text-anchor="middle" font-size="11.5" fill="var(--muted)">Mission Planner &#183; all vehicles at once</text>
+            <text x="406" y="358" font-family="IBM Plex Mono" font-size="11" letter-spacing=".04em" fill="var(--muted)">SEPARATE MACHINE</text>
+          </g>
+        </svg>
+      </div>
+      <figcaption><b>Fig. 2</b> &mdash; The leader-follower relationship is the two <code>FOLLOW &#8594; sysid 1</code> lines, and nothing else. Every arrow on this diagram already existed; what leader-follower adds is a hard requirement that the leader's position actually traverses the network layer to reach the follower SITL instances.</figcaption>
+    </figure>
+  </section>
+
+  <section id="logic">
+    <div class="eyebrow">07 &mdash; The main decision</div>
+    <h2>Where the formation logic lives</h2>
+    <p>This is now the real fork in the design, and it matters more than the transport question that follows it. The formation target for each follower can be computed in one of two places: inside the follower's own flight controller, or in a coordinator process that sends it explicit position targets.</p>
+
+    <figure>
+      <div class="frame">
+        <svg class="arch" viewBox="0 0 830 336" role="img" aria-label="Option A: the leader streams GLOBAL_POSITION_INT directly to the follower, whose flight controller computes the formation offset in FOLLOW mode. Option B: the leader streams position to a coordinator, which computes and sends SET_POSITION_TARGET commands to the follower flying in GUIDED mode.">
+          <defs>
+            <marker id="a3" markerWidth="9" markerHeight="9" refX="7.5" refY="4.5" orient="auto">
+              <path d="M0,0.5 L8.5,4.5 L0,8.5 Z" fill="currentColor"/>
+            </marker>
+          </defs>
+
+          <g font-family="IBM Plex Sans, sans-serif">
+            <!-- Panel A -->
+            <text x="30" y="26" font-size="14.5" font-weight="600" fill="var(--text)">A &#183; In the flight controller</text>
+            <rect x="30" y="46" width="250" height="54" rx="8" fill="var(--accent-soft)" stroke="var(--accent-line)" stroke-width="1.2"/>
+            <text x="155" y="69" text-anchor="middle" font-size="13.5" font-weight="600" fill="var(--text)">Leader</text>
+            <text x="155" y="87" text-anchor="middle" font-size="11" fill="var(--muted)">flies the mission, streams position</text>
+            <line x1="90" y1="100" x2="90" y2="150" stroke="currentColor" stroke-width="1.6" marker-end="url(#a3)"/>
+            <text x="104" y="120" font-family="IBM Plex Mono" font-size="10.5" fill="var(--muted)">GLOBAL_POSITION_INT</text>
+            <text x="104" y="136" font-family="IBM Plex Mono" font-size="10.5" fill="var(--muted)">a few Hz</text>
+            <rect x="30" y="154" width="250" height="76" rx="8" fill="var(--accent-soft)" stroke="var(--accent-line)" stroke-width="1.2"/>
+            <text x="155" y="177" text-anchor="middle" font-size="13.5" font-weight="600" fill="var(--text)">Follower</text>
+            <text x="155" y="196" text-anchor="middle" font-size="11.5" fill="var(--muted)">FOLLOW mode computes the target</text>
+            <text x="155" y="214" text-anchor="middle" font-family="IBM Plex Mono" font-size="10" fill="var(--sim)">FOLL_SYSID &#183; FOLL_OFS_X/Y/Z</text>
+            <text x="30" y="300" font-size="11.5" fill="var(--muted)">Holds formation even if the ground link drops.</text>
+            <text x="30" y="318" font-size="11.5" fill="var(--muted)">Offsets are static parameters. No new code.</text>
+
+            <line x1="420" y1="16" x2="420" y2="326" stroke="var(--border)" stroke-width="1"/>
+
+            <!-- Panel B -->
+            <text x="450" y="26" font-size="14.5" font-weight="600" fill="var(--text)">B &#183; In a coordinator</text>
+            <rect x="450" y="46" width="250" height="54" rx="8" fill="var(--accent-soft)" stroke="var(--accent-line)" stroke-width="1.2"/>
+            <text x="575" y="69" text-anchor="middle" font-size="13.5" font-weight="600" fill="var(--text)">Leader</text>
+            <text x="575" y="87" text-anchor="middle" font-size="11" fill="var(--muted)">flies the mission, streams position</text>
+            <line x1="510" y1="100" x2="510" y2="130" stroke="currentColor" stroke-width="1.6" marker-end="url(#a3)"/>
+            <text x="524" y="119" font-family="IBM Plex Mono" font-size="10.5" fill="var(--muted)">GLOBAL_POSITION_INT</text>
+            <rect x="450" y="134" width="250" height="54" rx="8" fill="var(--surface)" stroke="var(--border)" stroke-width="1.2"/>
+            <text x="575" y="157" text-anchor="middle" font-size="13.5" font-weight="600" fill="var(--text)">Coordinator</text>
+            <text x="575" y="175" text-anchor="middle" font-size="11" fill="var(--muted)">ground PC or companion Pi</text>
+            <line x1="510" y1="188" x2="510" y2="218" stroke="currentColor" stroke-width="1.6" marker-end="url(#a3)"/>
+            <text x="524" y="207" font-family="IBM Plex Mono" font-size="10.5" fill="var(--muted)">SET_POSITION_TARGET</text>
+            <rect x="450" y="222" width="250" height="54" rx="8" fill="var(--accent-soft)" stroke="var(--accent-line)" stroke-width="1.2"/>
+            <text x="575" y="245" text-anchor="middle" font-size="13.5" font-weight="600" fill="var(--text)">Follower</text>
+            <text x="575" y="263" text-anchor="middle" font-size="11.5" fill="var(--muted)">GUIDED mode, flies where told</text>
+            <text x="450" y="300" font-size="11.5" fill="var(--muted)">Any formation shape, reshaped in flight.</text>
+            <text x="450" y="318" font-size="11.5" fill="var(--muted)">The swarm is only as alive as the coordinator.</text>
+          </g>
+        </svg>
+      </div>
+      <figcaption><b>Fig. 3</b> &mdash; The difference is the middle box. In A the follower needs only to hear the leader; in B every correction makes a round trip through a process that must stay running, and through whatever link connects it.</figcaption>
+    </figure>
+
+    <p>Option&nbsp;A is what <code>FOLLOW</code> mode already is: no code to write, no process to keep alive, and the formation degrades gracefully because each follower is autonomous once it can hear the leader. Its ceiling is that the offset is essentially fixed &mdash; the formation shape is a set of parameters, not a plan.</p>
+    <p>Option&nbsp;B buys real flexibility: formations that change mid-flight, per-follower tasking, spacing that reacts to what the other followers are doing. It costs a process that becomes a single point of failure for the entire swarm, and it puts every correction at the mercy of link latency. Mission Planner also has a swarm screen that implements roughly this pattern, which is worth opening before writing any coordinator of your own &mdash; what it can do varies by version.</p>
+  </section>
+
+  <section id="topology">
+    <div class="eyebrow">08 &mdash; Transport</div>
+    <h2>Getting the leader's position to the followers</h2>
+    <p>Whichever option above wins, something has to carry the leader's stream. There are three ways to build the virtual network layer, and leader-follower adds a criterion that was not there before: the transport has to <i>fan one vehicle's stream out to several specific listeners</i>, not just move bytes.</p>
+
+    <figure>
+      <div class="frame">
+        <svg class="arch" viewBox="0 0 830 282" role="img" aria-label="Three transport options: A routes everything through a central mavlink-router process; B uses a shared UDP broadcast medium with no relay process; C uses a ROS 2 DDS domain with typed topics.">
+          <g font-family="IBM Plex Sans, sans-serif">
+            <g stroke="currentColor" stroke-width="1.4">
+              <line x1="145" y1="100" x2="66" y2="38"/>
+              <line x1="145" y1="100" x2="224" y2="38"/>
+              <line x1="145" y1="100" x2="40" y2="100"/>
+              <line x1="145" y1="100" x2="145" y2="196"/>
+            </g>
+            <circle cx="145" cy="100" r="40" fill="var(--sim-soft)" stroke="var(--sim-line)" stroke-width="1.6"/>
+            <text x="145" y="96" text-anchor="middle" font-family="IBM Plex Mono" font-size="11.5" fill="var(--sim)">mavlink</text>
+            <text x="145" y="112" text-anchor="middle" font-family="IBM Plex Mono" font-size="11.5" fill="var(--sim)">router</text>
+            <circle cx="66" cy="38" r="18" fill="var(--accent-soft)" stroke="var(--accent-line)" stroke-width="1.4"/>
+            <circle cx="224" cy="38" r="18" fill="var(--surface)" stroke="var(--border)" stroke-width="1.2"/>
+            <circle cx="40" cy="100" r="18" fill="var(--surface)" stroke="var(--border)" stroke-width="1.2"/>
+            <circle cx="145" cy="196" r="18" fill="var(--surface)" stroke="var(--border)" stroke-width="1.2"/>
+            <text x="66" y="43" text-anchor="middle" font-size="11.5" font-weight="600" fill="var(--text)">L</text>
+            <text x="224" y="43" text-anchor="middle" font-size="11.5" font-weight="600" fill="var(--text)">F2</text>
+            <text x="40" y="105" text-anchor="middle" font-size="11.5" font-weight="600" fill="var(--text)">F3</text>
+            <text x="145" y="201" text-anchor="middle" font-size="11.5" font-weight="600" fill="var(--text)">PC</text>
+            <text x="145" y="242" text-anchor="middle" font-size="14" font-weight="600" fill="var(--text)">A &#183; Central relay</text>
+            <text x="145" y="262" text-anchor="middle" font-size="12" fill="var(--muted)">fan-out declared in config</text>
+
+            <line x1="288" y1="20" x2="288" y2="232" stroke="var(--border)" stroke-width="1"/>
+
+            <g stroke="currentColor" stroke-width="1.4">
+              <line x1="355" y1="88" x2="355" y2="56"/>
+              <line x1="415" y1="88" x2="415" y2="56"/>
+              <line x1="475" y1="88" x2="475" y2="56"/>
+              <line x1="415" y1="112" x2="415" y2="178"/>
+            </g>
+            <rect x="330" y="88" width="170" height="24" rx="6" fill="var(--sim-soft)" stroke="var(--sim-line)" stroke-width="1.6"/>
+            <text x="415" y="104" text-anchor="middle" font-family="IBM Plex Mono" font-size="10.5" fill="var(--sim)">UDP broadcast</text>
+            <circle cx="355" cy="38" r="18" fill="var(--accent-soft)" stroke="var(--accent-line)" stroke-width="1.4"/>
+            <circle cx="415" cy="38" r="18" fill="var(--surface)" stroke="var(--border)" stroke-width="1.2"/>
+            <circle cx="475" cy="38" r="18" fill="var(--surface)" stroke="var(--border)" stroke-width="1.2"/>
+            <circle cx="415" cy="196" r="18" fill="var(--surface)" stroke="var(--border)" stroke-width="1.2"/>
+            <text x="355" y="43" text-anchor="middle" font-size="11.5" font-weight="600" fill="var(--text)">L</text>
+            <text x="415" y="43" text-anchor="middle" font-size="11.5" font-weight="600" fill="var(--text)">F2</text>
+            <text x="475" y="43" text-anchor="middle" font-size="11.5" font-weight="600" fill="var(--text)">F3</text>
+            <text x="415" y="201" text-anchor="middle" font-size="11.5" font-weight="600" fill="var(--text)">PC</text>
+            <text x="415" y="242" text-anchor="middle" font-size="14" font-weight="600" fill="var(--text)">B &#183; Shared broadcast</text>
+            <text x="415" y="262" text-anchor="middle" font-size="12" fill="var(--muted)">everyone hears everything</text>
+
+            <line x1="545" y1="20" x2="545" y2="232" stroke="var(--border)" stroke-width="1"/>
+
+            <g stroke="currentColor" stroke-width="1.4">
+              <line x1="690" y1="100" x2="615" y2="38"/>
+              <line x1="690" y1="100" x2="765" y2="38"/>
+              <line x1="690" y1="100" x2="592" y2="100"/>
+              <line x1="690" y1="100" x2="690" y2="196"/>
+            </g>
+            <ellipse cx="690" cy="100" rx="54" ry="36" fill="var(--sim-soft)" stroke="var(--sim-line)" stroke-width="1.6"/>
+            <text x="690" y="96" text-anchor="middle" font-family="IBM Plex Mono" font-size="11.5" fill="var(--sim)">DDS</text>
+            <text x="690" y="112" text-anchor="middle" font-family="IBM Plex Mono" font-size="11.5" fill="var(--sim)">domain</text>
+            <circle cx="615" cy="38" r="18" fill="var(--accent-soft)" stroke="var(--accent-line)" stroke-width="1.4"/>
+            <circle cx="765" cy="38" r="18" fill="var(--surface)" stroke="var(--border)" stroke-width="1.2"/>
+            <circle cx="592" cy="100" r="18" fill="var(--surface)" stroke="var(--border)" stroke-width="1.2"/>
+            <circle cx="690" cy="196" r="18" fill="var(--surface)" stroke="var(--border)" stroke-width="1.2"/>
+            <text x="615" y="43" text-anchor="middle" font-size="11.5" font-weight="600" fill="var(--text)">L</text>
+            <text x="765" y="43" text-anchor="middle" font-size="11.5" font-weight="600" fill="var(--text)">F2</text>
+            <text x="592" y="105" text-anchor="middle" font-size="11.5" font-weight="600" fill="var(--text)">F3</text>
+            <text x="690" y="201" text-anchor="middle" font-size="11.5" font-weight="600" fill="var(--text)">PC</text>
+            <text x="690" y="242" text-anchor="middle" font-size="14" font-weight="600" fill="var(--text)">C &#183; ROS 2 / DDS</text>
+            <text x="690" y="262" text-anchor="middle" font-size="12" fill="var(--muted)">typed publish / subscribe</text>
+          </g>
+        </svg>
+      </div>
+      <figcaption><b>Fig. 4</b> &mdash; <b>L</b> is the leader, <b>F2</b> and <b>F3</b> the followers. What differs is the crossing point: a relay process you configure and can inspect (A), no process at all (B), or a typed pub/sub layer (C).</figcaption>
+    </figure>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Criteria</th>
+            <th>A &#183; Central relay<span>mavlink-router</span></th>
+            <th>B &#183; Shared broadcast<span>UDP, no relay</span></th>
+            <th>C &#183; ROS 2 / DDS<span>typed topics</span></th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Fanning the leader's stream to followers</td>
+            <td class="ok">Declared explicitly, per endpoint</td>
+            <td class="mid">Implicit &mdash; everyone gets everything</td>
+            <td class="ok">Native, but needs a MAVLink bridge</td>
+          </tr>
+          <tr>
+            <td>Setup effort</td>
+            <td class="ok">Low &mdash; one config file</td>
+            <td class="ok">Low &mdash; a few socket flags</td>
+            <td class="mid">Moderate &mdash; MAVROS is already planned</td>
+          </tr>
+          <tr>
+            <td>Matches real Wi&#8209;Fi behaviour</td>
+            <td class="mid">Close, if the real link relays too</td>
+            <td class="ok">Closest &mdash; true shared medium</td>
+            <td class="mid">Rides the Pi network, not the radio link</td>
+          </tr>
+          <tr>
+            <td>Single point of failure</td>
+            <td class="bad">Yes &mdash; the router process</td>
+            <td class="ok">None</td>
+            <td class="mid">DDS discovery, usually resilient</td>
+          </tr>
+          <tr>
+            <td>Testing a degraded leader stream</td>
+            <td class="ok">Easy &mdash; one host, <code>tc netem</code></td>
+            <td class="mid">Per-link <code>netem</code> rules</td>
+            <td class="mid">Possible, plus DDS QoS knobs</td>
+          </tr>
+          <tr>
+            <td>Scaling past ~5 drones</td>
+            <td class="mid">Fine until the router bottlenecks</td>
+            <td class="bad">Broadcast traffic grows with N&sup2;</td>
+            <td class="ok">Built for this</td>
+          </tr>
+          <tr>
+            <td>Mission Planner, unmodified</td>
+            <td class="ok">Yes &mdash; point it at the router</td>
+            <td class="ok">Yes &mdash; point it at the port</td>
+            <td class="bad">Needs a DDS-to-MAVLink bridge</td>
+          </tr>
+          <tr>
+            <td>Porting to the real Pi later</td>
+            <td class="ok">Low &mdash; the binary runs on Pi too</td>
+            <td class="ok">Low &mdash; sockets behave the same</td>
+            <td class="mid">ROS 2 is already going on every Pi</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section id="recommendation">
+    <div class="eyebrow">09 &mdash; Recommendation</div>
+    <h2>FOLLOW mode over mavlink-router</h2>
+    <div class="rec">
+      <span class="tag">Proposed path</span>
+      <p><b>Formation logic in the flight controller (Option&nbsp;A).</b> It is already in the firmware you are running, it needs no code, and the <code>FOLL_*</code> values you tune against Gazebo are the same values you will type into Mission Planner on the real aircraft. It also fails well: a follower that can hear the leader keeps its station whether or not the ground station is alive. Reach for a coordinator later, and only if you hit something the offsets genuinely cannot express.</p>
+      <p><b>Transport via <code>mavlink-router</code> (Option&nbsp;A).</b> Leader-follower makes this a stronger pick than it was before the pattern was settled: you need the leader's stream delivered to specific followers, and a router config states that in one place instead of leaving it to whatever every node happens to overhear. It also gives you one host to attach <code>tc netem</code> to, which is how you will answer the question that actually matters &mdash; how far the link can degrade before the formation stops holding.</p>
+      <p><b>Run the formation traffic over the Pi network, not the telemetry bridge.</b> The build gives every aircraft two independent links (<a href="#constraint">Section&nbsp;04</a>), and the leader's position belongs on the Pi one &mdash; more headroom, and the ESP32 bridge stays dedicated to ground telemetry rather than competing with the thing holding the formation together.</p>
+      <p><b>On ROS&nbsp;2:</b> since MAVROS is already the planned companion stack, Option&nbsp;C is not the imposition this document previously called it. The nuance is that <code>FOLLOW</code> needs raw <code>GLOBAL_POSITION_INT</code> arriving at the flight controller, which is a MAVLink forwarding job rather than a pub/sub one. The clean arrangement is both: <code>mavlink-router</code> moving the leader's stream to each follower's FC, with a local UDP endpoint alongside it for MAVROS to attach to. The mission software gets ROS&nbsp;2; the formation keeps a path that does not depend on it.</p>
+    </div>
+  </section>
+
+  <section id="operator">
+    <div class="eyebrow">10 &mdash; Operator interface</div>
+    <h2>Cameras, telemetry, and flying the leader by hand</h2>
+    <p>Everything above describes a simulation you start and then watch. This section describes turning it into one you <em>operate</em>: a page per session carrying each drone's telemetry, a video feed from each, and direct keyboard control of the leader &mdash; so the formation can be demonstrated on demand rather than only measured by a script. Each of the three is a different path through the same processes, and in each one the <em>ordering</em> is the design, so they are drawn as sequence diagrams rather than as boxes.</p>
+
+    <h3>Telemetry &mdash; the path that already exists</h3>
+    <p>This one is mostly built. A reader thread per drone owns one UDP endpoint, keeps the latest state behind a lock, and the page polls a JSON snapshot. Worth drawing anyway, because the next two paths attach to the same server and inherit its rules &mdash; one owner per port, newest value wins, nothing assumed that can be read.</p>
+    <figure>
+      <div class="frame">
+        <svg class="arch" viewBox="0 0 830 568" role="img" aria-label="Sequence: each ArduPilot SITL instance streams HEARTBEAT, position and status messages through MAVProxy to a per-drone reader thread in the dashboard server, which also requests the FOLL_ parameters, computes each follower's station error, and answers the browser's one-second poll of /api/status with JSON.">
+          <defs>
+            <marker id="s5m" markerWidth="9" markerHeight="9" refX="7.5" refY="4.5" orient="auto">
+              <path d="M0,0.5 L8.5,4.5 L0,8.5 Z" fill="currentColor"/>
+            </marker>
+          </defs>
+          <line x1="120" y1="88" x2="120" y2="560" stroke="var(--border)" stroke-width="1.4" stroke-dasharray="3 5"/>
+          <line x1="322" y1="88" x2="322" y2="560" stroke="var(--border)" stroke-width="1.4" stroke-dasharray="3 5"/>
+          <line x1="524" y1="88" x2="524" y2="560" stroke="var(--border)" stroke-width="1.4" stroke-dasharray="3 5"/>
+          <line x1="726" y1="88" x2="726" y2="560" stroke="var(--border)" stroke-width="1.4" stroke-dasharray="3 5"/>
+          <rect x="40" y="430" width="776" height="84" rx="7" fill="none" stroke="var(--sim-line)" stroke-width="1.1" stroke-dasharray="4 4" opacity=".75"/>
+          <rect x="40" y="430" width="102" height="19" rx="6" fill="var(--sim-soft)" stroke="var(--sim-line)" stroke-width="1.1"/>
+          <text x="46" y="443.5" font-family="IBM Plex Mono" font-size="10" letter-spacing=".03em" fill="var(--sim)">loop  every 1 s</text>
+          <g font-family="IBM Plex Sans, sans-serif">
+            <rect x="34" y="34" width="172" height="54" rx="8" fill="var(--accent-soft)" stroke="var(--accent-line)" stroke-width="1.3"/>
+            <text x="120" y="56" text-anchor="middle" font-size="13" font-weight="600" fill="var(--text)">ArduPilot SITL</text>
+            <text x="120" y="73" text-anchor="middle" font-family="IBM Plex Mono" font-size="10" fill="var(--muted)">one per drone</text>
+            <rect x="236" y="34" width="172" height="54" rx="8" fill="var(--surface)" stroke="var(--border)" stroke-width="1.3"/>
+            <text x="322" y="56" text-anchor="middle" font-size="13" font-weight="600" fill="var(--text)">MAVProxy</text>
+            <text x="322" y="73" text-anchor="middle" font-family="IBM Plex Mono" font-size="10" fill="var(--muted)">--out fan-out</text>
+            <rect x="438" y="34" width="172" height="54" rx="8" fill="var(--sim-soft)" stroke="var(--sim-line)" stroke-width="1.3"/>
+            <text x="524" y="56" text-anchor="middle" font-size="13" font-weight="600" fill="var(--text)">dashboard/server.py</text>
+            <text x="524" y="73" text-anchor="middle" font-family="IBM Plex Mono" font-size="10" fill="var(--muted)">reader thread per drone</text>
+            <rect x="640" y="34" width="172" height="54" rx="8" fill="var(--surface)" stroke="var(--border)" stroke-width="1.3"/>
+            <text x="726" y="56" text-anchor="middle" font-size="13" font-weight="600" fill="var(--text)">Browser</text>
+            <text x="726" y="73" text-anchor="middle" font-family="IBM Plex Mono" font-size="10" fill="var(--muted)">dashboard page</text>
+          </g>
+          <g font-family="IBM Plex Mono" font-size="10.5">
+            <text x="26" y="140" text-anchor="end" font-size="10" fill="var(--muted)" opacity=".8">01</text>
+            <line x1="120" y1="136" x2="322" y2="136" stroke="currentColor" stroke-width="1.6" marker-end="url(#s5m)"/>
+            <text x="221" y="129" text-anchor="middle" fill="var(--text)">HEARTBEAT, POSITION, VFR_HUD</text>
+            <text x="26" y="180" text-anchor="end" font-size="10" fill="var(--muted)" opacity=".8">02</text>
+            <line x1="120" y1="176" x2="322" y2="176" stroke="currentColor" stroke-width="1.6" marker-end="url(#s5m)"/>
+            <text x="221" y="169" text-anchor="middle" fill="var(--text)">GPS_RAW_INT, SYS_STATUS</text>
+            <text x="26" y="220" text-anchor="end" font-size="10" fill="var(--muted)" opacity=".8">03</text>
+            <line x1="322" y1="216" x2="524" y2="216" stroke="currentColor" stroke-width="1.6" marker-end="url(#s5m)"/>
+            <text x="423" y="209" text-anchor="middle" fill="var(--text)">udp 14552 + 10i</text>
+            <text x="423" y="231" text-anchor="middle" font-size="10" fill="var(--muted)">one owner per port</text>
+            <text x="26" y="260" text-anchor="end" font-size="10" fill="var(--muted)" opacity=".8">04</text>
+            <line x1="524" y1="256" x2="120" y2="256" stroke="currentColor" stroke-width="1.6" marker-end="url(#s5m)"/>
+            <text x="322" y="249" text-anchor="middle" fill="var(--text)">PARAM_REQUEST_READ FOLL_*</text>
+            <text x="26" y="300" text-anchor="end" font-size="10" fill="var(--muted)" opacity=".8">05</text>
+            <line x1="120" y1="296" x2="524" y2="296" stroke="currentColor" stroke-width="1.6" stroke-dasharray="5 4" marker-end="url(#s5m)"/>
+            <text x="322" y="289" text-anchor="middle" fill="var(--text)">PARAM_VALUE FOLL_SYSID, FOLL_OFS_*</text>
+            <text x="26" y="340" text-anchor="end" font-size="10" fill="var(--muted)" opacity=".8">06</text>
+            <path d="M524,336 h34 v20 h-34" fill="none" stroke="currentColor" stroke-width="1.6" marker-end="url(#s5m)"/>
+            <text x="568" y="353" text-anchor="start" fill="var(--muted)">leader derived from FOLL_SYSID</text>
+            <text x="26" y="394" text-anchor="end" font-size="10" fill="var(--muted)" opacity=".8">07</text>
+            <path d="M524,390 h34 v20 h-34" fill="none" stroke="currentColor" stroke-width="1.6" marker-end="url(#s5m)"/>
+            <text x="568" y="407" text-anchor="start" fill="var(--muted)">error_m = hypot(offset - station)</text>
+            <text x="26" y="460" text-anchor="end" font-size="10" fill="var(--muted)" opacity=".8">08</text>
+            <line x1="726" y1="456" x2="524" y2="456" stroke="currentColor" stroke-width="1.6" marker-end="url(#s5m)"/>
+            <text x="625" y="449" text-anchor="middle" fill="var(--text)">GET /api/status</text>
+            <text x="26" y="500" text-anchor="end" font-size="10" fill="var(--muted)" opacity=".8">09</text>
+            <line x1="524" y1="496" x2="726" y2="496" stroke="currentColor" stroke-width="1.6" stroke-dasharray="5 4" marker-end="url(#s5m)"/>
+            <text x="625" y="489" text-anchor="middle" fill="var(--text)">JSON: every drone + 180 s of error</text>
+          </g>
+        </svg>
+      </div>
+      <figcaption><b>Fig. 5</b> &mdash; The telemetry path, which is already built. Note step&nbsp;04: the server asks each vehicle for its own <code>FOLL_*</code> values rather than assuming the formation it commanded is the formation in force, so a mis-pointed <code>FOLL_SYSID</code> appears on screen instead of hiding. Everything after it is arithmetic on two positions.</figcaption>
+    </figure>
+
+    <h3>Flying the leader from the keyboard</h3>
+    <p>The leader is the only vehicle a human needs to touch: the followers are already a function of it. Control goes through <code>GUIDED</code> velocity setpoints rather than <code>RC_CHANNELS_OVERRIDE</code>, and that choice is about authority, not convenience. An override actively fights a transmitter for the same channels; a mode-based setpoint loses to the transmitter the instant someone flips the mode switch, which is the behaviour you want the day this is pointed at a real aircraft.</p>
+    <figure>
+      <div class="frame">
+        <svg class="arch" viewBox="0 0 830 576" role="img" aria-label="Sequence: the browser posts a take-control request, the dashboard server puts the leader into GUIDED, then repeats a velocity setpoint every 200 milliseconds while a key is held. The leader's position reaches the followers through relay.py and FOLLOW recomputes each station. On keyup, or after 500 milliseconds of silence, the server commands zero velocity.">
+          <defs>
+            <marker id="s6m" markerWidth="9" markerHeight="9" refX="7.5" refY="4.5" orient="auto">
+              <path d="M0,0.5 L8.5,4.5 L0,8.5 Z" fill="currentColor"/>
+            </marker>
+          </defs>
+          <line x1="120" y1="88" x2="120" y2="568" stroke="var(--border)" stroke-width="1.4" stroke-dasharray="3 5"/>
+          <line x1="322" y1="88" x2="322" y2="568" stroke="var(--border)" stroke-width="1.4" stroke-dasharray="3 5"/>
+          <line x1="524" y1="88" x2="524" y2="568" stroke="var(--border)" stroke-width="1.4" stroke-dasharray="3 5"/>
+          <line x1="726" y1="88" x2="726" y2="568" stroke="var(--border)" stroke-width="1.4" stroke-dasharray="3 5"/>
+          <rect x="40" y="282" width="776" height="144" rx="7" fill="none" stroke="var(--sim-line)" stroke-width="1.1" stroke-dasharray="4 4" opacity=".75"/>
+          <rect x="40" y="282" width="240" height="19" rx="6" fill="var(--sim-soft)" stroke="var(--sim-line)" stroke-width="1.1"/>
+          <text x="46" y="295.5" font-family="IBM Plex Mono" font-size="10" letter-spacing=".03em" fill="var(--sim)">loop  every 200 ms while a key is held</text>
+          <g font-family="IBM Plex Sans, sans-serif">
+            <rect x="34" y="34" width="172" height="54" rx="8" fill="var(--surface)" stroke="var(--border)" stroke-width="1.3"/>
+            <text x="120" y="56" text-anchor="middle" font-size="13" font-weight="600" fill="var(--text)">Browser</text>
+            <text x="120" y="73" text-anchor="middle" font-family="IBM Plex Mono" font-size="10" fill="var(--muted)">keydown / keyup</text>
+            <rect x="236" y="34" width="172" height="54" rx="8" fill="var(--sim-soft)" stroke="var(--sim-line)" stroke-width="1.3"/>
+            <text x="322" y="56" text-anchor="middle" font-size="13" font-weight="600" fill="var(--text)">dashboard/server.py</text>
+            <text x="322" y="73" text-anchor="middle" font-family="IBM Plex Mono" font-size="10" fill="var(--muted)">control endpoint</text>
+            <rect x="438" y="34" width="172" height="54" rx="8" fill="var(--accent-soft)" stroke="var(--accent-line)" stroke-width="1.3"/>
+            <text x="524" y="56" text-anchor="middle" font-size="13" font-weight="600" fill="var(--text)">Leader SITL</text>
+            <text x="524" y="73" text-anchor="middle" font-family="IBM Plex Mono" font-size="10" fill="var(--muted)">sysid 1</text>
+            <rect x="640" y="34" width="172" height="54" rx="8" fill="var(--surface)" stroke="var(--border)" stroke-width="1.3"/>
+            <text x="726" y="56" text-anchor="middle" font-size="13" font-weight="600" fill="var(--text)">Followers</text>
+            <text x="726" y="73" text-anchor="middle" font-family="IBM Plex Mono" font-size="10" fill="var(--muted)">FOLLOW &#8594; sysid 1</text>
+          </g>
+          <g font-family="IBM Plex Mono" font-size="10.5">
+            <text x="26" y="140" text-anchor="end" font-size="10" fill="var(--muted)" opacity=".8">01</text>
+            <line x1="120" y1="136" x2="322" y2="136" stroke="currentColor" stroke-width="1.6" marker-end="url(#s6m)"/>
+            <text x="221" y="129" text-anchor="middle" fill="var(--text)">POST /api/control {take:1}</text>
+            <text x="26" y="180" text-anchor="end" font-size="10" fill="var(--muted)" opacity=".8">02</text>
+            <line x1="322" y1="176" x2="524" y2="176" stroke="currentColor" stroke-width="1.6" marker-end="url(#s6m)"/>
+            <text x="423" y="169" text-anchor="middle" fill="var(--text)">SET_MODE GUIDED</text>
+            <text x="26" y="220" text-anchor="end" font-size="10" fill="var(--muted)" opacity=".8">03</text>
+            <line x1="524" y1="216" x2="322" y2="216" stroke="currentColor" stroke-width="1.6" stroke-dasharray="5 4" marker-end="url(#s6m)"/>
+            <text x="423" y="209" text-anchor="middle" fill="var(--text)">HEARTBEAT mode = GUIDED</text>
+            <text x="26" y="260" text-anchor="end" font-size="10" fill="var(--muted)" opacity=".8">04</text>
+            <line x1="120" y1="256" x2="322" y2="256" stroke="currentColor" stroke-width="1.6" marker-end="url(#s6m)"/>
+            <text x="221" y="249" text-anchor="middle" fill="var(--text)">keydown W -> vx = +3 m/s</text>
+            <text x="26" y="312" text-anchor="end" font-size="10" fill="var(--muted)" opacity=".8">05</text>
+            <line x1="322" y1="308" x2="524" y2="308" stroke="currentColor" stroke-width="1.6" marker-end="url(#s6m)"/>
+            <text x="423" y="301" text-anchor="middle" fill="var(--text)">SET_POSITION_TARGET_LOCAL_NED</text>
+            <text x="423" y="323" text-anchor="middle" font-size="10" fill="var(--muted)">velocity, body frame</text>
+            <text x="26" y="352" text-anchor="end" font-size="10" fill="var(--muted)" opacity=".8">06</text>
+            <line x1="524" y1="348" x2="726" y2="348" stroke="currentColor" stroke-width="1.6" marker-end="url(#s6m)"/>
+            <text x="625" y="341" text-anchor="middle" fill="var(--text)">GLOBAL_POSITION_INT (relay.py)</text>
+            <text x="26" y="392" text-anchor="end" font-size="10" fill="var(--muted)" opacity=".8">07</text>
+            <path d="M726,388 h-34 v20 h34" fill="none" stroke="currentColor" stroke-width="1.6" marker-end="url(#s6m)"/>
+            <text x="682" y="405" text-anchor="end" fill="var(--muted)">FOLLOW recomputes its station</text>
+            <text x="26" y="482" text-anchor="end" font-size="10" fill="var(--muted)" opacity=".8">08</text>
+            <line x1="120" y1="478" x2="322" y2="478" stroke="currentColor" stroke-width="1.6" marker-end="url(#s6m)"/>
+            <text x="221" y="471" text-anchor="middle" fill="var(--text)">keyup W, or 500 ms of silence</text>
+            <text x="26" y="522" text-anchor="end" font-size="10" fill="var(--muted)" opacity=".8">09</text>
+            <line x1="322" y1="518" x2="524" y2="518" stroke="currentColor" stroke-width="1.6" marker-end="url(#s6m)"/>
+            <text x="423" y="511" text-anchor="middle" fill="var(--text)">velocity 0, 0, 0</text>
+            <text x="423" y="533" text-anchor="middle" font-size="10" fill="var(--muted)">deadman: silence means stop</text>
+          </g>
+        </svg>
+      </div>
+      <figcaption><b>Fig. 6</b> &mdash; Manual control of the leader. The loop is the whole design: ArduPilot expires a <code>GUIDED</code> setpoint after about three seconds, so a held key has to be re-sent, and that same property is the safety feature &mdash; a closed tab, a lost focus or a dead server all decay to a hover on their own. Steps 06 and 07 are unchanged code: the followers cannot tell a hand-flown leader from a scripted one.</figcaption>
+    </figure>
+
+    <h3>Video from each drone</h3>
+    <p>Each vehicle model gets a camera sensor publishing on its own <code>gz-transport</code> topic. The dashboard subscribes with the Python bindings, JPEG-encodes frames with OpenCV, and serves them as <code>multipart/x-mixed-replace</code> &mdash; the ancient MJPEG trick, which for three small feeds over loopback needs no negotiation, no signalling server and no client-side library. WebRTC would cut latency and is the right answer for video off a real aircraft over Wi&#8209;Fi; it is the wrong answer for a localhost demo.</p>
+    <figure>
+      <div class="frame">
+        <svg class="arch" viewBox="0 0 830 448" role="img" aria-label="Sequence: a camera sensor on each vehicle model publishes frames on its own gz-transport topic; the dashboard server subscribes with the gz-transport Python bindings, JPEG-encodes the newest frame with OpenCV, and streams it to the browser as multipart/x-mixed-replace, one image element per drone.">
+          <defs>
+            <marker id="s7m" markerWidth="9" markerHeight="9" refX="7.5" refY="4.5" orient="auto">
+              <path d="M0,0.5 L8.5,4.5 L0,8.5 Z" fill="currentColor"/>
+            </marker>
+          </defs>
+          <line x1="120" y1="88" x2="120" y2="440" stroke="var(--border)" stroke-width="1.4" stroke-dasharray="3 5"/>
+          <line x1="322" y1="88" x2="322" y2="440" stroke="var(--border)" stroke-width="1.4" stroke-dasharray="3 5"/>
+          <line x1="524" y1="88" x2="524" y2="440" stroke="var(--border)" stroke-width="1.4" stroke-dasharray="3 5"/>
+          <line x1="726" y1="88" x2="726" y2="440" stroke="var(--border)" stroke-width="1.4" stroke-dasharray="3 5"/>
+          <rect x="40" y="350" width="776" height="44" rx="7" fill="none" stroke="var(--sim-line)" stroke-width="1.1" stroke-dasharray="4 4" opacity=".75"/>
+          <rect x="40" y="350" width="168" height="19" rx="6" fill="var(--sim-soft)" stroke="var(--sim-line)" stroke-width="1.1"/>
+          <text x="46" y="363.5" font-family="IBM Plex Mono" font-size="10" letter-spacing=".03em" fill="var(--sim)">loop  per connected viewer</text>
+          <g font-family="IBM Plex Sans, sans-serif">
+            <rect x="34" y="34" width="172" height="54" rx="8" fill="var(--panel)" stroke="var(--panel-line)" stroke-width="1.3"/>
+            <text x="120" y="56" text-anchor="middle" font-size="13" font-weight="600" fill="var(--text)">Gazebo camera</text>
+            <text x="120" y="73" text-anchor="middle" font-family="IBM Plex Mono" font-size="10" fill="var(--muted)">sensor on iris_v{i}</text>
+            <rect x="236" y="34" width="172" height="54" rx="8" fill="var(--panel)" stroke="var(--panel-line)" stroke-width="1.3"/>
+            <text x="322" y="56" text-anchor="middle" font-size="13" font-weight="600" fill="var(--text)">gz-transport</text>
+            <text x="322" y="73" text-anchor="middle" font-family="IBM Plex Mono" font-size="10" fill="var(--muted)">topic per drone</text>
+            <rect x="438" y="34" width="172" height="54" rx="8" fill="var(--sim-soft)" stroke="var(--sim-line)" stroke-width="1.3"/>
+            <text x="524" y="56" text-anchor="middle" font-size="13" font-weight="600" fill="var(--text)">dashboard/server.py</text>
+            <text x="524" y="73" text-anchor="middle" font-family="IBM Plex Mono" font-size="10" fill="var(--muted)">encoder thread per drone</text>
+            <rect x="640" y="34" width="172" height="54" rx="8" fill="var(--surface)" stroke="var(--border)" stroke-width="1.3"/>
+            <text x="726" y="56" text-anchor="middle" font-size="13" font-weight="600" fill="var(--text)">Browser</text>
+            <text x="726" y="73" text-anchor="middle" font-family="IBM Plex Mono" font-size="10" fill="var(--muted)">img src=/api/video/i</text>
+          </g>
+          <g font-family="IBM Plex Mono" font-size="10.5">
+            <text x="26" y="140" text-anchor="end" font-size="10" fill="var(--muted)" opacity=".8">01</text>
+            <line x1="120" y1="136" x2="322" y2="136" stroke="currentColor" stroke-width="1.6" marker-end="url(#s7m)"/>
+            <text x="221" y="129" text-anchor="middle" fill="var(--text)">320x240 RGB8 @ 10 Hz</text>
+            <text x="26" y="180" text-anchor="end" font-size="10" fill="var(--muted)" opacity=".8">02</text>
+            <line x1="322" y1="176" x2="524" y2="176" stroke="currentColor" stroke-width="1.6" marker-end="url(#s7m)"/>
+            <text x="423" y="169" text-anchor="middle" fill="var(--text)">gz.transport13 subscribe()</text>
+            <text x="423" y="191" text-anchor="middle" font-size="10" fill="var(--muted)">no GStreamer, no new deps</text>
+            <text x="26" y="220" text-anchor="end" font-size="10" fill="var(--muted)" opacity=".8">03</text>
+            <path d="M524,216 h34 v20 h-34" fill="none" stroke="currentColor" stroke-width="1.6" marker-end="url(#s7m)"/>
+            <text x="568" y="233" text-anchor="start" fill="var(--muted)">cv2.imencode JPEG q=70</text>
+            <text x="26" y="274" text-anchor="end" font-size="10" fill="var(--muted)" opacity=".8">04</text>
+            <path d="M524,270 h34 v20 h-34" fill="none" stroke="currentColor" stroke-width="1.6" marker-end="url(#s7m)"/>
+            <text x="568" y="287" text-anchor="start" fill="var(--muted)">newest frame only, never a queue</text>
+            <text x="26" y="328" text-anchor="end" font-size="10" fill="var(--muted)" opacity=".8">05</text>
+            <line x1="726" y1="324" x2="524" y2="324" stroke="currentColor" stroke-width="1.6" marker-end="url(#s7m)"/>
+            <text x="625" y="317" text-anchor="middle" fill="var(--text)">GET /api/video/{i}</text>
+            <text x="26" y="380" text-anchor="end" font-size="10" fill="var(--muted)" opacity=".8">06</text>
+            <line x1="524" y1="376" x2="726" y2="376" stroke="currentColor" stroke-width="1.6" stroke-dasharray="5 4" marker-end="url(#s7m)"/>
+            <text x="625" y="369" text-anchor="middle" fill="var(--text)">multipart/x-mixed-replace</text>
+            <text x="625" y="391" text-anchor="middle" font-size="10" fill="var(--muted)">one JPEG part per frame</text>
+          </g>
+        </svg>
+      </div>
+      <figcaption><b>Fig. 7</b> &mdash; Video. The only new dependency is one already installed (<code>gz-transport13</code>'s Python bindings), and the encoder deliberately drops frames rather than queueing them &mdash; a viewer that stalls must not be able to make the server accumulate memory or serve stale video.</figcaption>
+    </figure>
+
+    <div class="note">
+      <span class="tag">What this costs &mdash; measured, and not what was predicted</span>
+      <p>This section originally predicted that three rendered camera sensors would be the expensive part, and that a real-time factor below 1.0 would corrupt the flight measurements. Both halves turned out to be wrong, so here are the numbers instead. On this machine, three drones with the Gazebo GUI run at <b>RTF&nbsp;0.66</b> with no cameras at all and <b>RTF&nbsp;0.61</b> with three of them at 320&times;240 and 10&nbsp;Hz (ten samples each). The cameras cost about 7&nbsp;% relative; the low baseline is three SITL processes and the GUI, and it was already there.</p>
+      <p>The second correction matters more. Because the plugin is <b>lock-stepped</b>, SITL and Gazebo share one clock, so a low RTF does <em>not</em> corrupt the simulated flight &mdash; it stays self-consistent, and the station-keeping numbers remain valid. What a low RTF actually costs is wall-clock time, and it makes anything measured in wall-clock correspond to <em>less</em> sim time than it appears to: the sensor's 10&nbsp;Hz is 10&nbsp;Hz of <em>sim</em> time, which is why the dashboard measured 6.3&nbsp;fps at RTF&nbsp;0.63 and 9.9&nbsp;fps once the machine was less loaded. The same applies to the browser's command loop and its deadman, both of which are wall-clock and therefore conservative here rather than dangerous.</p>
+      <p>The acceptance test is still worth running &mdash; <code>SWARM_CAMERAS=0 flyit 3</code> builds the identical world without camera sensors, so the comparison takes two runs &mdash; but on this hardware the cameras are not what to cut if the simulation feels slow. Closing the Gazebo GUI is.</p>
+    </div>
+
+    <div class="note">
+      <span class="tag">What this changes &mdash; the dashboard stops being read-only</span>
+      <p>One failure mode found while building this is worth writing down, because it looks like a bug in the formation and is not. If the leader descends and lands while the followers are still in <code>FOLLOW</code>, they dutifully follow it to the ground and stay <em>armed</em> there &mdash; and ArduPilot then refuses a fresh <code>GUIDED</code> takeoff for a vehicle that is armed and already on the ground. The take-off button therefore force-disarms anything sitting armed at zero altitude before arming it again, and every arm and take-off now waits for its <code>COMMAND_ACK</code> and reports the result on the page. That last part is the real fix: the first version failed completely silently, leaving vehicles on the ground while the UI looked like it had worked.</p>
+      <p>Until now nothing in the web UI could touch a vehicle; the page was a window. Step&nbsp;01 of Fig.&nbsp;6 changes that, and a browser tab becomes a flight control. In SITL the stakes are zero, but the stated goal of this repo is that its code and parameters transfer to real F450s, so the gate belongs in the design now rather than bolted on later: bind to loopback only, require an explicit take-control action instead of live-by-default keys, show on screen who currently holds authority, and keep the deadman short. On a real aircraft the FrSky transmitter must win every contest, which is the argument for <code>GUIDED</code> setpoints over RC override made above.</p>
+    </div>
+  </section>
+
+  <section id="inspection">
+    <div class="eyebrow">11 &mdash; Autonomous inspection</div>
+    <h2>Pick a point, sweep an area, find what is on the road, look at it</h2>
+    <p>Manual control answers &ldquo;fly <em>there</em>&rdquo;. This section answers the two questions that follow it: <em>go here</em>, chosen by clicking the map, and <em>cover all of this and tell me what you found</em>. Both reduce to the same primitive &mdash; a position target for the leader &mdash; because the followers are already a function of the leader. That is the dividend of putting the formation logic in the flight controller: a survey plan has exactly one vehicle in it, no matter how many are flying.</p>
+
+    <h3>One click, one target</h3>
+    <p>The map is drawn leader-centred, but a clicked target is stored as an absolute latitude and longitude and re-projected every frame. Storing an offset instead would make the target slide across the ground as the leader closed on it. Position targets go out as <code>SET_POSITION_TARGET_GLOBAL_INT</code>, whose 1e7 integer fields are exact; <code>MAV_CMD_DO_REPOSITION</code> is the obvious alternative and carries latitude as a float32 command parameter, which quantises a position to about a metre at these latitudes.</p>
+    <figure>
+      <div class="frame">
+        <svg class="arch" viewBox="0 0 830 510" role="img" aria-label="Sequence: a click on the formation map is converted to an absolute latitude and longitude, the server takes sole ownership of the leader's setpoints, and re-asserts a position target once a second until the leader is within the acceptance radius. The followers hold station throughout. On arrival the server holds position in GUIDED rather than handing over to LOITER.">
+          <defs>
+            <marker id="s8m" markerWidth="9" markerHeight="9" refX="7.5" refY="4.5" orient="auto">
+              <path d="M0,0.5 L8.5,4.5 L0,8.5 Z" fill="currentColor"/>
+            </marker>
+          </defs>
+          <line x1="120" y1="88" x2="120" y2="502" stroke="var(--border)" stroke-width="1.4" stroke-dasharray="3 5"/>
+          <line x1="322" y1="88" x2="322" y2="502" stroke="var(--border)" stroke-width="1.4" stroke-dasharray="3 5"/>
+          <line x1="524" y1="88" x2="524" y2="502" stroke="var(--border)" stroke-width="1.4" stroke-dasharray="3 5"/>
+          <line x1="726" y1="88" x2="726" y2="502" stroke="var(--border)" stroke-width="1.4" stroke-dasharray="3 5"/>
+          <rect x="40" y="256" width="776" height="144" rx="7" fill="none" stroke="var(--sim-line)" stroke-width="1.1" stroke-dasharray="4 4" opacity=".75"/>
+          <rect x="40" y="256" width="180" height="19" rx="6" fill="var(--sim-soft)" stroke="var(--sim-line)" stroke-width="1.1"/>
+          <text x="46" y="269.5" font-family="IBM Plex Mono" font-size="10" letter-spacing=".03em" fill="var(--sim)">loop  1 Hz until within 12 m</text>
+          <g font-family="IBM Plex Sans, sans-serif">
+            <rect x="34" y="34" width="172" height="54" rx="8" fill="var(--surface)" stroke="var(--border)" stroke-width="1.3"/>
+            <text x="120" y="56" text-anchor="middle" font-size="13" font-weight="600" fill="var(--text)">Browser</text>
+            <text x="120" y="73" text-anchor="middle" font-family="IBM Plex Mono" font-size="10" fill="var(--muted)">click on the map</text>
+            <rect x="236" y="34" width="172" height="54" rx="8" fill="var(--sim-soft)" stroke="var(--sim-line)" stroke-width="1.3"/>
+            <text x="322" y="56" text-anchor="middle" font-size="13" font-weight="600" fill="var(--text)">dashboard/server.py</text>
+            <text x="322" y="73" text-anchor="middle" font-family="IBM Plex Mono" font-size="10" fill="var(--muted)">one command owner</text>
+            <rect x="438" y="34" width="172" height="54" rx="8" fill="var(--accent-soft)" stroke="var(--accent-line)" stroke-width="1.3"/>
+            <text x="524" y="56" text-anchor="middle" font-size="13" font-weight="600" fill="var(--text)">Leader SITL</text>
+            <text x="524" y="73" text-anchor="middle" font-family="IBM Plex Mono" font-size="10" fill="var(--muted)">sysid 1 - GUIDED</text>
+            <rect x="640" y="34" width="172" height="54" rx="8" fill="var(--surface)" stroke="var(--border)" stroke-width="1.3"/>
+            <text x="726" y="56" text-anchor="middle" font-size="13" font-weight="600" fill="var(--text)">Followers</text>
+            <text x="726" y="73" text-anchor="middle" font-family="IBM Plex Mono" font-size="10" fill="var(--muted)">FOLLOW &#8594; sysid 1</text>
+          </g>
+          <g font-family="IBM Plex Mono" font-size="10.5">
+            <text x="26" y="140" text-anchor="end" font-size="10" fill="var(--muted)" opacity=".8">01</text>
+            <line x1="120" y1="136" x2="322" y2="136" stroke="currentColor" stroke-width="1.6" marker-end="url(#s8m)"/>
+            <text x="221" y="129" text-anchor="middle" fill="var(--text)">POST /api/control  goto lat,lon</text>
+            <text x="26" y="180" text-anchor="end" font-size="10" fill="var(--muted)" opacity=".8">02</text>
+            <path d="M322,176 h34 v20 h-34" fill="none" stroke="currentColor" stroke-width="1.6" marker-end="url(#s8m)"/>
+            <text x="366" y="193" text-anchor="start" fill="var(--muted)">claim sole ownership: drop manual, drop any survey</text>
+            <text x="26" y="234" text-anchor="end" font-size="10" fill="var(--muted)" opacity=".8">03</text>
+            <line x1="322" y1="230" x2="524" y2="230" stroke="currentColor" stroke-width="1.6" marker-end="url(#s8m)"/>
+            <text x="423" y="223" text-anchor="middle" fill="var(--text)">SET_MODE GUIDED</text>
+            <text x="26" y="286" text-anchor="end" font-size="10" fill="var(--muted)" opacity=".8">04</text>
+            <line x1="322" y1="282" x2="524" y2="282" stroke="currentColor" stroke-width="1.6" marker-end="url(#s8m)"/>
+            <text x="423" y="275" text-anchor="middle" fill="var(--text)">SET_POSITION_TARGET_GLOBAL_INT</text>
+            <text x="423" y="297" text-anchor="middle" font-size="10" fill="var(--muted)">lat/lon as 1e7 integers</text>
+            <text x="26" y="326" text-anchor="end" font-size="10" fill="var(--muted)" opacity=".8">05</text>
+            <line x1="524" y1="322" x2="726" y2="322" stroke="currentColor" stroke-width="1.6" marker-end="url(#s8m)"/>
+            <text x="625" y="315" text-anchor="middle" fill="var(--text)">GLOBAL_POSITION_INT (relay.py)</text>
+            <text x="26" y="366" text-anchor="end" font-size="10" fill="var(--muted)" opacity=".8">06</text>
+            <path d="M726,362 h-34 v20 h34" fill="none" stroke="currentColor" stroke-width="1.6" marker-end="url(#s8m)"/>
+            <text x="682" y="379" text-anchor="end" fill="var(--muted)">FOLLOW recomputes its station</text>
+            <text x="26" y="456" text-anchor="end" font-size="10" fill="var(--muted)" opacity=".8">07</text>
+            <line x1="322" y1="452" x2="524" y2="452" stroke="currentColor" stroke-width="1.6" marker-end="url(#s8m)"/>
+            <text x="423" y="445" text-anchor="middle" fill="var(--text)">position target = here</text>
+            <text x="423" y="467" text-anchor="middle" font-size="10" fill="var(--muted)">hold in GUIDED, never LOITER</text>
+          </g>
+        </svg>
+      </div>
+      <figcaption><b>Fig. 8</b> &mdash; Step 02 is the one that was missing at first. Manual keys, a map click and a survey all command the same vehicle several times a second, and two of them running at once does not blend &mdash; it alternates, and the vehicle does neither. Every entry point now claims sole ownership before it starts, which is also why a take-off no longer stops short at the altitude of some forgotten target.</figcaption>
+    </figure>
+
+    <h3>Finding the accident</h3>
+    <p>There is nothing to find in the stock world, so the generator stages something: two cars and some debris on the runway centreline, in saturated red and yellow. Nothing else in this world is either colour &mdash; asphalt grey, markings white, grass green, sky pale &mdash; which is what makes a plain hue threshold a legitimate detector here rather than a toy. It is not a vehicle detector, and the day this points at real video it has to be replaced outright.</p>
+    <p>The interesting half is not detection but <em>location</em>. The camera looks forward and down, so a blob near the top of the frame sits near the horizon, where a small angular error becomes an enormous ground error. The projection therefore reports its own reliability and refuses to range anything shallower than 12&deg; below horizontal, returning a bearing instead.</p>
+    <figure>
+      <div class="frame">
+        <svg class="arch" viewBox="0 0 830 610" role="img" aria-label="Sequence: every third camera frame is passed to the detector, which thresholds saturated red and returns a centroid. The server projects that pixel onto the ground using the drone's altitude and attitude, clusters the result with nearby sightings weighted by blob area, writes an annotated evidence frame, and reports one geotagged accident to the page.">
+          <defs>
+            <marker id="s9m" markerWidth="9" markerHeight="9" refX="7.5" refY="4.5" orient="auto">
+              <path d="M0,0.5 L8.5,4.5 L0,8.5 Z" fill="currentColor"/>
+            </marker>
+          </defs>
+          <line x1="120" y1="88" x2="120" y2="602" stroke="var(--border)" stroke-width="1.4" stroke-dasharray="3 5"/>
+          <line x1="322" y1="88" x2="322" y2="602" stroke="var(--border)" stroke-width="1.4" stroke-dasharray="3 5"/>
+          <line x1="524" y1="88" x2="524" y2="602" stroke="var(--border)" stroke-width="1.4" stroke-dasharray="3 5"/>
+          <line x1="726" y1="88" x2="726" y2="602" stroke="var(--border)" stroke-width="1.4" stroke-dasharray="3 5"/>
+          <rect x="40" y="472" width="776" height="84" rx="7" fill="none" stroke="var(--sim-line)" stroke-width="1.1" stroke-dasharray="4 4" opacity=".75"/>
+          <rect x="40" y="472" width="102" height="19" rx="6" fill="var(--sim-soft)" stroke="var(--sim-line)" stroke-width="1.1"/>
+          <text x="46" y="485.5" font-family="IBM Plex Mono" font-size="10" letter-spacing=".03em" fill="var(--sim)">loop  every 1 s</text>
+          <g font-family="IBM Plex Sans, sans-serif">
+            <rect x="34" y="34" width="172" height="54" rx="8" fill="var(--panel)" stroke="var(--panel-line)" stroke-width="1.3"/>
+            <text x="120" y="56" text-anchor="middle" font-size="13" font-weight="600" fill="var(--text)">Gazebo camera</text>
+            <text x="120" y="73" text-anchor="middle" font-family="IBM Plex Mono" font-size="10" fill="var(--muted)">one per drone</text>
+            <rect x="236" y="34" width="172" height="54" rx="8" fill="var(--sim-soft)" stroke="var(--sim-line)" stroke-width="1.3"/>
+            <text x="322" y="56" text-anchor="middle" font-size="13" font-weight="600" fill="var(--text)">detect.py</text>
+            <text x="322" y="73" text-anchor="middle" font-family="IBM Plex Mono" font-size="10" fill="var(--muted)">hue + projection</text>
+            <rect x="438" y="34" width="172" height="54" rx="8" fill="var(--sim-soft)" stroke="var(--sim-line)" stroke-width="1.3"/>
+            <text x="524" y="56" text-anchor="middle" font-size="13" font-weight="600" fill="var(--text)">server.py</text>
+            <text x="524" y="73" text-anchor="middle" font-family="IBM Plex Mono" font-size="10" fill="var(--muted)">sightings store</text>
+            <rect x="640" y="34" width="172" height="54" rx="8" fill="var(--surface)" stroke="var(--border)" stroke-width="1.3"/>
+            <text x="726" y="56" text-anchor="middle" font-size="13" font-weight="600" fill="var(--text)">Browser</text>
+            <text x="726" y="73" text-anchor="middle" font-family="IBM Plex Mono" font-size="10" fill="var(--muted)">accidents found</text>
+          </g>
+          <g font-family="IBM Plex Mono" font-size="10.5">
+            <text x="26" y="140" text-anchor="end" font-size="10" fill="var(--muted)" opacity=".8">01</text>
+            <line x1="120" y1="136" x2="322" y2="136" stroke="currentColor" stroke-width="1.6" marker-end="url(#s9m)"/>
+            <text x="221" y="129" text-anchor="middle" fill="var(--text)">every 3rd frame, 320x240 RGB</text>
+            <text x="26" y="180" text-anchor="end" font-size="10" fill="var(--muted)" opacity=".8">02</text>
+            <path d="M322,176 h34 v20 h-34" fill="none" stroke="currentColor" stroke-width="1.6" marker-end="url(#s9m)"/>
+            <text x="366" y="193" text-anchor="start" fill="var(--muted)">HSV threshold, contours, centroid</text>
+            <text x="26" y="234" text-anchor="end" font-size="10" fill="var(--muted)" opacity=".8">03</text>
+            <line x1="322" y1="230" x2="524" y2="230" stroke="currentColor" stroke-width="1.6" marker-end="url(#s9m)"/>
+            <text x="423" y="223" text-anchor="middle" fill="var(--text)">centroid + area px</text>
+            <text x="26" y="274" text-anchor="end" font-size="10" fill="var(--muted)" opacity=".8">04</text>
+            <path d="M524,270 h34 v20 h-34" fill="none" stroke="currentColor" stroke-width="1.6" marker-end="url(#s9m)"/>
+            <text x="568" y="287" text-anchor="start" fill="var(--muted)">project_to_ground(alt, yaw, pitch, roll)</text>
+            <text x="26" y="328" text-anchor="end" font-size="10" fill="var(--muted)" opacity=".8">05</text>
+            <path d="M524,324 h34 v20 h-34" fill="none" stroke="currentColor" stroke-width="1.6" marker-end="url(#s9m)"/>
+            <text x="568" y="341" text-anchor="start" fill="var(--muted)">refuse to range near the horizon</text>
+            <text x="26" y="382" text-anchor="end" font-size="10" fill="var(--muted)" opacity=".8">06</text>
+            <path d="M524,378 h34 v20 h-34" fill="none" stroke="currentColor" stroke-width="1.6" marker-end="url(#s9m)"/>
+            <text x="568" y="395" text-anchor="start" fill="var(--muted)">cluster within 45 m, weight by area</text>
+            <text x="26" y="436" text-anchor="end" font-size="10" fill="var(--muted)" opacity=".8">07</text>
+            <path d="M524,432 h34 v20 h-34" fill="none" stroke="currentColor" stroke-width="1.6" marker-end="url(#s9m)"/>
+            <text x="568" y="449" text-anchor="start" fill="var(--muted)">write .run/latest/detections/N.jpg</text>
+            <text x="26" y="502" text-anchor="end" font-size="10" fill="var(--muted)" opacity=".8">08</text>
+            <line x1="726" y1="498" x2="524" y2="498" stroke="currentColor" stroke-width="1.6" marker-end="url(#s9m)"/>
+            <text x="625" y="491" text-anchor="middle" fill="var(--text)">GET /api/status</text>
+            <text x="26" y="542" text-anchor="end" font-size="10" fill="var(--muted)" opacity=".8">09</text>
+            <line x1="524" y1="538" x2="726" y2="538" stroke="currentColor" stroke-width="1.6" stroke-dasharray="5 4" marker-end="url(#s9m)"/>
+            <text x="625" y="531" text-anchor="middle" fill="var(--text)">one accident, lat/lon + evidence</text>
+          </g>
+        </svg>
+      </div>
+      <figcaption><b>Fig. 9</b> &mdash; Steps 06 and 07 are what turn a flood into a report. Three cameras over one wreck produce well over a hundred sightings a minute; clustering by ground position rather than by time or by camera collapses them into one record, and weighting each fix by how much red it saw keeps a distant near-horizon glimpse from dragging the estimate around. Measured, that weighting is worth about a metre and a half.</figcaption>
+    </figure>
+
+    <h3>Aiming every camera at what you found</h3>
+    <p>Once something is on the map, the useful next question is &ldquo;let me look at it&rdquo;. The cameras are bolted to the airframes &mdash; no gimbals, matching the real F450s &mdash; so aiming a camera means yawing the aircraft. That turns out to be free: <code>FOLL_OFS_TYPE=0</code> puts the formation offsets in the NED frame, so the geometry does not rotate with heading and yaw is an unused degree of freedom. The swarm can stare at a fixed point on the ground while still flying wherever the leader goes.</p>
+    <p>What it does cost is <code>FOLLOW</code> mode, and finding that out is most of the story. ArduPilot's <code>FOLLOW</code> owns the yaw controller: it <em>acks</em> <code>MAV_CMD_CONDITION_YAW</code> and then ignores it, and <code>FOLL_YAW_BEHAVE</code> offers only &ldquo;face the leader&rdquo;, &ldquo;copy the leader&rdquo; and &ldquo;face the direction of flight&rdquo; &mdash; none of which is &ldquo;face that point over there&rdquo;. Copying the leader's heading nearly works, and fails exactly where it matters: measured with the swarm near the wreck, the three drones wanted 0&deg;, 16&deg; and 344&deg;, a 32&deg; spread, and up close the spread exceeded what a 69&deg; lens can absorb entirely.</p>
+    <p>So while a point is being watched, the followers move to <code>GUIDED</code> and the dashboard holds their stations from the ground &mdash; Option&nbsp;B from <a href="#logic">Section&nbsp;07</a>, for exactly as long as the cameras are aimed, with their <code>FOLL_*</code> parameters left untouched so the handback is exact.</p>
+    <figure>
+      <div class="frame">
+        <svg class="arch" viewBox="0 0 830 604" role="img" aria-label="Sequence: pressing point-all-cameras-here stores one ground position. The watch loop computes a separate bearing for every drone and sends it inside that drone's own command - a velocity or position target for the leader, and a position, velocity and yaw target for each follower built from the leader's live position plus the follower's existing FOLL_OFS station. The followers leave FOLLOW for the duration and are handed back afterwards.">
+          <defs>
+            <marker id="s10m" markerWidth="9" markerHeight="9" refX="7.5" refY="4.5" orient="auto">
+              <path d="M0,0.5 L8.5,4.5 L0,8.5 Z" fill="currentColor"/>
+            </marker>
+          </defs>
+          <line x1="120" y1="88" x2="120" y2="596" stroke="var(--border)" stroke-width="1.4" stroke-dasharray="3 5"/>
+          <line x1="322" y1="88" x2="322" y2="596" stroke="var(--border)" stroke-width="1.4" stroke-dasharray="3 5"/>
+          <line x1="524" y1="88" x2="524" y2="596" stroke="var(--border)" stroke-width="1.4" stroke-dasharray="3 5"/>
+          <line x1="726" y1="88" x2="726" y2="596" stroke="var(--border)" stroke-width="1.4" stroke-dasharray="3 5"/>
+          <rect x="40" y="256" width="776" height="198" rx="7" fill="none" stroke="var(--sim-line)" stroke-width="1.1" stroke-dasharray="4 4" opacity=".75"/>
+          <rect x="40" y="256" width="162" height="19" rx="6" fill="var(--sim-soft)" stroke="var(--sim-line)" stroke-width="1.1"/>
+          <text x="46" y="269.5" font-family="IBM Plex Mono" font-size="10" letter-spacing=".03em" fill="var(--sim)">loop  3 Hz while watching</text>
+          <g font-family="IBM Plex Sans, sans-serif">
+            <rect x="34" y="34" width="172" height="54" rx="8" fill="var(--surface)" stroke="var(--border)" stroke-width="1.3"/>
+            <text x="120" y="56" text-anchor="middle" font-size="13" font-weight="600" fill="var(--text)">Browser</text>
+            <text x="120" y="73" text-anchor="middle" font-family="IBM Plex Mono" font-size="10" fill="var(--muted)">accidents found</text>
+            <rect x="236" y="34" width="172" height="54" rx="8" fill="var(--sim-soft)" stroke="var(--sim-line)" stroke-width="1.3"/>
+            <text x="322" y="56" text-anchor="middle" font-size="13" font-weight="600" fill="var(--text)">dashboard/server.py</text>
+            <text x="322" y="73" text-anchor="middle" font-family="IBM Plex Mono" font-size="10" fill="var(--muted)">watch loop, 3 Hz</text>
+            <rect x="438" y="34" width="172" height="54" rx="8" fill="var(--accent-soft)" stroke="var(--accent-line)" stroke-width="1.3"/>
+            <text x="524" y="56" text-anchor="middle" font-size="13" font-weight="600" fill="var(--text)">Leader SITL</text>
+            <text x="524" y="73" text-anchor="middle" font-family="IBM Plex Mono" font-size="10" fill="var(--muted)">whatever is flying it</text>
+            <rect x="640" y="34" width="172" height="54" rx="8" fill="var(--surface)" stroke="var(--border)" stroke-width="1.3"/>
+            <text x="726" y="56" text-anchor="middle" font-size="13" font-weight="600" fill="var(--text)">Followers</text>
+            <text x="726" y="73" text-anchor="middle" font-family="IBM Plex Mono" font-size="10" fill="var(--muted)">GUIDED while aimed</text>
+          </g>
+          <g font-family="IBM Plex Mono" font-size="10.5">
+            <text x="26" y="140" text-anchor="end" font-size="10" fill="var(--muted)" opacity=".8">01</text>
+            <line x1="120" y1="136" x2="322" y2="136" stroke="currentColor" stroke-width="1.6" marker-end="url(#s10m)"/>
+            <text x="221" y="129" text-anchor="middle" fill="var(--text)">POST /api/control  watch</text>
+            <text x="26" y="180" text-anchor="end" font-size="10" fill="var(--muted)" opacity=".8">02</text>
+            <path d="M322,176 h34 v20 h-34" fill="none" stroke="currentColor" stroke-width="1.6" marker-end="url(#s10m)"/>
+            <text x="366" y="193" text-anchor="start" fill="var(--muted)">store a ground position, not a heading</text>
+            <text x="26" y="234" text-anchor="end" font-size="10" fill="var(--muted)" opacity=".8">03</text>
+            <line x1="322" y1="230" x2="726" y2="230" stroke="currentColor" stroke-width="1.6" marker-end="url(#s10m)"/>
+            <text x="524" y="223" text-anchor="middle" fill="var(--text)">SET_MODE GUIDED</text>
+            <text x="524" y="245" text-anchor="middle" font-size="10" fill="var(--muted)">FOLLOW ignores any yaw command</text>
+            <text x="26" y="286" text-anchor="end" font-size="10" fill="var(--muted)" opacity=".8">04</text>
+            <path d="M322,282 h34 v20 h-34" fill="none" stroke="currentColor" stroke-width="1.6" marker-end="url(#s10m)"/>
+            <text x="366" y="299" text-anchor="start" fill="var(--muted)">a bearing per drone, from its own position</text>
+            <text x="26" y="340" text-anchor="end" font-size="10" fill="var(--muted)" opacity=".8">05</text>
+            <line x1="322" y1="336" x2="524" y2="336" stroke="currentColor" stroke-width="1.6" marker-end="url(#s10m)"/>
+            <text x="423" y="329" text-anchor="middle" fill="var(--text)">target + yaw in ONE message</text>
+            <text x="423" y="351" text-anchor="middle" font-size="10" fill="var(--muted)">a separate yaw is overwritten</text>
+            <text x="26" y="380" text-anchor="end" font-size="10" fill="var(--muted)" opacity=".8">06</text>
+            <line x1="322" y1="376" x2="726" y2="376" stroke="currentColor" stroke-width="1.6" marker-end="url(#s10m)"/>
+            <text x="524" y="369" text-anchor="middle" fill="var(--text)">position + leader velocity + yaw</text>
+            <text x="524" y="391" text-anchor="middle" font-size="10" fill="var(--muted)">velocity is feed-forward</text>
+            <text x="26" y="420" text-anchor="end" font-size="10" fill="var(--muted)" opacity=".8">07</text>
+            <path d="M726,416 h-34 v20 h34" fill="none" stroke="currentColor" stroke-width="1.6" marker-end="url(#s10m)"/>
+            <text x="682" y="433" text-anchor="end" fill="var(--muted)">holds station, faces the wreck</text>
+            <text x="26" y="510" text-anchor="end" font-size="10" fill="var(--muted)" opacity=".8">08</text>
+            <line x1="120" y1="506" x2="322" y2="506" stroke="currentColor" stroke-width="1.6" marker-end="url(#s10m)"/>
+            <text x="221" y="499" text-anchor="middle" fill="var(--text)">POST /api/control  unwatch</text>
+            <text x="26" y="550" text-anchor="end" font-size="10" fill="var(--muted)" opacity=".8">09</text>
+            <line x1="322" y1="546" x2="726" y2="546" stroke="currentColor" stroke-width="1.6" marker-end="url(#s10m)"/>
+            <text x="524" y="539" text-anchor="middle" fill="var(--text)">SET_MODE FOLLOW</text>
+            <text x="524" y="561" text-anchor="middle" font-size="10" fill="var(--muted)">FOLL_* were never touched</text>
+          </g>
+        </svg>
+      </div>
+      <figcaption><b>Fig. 10</b> &mdash; Two details do all the work. The aim rides <em>inside</em> whatever message is already commanding each vehicle (steps 05 and 06): a separate yaw command is reset to &ldquo;face the direction of travel&rdquo; by the very next position target, so the camera swings away precisely while the vehicle is moving. And the follower targets carry the leader's <b>velocity</b> as feed-forward &mdash; without it a follower flies <em>to</em> a point and decelerates into it, which left the formation about 25&nbsp;m behind a leader doing 10&nbsp;m/s.</figcaption>
+    </figure>
+
+    <div class="note">
+      <span class="tag">What the hand-off actually costs</span>
+      <p>Holding formation from the ground instead of in the flight controller is a real trade, and now a measured one. With the velocity feed-forward in place, a leader hand-flown at 6&nbsp;m/s kept its followers within <b>1.0&ndash;1.6&nbsp;m</b> of station while all three cameras stayed within <b>&plusmn;1.6&deg;</b> of their individual bearings &mdash; comparable to the 0.3&ndash;2.8&nbsp;m that flight-controller <code>FOLLOW</code> held during a survey. Without the feed-forward it was <b>25&nbsp;m</b>. The difference that remains is not accuracy but dependency: while watching, the formation exists because the ground station is talking. If the dashboard or the link stops, the followers hold their last commanded position &mdash; safe, but no longer following. That is the whole Option&nbsp;A versus Option&nbsp;B argument, and it is why watching is a temporary mode with an explicit hand-back rather than the default.</p>
+    </div>
+
+    <div class="note">
+      <span class="tag">Measured against the answer key</span>
+      <p><code>worlds/scene.json</code> records where the accident was actually staged, which makes this testable rather than merely demonstrable. Flying the highway survey at 30&nbsp;m, the swarm located it to <b>1.8&nbsp;m</b>; the wider area survey at 35&nbsp;m, with 148 sightings from two drones, to <b>2.6&nbsp;m</b>. The negative control matters just as much: with <code>SWARM_ACCIDENT=0</code> the generator stages nothing, and a full survey over the same clear road reported <b>zero</b> detections &mdash; so the detector is keying on the wreck and not on asphalt, markings or grass.</p>
+    </div>
+
+    <div class="note">
+      <span class="tag">LOITER is not a hold &mdash; the bug this section cost</span>
+      <p>Every early survey ended with the swarm sitting on the ground, with no failsafe, no warning and nothing in the flight log but a mode change. The cause was a single line: on completion the leader was handed to <code>LOITER</code>. <b><code>LOITER</code> is a pilot-assisted mode</b> &mdash; it holds position horizontally but takes its climb rate from the throttle stick, and in SITL that stick reads 1000&nbsp;&micro;s, which is full descent. Every &ldquo;hold here&rdquo; in this repo was quietly commanding a landing. The fix is to hold the current position as a <code>GUIDED</code> target, which needs no RC input at all; position targets, unlike velocity targets, do not expire, so one message does it. Worth remembering before any of this is pointed at an aircraft whose transmitter happens to be switched off.</p>
+    </div>
+  </section>
+
+  <section id="layout">
+    <div class="eyebrow">12 &mdash; If this is approved</div>
+    <h2>Proposed repo layout</h2>
+    <p>Structured so <code>companion/</code> ships to a real Pi unchanged, and both the formation and the network topology live in config rather than in code.</p>
+    <pre class="tree"><span class="r">Swarm-Simulation-SSS/</span>
+├── worlds/               <span class="c"># Gazebo .sdf worlds, with spaced spawn points</span>
+├── models/               <span class="c"># vehicle airframes, matched to the real frames</span>
+├── config/
+│   ├── sitl/             <span class="c"># per-vehicle params: SYSID_THISMAV, ports</span>
+│   ├── <span class="new">follow/</span>           <span class="c"><span class="new"># FOLL_* parameter sets, one per formation shape</span></span>
+│   └── network/          <span class="c"># mavlink-router conf, netem impairment profiles</span>
+├── companion/            <span class="c"># ships to the real Raspberry Pi unchanged</span>
+│   ├── swarm_agent/      <span class="c"># per-drone logic: mirrors the Pi's real job</span>
+│   └── requirements.txt
+├── ground_control/       <span class="c"># Mission Planner endpoints, optional coordinator</span>
+├── scripts/
+│   ├── launch_swarm.sh   <span class="c"># spins up N SITL + N companions + router</span>
+│   ├── <span class="new">leader_follower.py</span> <span class="c"><span class="new"># arm, take off, set the leader's mission, watch</span></span>
+│   └── spawn_vehicles.py
+└── docs/
+    └── architecture.html <span class="c"># this document</span></pre>
+    <p style="margin-top:18px">The first milestone worth aiming at is deliberately small: <b>two</b> vehicles, one leader and one follower, holding a fixed offset in Gazebo with Mission Planner watching both. Everything after that &mdash; a third vehicle, formation shapes, link degradation &mdash; is a variation on a loop that already closes.</p>
+  </section>
+
+  <section id="checklist">
+    <div class="eyebrow">13 &mdash; Before writing code</div>
+    <h2>Validation checklist</h2>
+    <p>The parts list closed three of these outright &mdash; airframe, vehicle type, and companion stack are all settled. What remains is below, including three items that Section&nbsp;10 adds. Ticks are saved in this browser only, so you can work through them across more than one sitting.</p>
+    <ul class="checklist">
+      <li><label for="c1"><input type="checkbox" id="c1"><span class="n">01</span><span class="body"><span class="q">Decide the network layout: do the Pi radios and the ESP32 bridges share one SSID, and do the Pis get static addresses?</span><span class="why">Replaces the old DroneBridge blocker, which the build resolved. This is now plain configuration, but the swarm cannot be wired until it is settled.</span></span></label></li>
+      <li><label for="c1b"><input type="checkbox" id="c1b"><span class="n">02</span><span class="body"><span class="q">Extend the simulation from one vehicle to several.</span><span class="why">The documented setup is a single <code>sim_vehicle.py -f gazebo-iris</code> instance. Leader-follower needs multiple instances with distinct <code>SYSID_THISMAV</code>, separate ports, and spaced spawn points.</span></span></label></li>
+      <li><label for="c1c"><input type="checkbox" id="c1c"><span class="n">03</span><span class="body"><span class="q">Decide whether to build an F450 model or keep flying the stock iris in simulation.</span><span class="why">The iris is not an F450. Fine for testing the plumbing; not fine for tuning <code>FOLL_POS_P</code> and expecting it to transfer.</span></span></label></li>
+      <li><label for="c2"><input type="checkbox" id="c2"><span class="n">04</span><span class="body"><span class="q">Weigh a completed aircraft, all-up with battery.</span><span class="why">The single number the Gazebo model most depends on, and the only one on this list that cannot be looked up.</span></span></label></li>
+      <li><label for="c3"><input type="checkbox" id="c3"><span class="n">05</span><span class="body"><span class="q">Fix the leader: which vehicle, which <code>SYSID_THISMAV</code>, and can the role move in flight?</span><span class="why">A reassignable leader is a much larger design than a fixed one &mdash; worth knowing now rather than after.</span></span></label></li>
+      <li><label for="c4"><input type="checkbox" id="c4"><span class="n">06</span><span class="body"><span class="q">Set formation offsets generously relative to GNSS relative error, then tighten from measurement.</span><span class="why">FOLLOW has no inter-follower awareness, and metre-level receivers mean single-digit spacing sits inside the noise.</span></span></label></li>
+      <li><label for="c5"><input type="checkbox" id="c5"><span class="n">07</span><span class="body"><span class="q">Decide what a follower does when the leader's stream stops.</span><span class="why">Hold, return, or land &mdash; this should be a decision, not an inherited default.</span></span></label></li>
+      <li><label for="c6"><input type="checkbox" id="c6"><span class="n">08</span><span class="body"><span class="q">Check the UBEC's continuous current rating against a loaded Pi&nbsp;4.</span><span class="why">The leader's Pi browning out takes the whole formation's position source with it.</span></span></label></li>
+      <li><label for="c7"><input type="checkbox" id="c7"><span class="n">09</span><span class="body"><span class="q">Decide the manual-override and abort procedure per aircraft.</span><span class="why">One transmitter covers one vehicle. The other two abort through the GCS or their failsafes &mdash; worth rehearsing in simulation.</span></span></label></li>
+      <li><label for="c8"><input type="checkbox" id="c8"><span class="n">10</span><span class="body"><span class="q">Wire a magnetometer, or accept NED-frame offsets that do not rotate with the leader.</span><span class="why">The build has no compass wired. That forecloses heading-relative formations until one is added to the free I&#178;C pads.</span></span></label></li>
+      <li><label for="c9"><input type="checkbox" id="c9"><span class="n">11</span><span class="body"><span class="q">Agree the altitude frame and make <code>FOLL_ALT_TYPE</code> consistent across vehicles.</span><span class="why">A mismatch here puts the formation at a confidently wrong height.</span></span></label></li>
+      <li><label for="c10"><input type="checkbox" id="c10"><span class="n">12</span><span class="body"><span class="q">Set and verify the leader's position stream rate on the link that reaches the followers.</span><span class="why">A stream tuned for a human watching a GCS map is too slow for a follower holding station.</span></span></label></li>
+      <li><label for="c11"><input type="checkbox" id="c11"><span class="n">13</span><span class="body"><span class="q">Confirm the Matek has four usable UARTs: GNSS, receiver, Pi, and ESP32 bridge.</span><span class="why">GNSS is on USART3 and the receiver on SERIAL2 already. Two more consumers need homes.</span></span></label></li>
+      <li><label for="c12"><input type="checkbox" id="c12"><span class="n">14</span><span class="body"><span class="q">Confirm the Gazebo target &mdash; the documented <code>-f gazebo-iris</code> frame implies Classic.</span><span class="why">Sets which <code>ardupilot_gazebo</code> plugin build and world format the repo standardises on.</span></span></label></li>
+      <li><label for="c13"><input type="checkbox" id="c13"><span class="n">15</span><span class="body"><span class="q">Open your Mission Planner version's swarm screen and see what it already does.</span><span class="why">It may cover Option B well enough that no coordinator needs writing. Capability varies by version.</span></span></label></li>
+      <li><label for="c14"><input type="checkbox" id="c14"><span class="n">16</span><span class="body"><span class="q">Record the Gazebo real-time factor with and without camera sensors, and set a floor below which cameras get cut.</span><span class="why">The plugin is lock-stepped with SITL, so a renderer that falls behind slows the physics clock &mdash; it corrupts the flight measurements rather than just looking choppy.</span></span></label></li>
+      <li><label for="c15"><input type="checkbox" id="c15"><span class="n">17</span><span class="body"><span class="q">Decide who may hold manual authority over the leader, and how the web UI proves it does not have it.</span><span class="why">Keyboard control makes the dashboard a write path to a flying vehicle. Harmless in SITL; on a real F450 the transmitter must win every contest.</span></span></label></li>
+      <li><label for="c16"><input type="checkbox" id="c16"><span class="n">18</span><span class="body"><span class="q">Decide whether simulated cameras need to match the real Pi Camera v2 field of view and resolution.</span><span class="why">If the video is only situational awareness for a demo, any sensor will do. If it is ever going to feed vision code, the intrinsics have to be the real ones.</span></span></label></li>
+    </ul>
+  </section>
+
+  <footer>
+    Sections 00&ndash;09 were written as a design to validate before building; the build now exists &mdash; three drones hold a V formation in Gazebo under <code>FOLLOW</code>, measured by <code>scripts/leader_follower.py</code>. Section&nbsp;10 is built too &mdash; per-drone camera views, telemetry and keyboard control of the leader, all measured in <code>README.md</code>. Section&nbsp;11 adds map-click targeting and area inspection with geotagged detection. The open items in Section&nbsp;13 are still open. Read <code>README.md</code> for what has actually been run, including the caveats on what the measured numbers mean.
+  </footer>
+</div>
+
+<script>
+(function(){
+  var KEY = 'swarm-sim-arch-checklist';
+  var boxes = document.querySelectorAll('.checklist input[type=checkbox]');
+  var saved = {};
+  try{ saved = JSON.parse(localStorage.getItem(KEY) || '{}'); }catch(e){}
+  boxes.forEach(function(b){ if(saved[b.id]) b.checked = true; });
+  boxes.forEach(function(b){
+    b.addEventListener('change', function(){
+      var state = {};
+      boxes.forEach(function(x){ if(x.checked) state[x.id] = true; });
+      try{ localStorage.setItem(KEY, JSON.stringify(state)); }catch(e){}
+    });
+  });
+})();
+</script>
