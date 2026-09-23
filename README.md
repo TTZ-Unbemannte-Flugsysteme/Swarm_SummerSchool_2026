@@ -14,7 +14,8 @@ the formation holding 0.0 m station error.*
 Design rationale lives in [docs/architecture.html](docs/architecture.html);
 this file is the build, in the order you can check it. To *teach* it, open
 [docs/workshop.html](docs/workshop.html) — diagrams, SITL vs HIL, why ports
-decide everything, and a 16-slide deck with a presenter mode.
+decide everything, and a 16-slide deck with a presenter mode. To attach a real
+ground station, [docs/ground-station.html](docs/ground-station.html).
 
 Every step prints `RESULT: PASS` or `RESULT: FAIL` and exits non-zero on
 failure, so nothing here needs to be judged by eye — including the setup
@@ -437,6 +438,8 @@ hold their last commanded position — safe, but no longer following. That is wh
 aiming is a temporary mode with an explicit hand-back rather than the default.
 
 ## Ground station: QGroundControl or Mission Planner
+
+Full walkthrough with diagrams: **[docs/ground-station.html](docs/ground-station.html)**.
 
 QGroundControl speaks ArduPilot, and one link shows the whole swarm:
 

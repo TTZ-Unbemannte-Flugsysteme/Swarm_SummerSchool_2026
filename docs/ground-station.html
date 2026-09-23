@@ -1,0 +1,584 @@
+<!doctype html>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ground station &mdash; QGroundControl on the swarm</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Condensed:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+  :root{
+    --bg:#eef1f4;
+    --surface:#ffffff;
+    --panel:#e3e8ed;
+    --panel-line:#c3ccd5;
+    --border:#c9d2da;
+    --text:#161d29;
+    --muted:#556170;
+    --accent:#a8481a;
+    --accent-soft:#f6e0d2;
+    --accent-line:#c2571f;
+    --sim:#0c6b78;
+    --sim-soft:#d5ecef;
+    --sim-line:#12808f;
+    --good:#2a7048;
+    --warn:#8f6708;
+    --shadow:0 1px 2px rgba(20,30,45,.05), 0 10px 30px -16px rgba(20,30,45,.25);
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --bg:#0f1319;
+      --surface:#181e27;
+      --panel:#1d242f;
+      --panel-line:#303a48;
+      --border:#2d3744;
+      --text:#e9edf2;
+      --muted:#9aa7b5;
+      --accent:#ff9a5e;
+      --accent-soft:#3d2617;
+      --accent-line:#e07f44;
+      --sim:#63d8e8;
+      --sim-soft:#123840;
+      --sim-line:#2ba7bb;
+      --good:#6bcf92;
+      --warn:#e3b451;
+      --shadow:0 1px 2px rgba(0,0,0,.5), 0 10px 30px -16px rgba(0,0,0,.7);
+    }
+  }
+  :root[data-theme="dark"]{
+    --bg:#0f1319;
+    --surface:#181e27;
+    --panel:#1d242f;
+    --panel-line:#303a48;
+    --border:#2d3744;
+    --text:#e9edf2;
+    --muted:#9aa7b5;
+    --accent:#ff9a5e;
+    --accent-soft:#3d2617;
+    --accent-line:#e07f44;
+    --sim:#63d8e8;
+    --sim-soft:#123840;
+    --sim-line:#2ba7bb;
+    --good:#6bcf92;
+    --warn:#e3b451;
+    --shadow:0 1px 2px rgba(0,0,0,.5), 0 10px 30px -16px rgba(0,0,0,.7);
+  }
+
+  *{ box-sizing:border-box }
+
+  body{
+    margin:0;
+    background:var(--bg);
+    color:var(--text);
+    font-family:"IBM Plex Sans", ui-sans-serif, system-ui, sans-serif;
+    font-size:17px;
+    line-height:1.7;
+    -webkit-font-smoothing:antialiased;
+  }
+
+  .wrap{
+    max-width:1000px;
+    margin:0 auto;
+    padding-inline:28px;
+    padding-block:44px 96px;
+  }
+
+  h1,h2,h3{
+    font-family:"IBM Plex Sans Condensed","IBM Plex Sans",sans-serif;
+    text-wrap:balance;
+    line-height:1.15;
+    margin:0;
+  }
+  code,.mono{ font-family:"IBM Plex Mono", ui-monospace, monospace; }
+  code{ font-size:.88em; }
+  a{ color:var(--sim); text-underline-offset:3px; }
+
+  .kicker{
+    font-family:"IBM Plex Mono";
+    font-size:13px;
+    letter-spacing:.1em;
+    text-transform:uppercase;
+    color:var(--sim);
+    margin-bottom:14px;
+  }
+  h1{ font-size:clamp(31px,5vw,44px); font-weight:700; letter-spacing:-.01em; }
+  .dek{
+    font-size:19px;
+    color:var(--muted);
+    max-width:60ch;
+    margin:16px 0 0;
+  }
+  .facts{ display:flex; flex-wrap:wrap; gap:10px; margin-top:26px; }
+  .fact{
+    font-family:"IBM Plex Mono";
+    font-size:12.5px;
+    padding:6px 12px;
+    border:1px solid var(--border);
+    border-radius:999px;
+    color:var(--muted);
+    background:var(--surface);
+  }
+  .fact b{ color:var(--text); font-weight:500; }
+
+  .contents{
+    margin-top:40px;
+    border:1px solid var(--border);
+    border-radius:12px;
+    background:var(--surface);
+    padding:20px 22px 22px;
+    box-shadow:var(--shadow);
+  }
+  .contents h2{
+    font-family:"IBM Plex Mono";
+    font-size:12px;
+    letter-spacing:.1em;
+    text-transform:uppercase;
+    color:var(--muted);
+    font-weight:500;
+    margin-bottom:14px;
+  }
+  .contents ol{
+    list-style:none; margin:0; padding:0;
+    display:grid;
+    grid-template-columns:repeat(auto-fit, minmax(240px, 1fr));
+    gap:2px 22px;
+  }
+  .contents a{
+    display:flex; gap:12px;
+    padding:7px 0;
+    text-decoration:none;
+    color:var(--text);
+    font-size:16px;
+  }
+  .contents a:hover{ color:var(--sim); }
+  .contents .n{
+    font-family:"IBM Plex Mono";
+    font-size:13px;
+    color:var(--sim);
+    padding-top:2px;
+  }
+
+  section{ margin-top:72px; scroll-margin-top:24px; }
+  .eyebrow{
+    font-family:"IBM Plex Mono";
+    font-size:13px;
+    letter-spacing:.06em;
+    color:var(--sim);
+    margin-bottom:8px;
+  }
+  h2{ font-size:27px; font-weight:600; }
+  section > h2{ margin-bottom:18px; }
+  h3{ font-size:18px; font-weight:600; margin:32px 0 8px; }
+  p{ margin:0 0 18px; max-width:66ch; }
+  p:last-child{ margin-bottom:0; }
+  ul.plain{ max-width:66ch; padding-left:1.15em; margin:0 0 18px; }
+  ul.plain li{ margin-bottom:8px; }
+
+  .note{
+    border:1px solid var(--border);
+    border-left:4px solid var(--accent-line);
+    background:var(--accent-soft);
+    border-radius:10px;
+    padding:22px 24px;
+    margin:24px 0 0;
+    max-width:78ch;
+  }
+  .note .tag,.rec .tag{
+    display:block;
+    font-family:"IBM Plex Mono";
+    font-size:12px;
+    letter-spacing:.08em;
+    text-transform:uppercase;
+    font-weight:500;
+    margin-bottom:10px;
+  }
+  .note .tag{ color:var(--accent); }
+  .note p,.rec p{ max-width:none; }
+  .rec{
+    border:1px solid var(--border);
+    border-left:4px solid var(--sim-line);
+    background:var(--sim-soft);
+    border-radius:10px;
+    padding:22px 24px;
+    max-width:78ch;
+  }
+  .rec .tag{ color:var(--sim); }
+
+  figure{ margin:28px 0 0; }
+  figure:not(:last-child){ margin-bottom:30px; }
+  .frame{
+    background:var(--surface);
+    border:1px solid var(--border);
+    border-radius:12px;
+    padding:22px 20px;
+    box-shadow:var(--shadow);
+    overflow-x:auto;
+  }
+  svg.arch{ display:block; width:100%; min-width:640px; height:auto; }
+  figcaption{
+    font-size:15px;
+    line-height:1.6;
+    color:var(--muted);
+    margin-top:14px;
+    max-width:70ch;
+  }
+  figcaption b{ color:var(--text); font-weight:600; }
+
+  .table-wrap{
+    margin-top:24px;
+    border:1px solid var(--border);
+    border-radius:12px;
+    overflow-x:auto;
+    background:var(--surface);
+  }
+  table{ border-collapse:collapse; width:100%; font-size:15px; }
+  th,td{
+    text-align:left;
+    padding:14px 16px;
+    border-bottom:1px solid var(--border);
+    vertical-align:top;
+  }
+  thead th{
+    background:var(--panel);
+    font-family:"IBM Plex Mono";
+    font-weight:500;
+    font-size:12px;
+    letter-spacing:.05em;
+    text-transform:uppercase;
+    color:var(--muted);
+    line-height:1.5;
+  }
+  thead th span{ display:block; text-transform:none; letter-spacing:0; opacity:.8; }
+  tbody tr:last-child td{ border-bottom:none; }
+  td.mono{ font-size:13.5px; }
+  .ok{ color:var(--good); font-weight:500; }
+  .mid{ color:var(--warn); font-weight:500; }
+  .bad{ color:var(--accent); font-weight:500; }
+
+  pre.tree{
+    margin:24px 0 0;
+    background:var(--panel);
+    border:1px solid var(--border);
+    border-radius:12px;
+    padding:22px 24px;
+    font-family:"IBM Plex Mono";
+    font-size:13.5px;
+    line-height:1.75;
+    overflow-x:auto;
+    color:var(--text);
+  }
+  pre.tree .c{ color:var(--muted); }
+  pre.tree .r{ color:var(--sim); }
+  pre.tree .new{ color:var(--accent); }
+
+  .checklist{
+    list-style:none; margin:24px 0 0; padding:0;
+    border:1px solid var(--border);
+    border-radius:12px;
+    background:var(--surface);
+    overflow:hidden;
+  }
+  .checklist li{ border-bottom:1px solid var(--border); }
+  .checklist li:last-child{ border-bottom:none; }
+  .checklist label{
+    display:flex; gap:14px; align-items:flex-start;
+    padding:16px 20px;
+    cursor:pointer;
+  }
+  .checklist label:hover{ background:var(--panel); }
+  .checklist input{
+    margin:5px 0 0; width:17px; height:17px;
+    accent-color:var(--sim-line); flex:0 0 auto;
+  }
+  .checklist .n{
+    font-family:"IBM Plex Mono";
+    font-size:13px; color:var(--muted);
+    flex:0 0 auto; padding-top:1px;
+  }
+  .checklist .body{ min-width:0; }
+  .checklist .q{ display:block; font-size:16.5px; }
+  .checklist .why{ display:block; color:var(--muted); font-size:14.5px; margin-top:2px; }
+  .checklist input:checked ~ .body .q{ color:var(--muted); text-decoration:line-through; }
+
+  footer{
+    margin-top:72px;
+    padding-top:26px;
+    border-top:1px solid var(--border);
+    color:var(--muted);
+    font-size:15px;
+    max-width:70ch;
+  }
+
+  @media (max-width:640px){
+    body{ font-size:16px; }
+    .wrap{ padding-inline:18px; padding-block:32px 64px; }
+    section{ margin-top:56px; }
+    .note,.rec{ padding:18px; }
+    .frame{ padding:16px 14px; }
+  }
+</style>
+<style>
+  .lede{font-size:19px;color:var(--muted);max-width:62ch;margin:16px 0 0}
+  pre.cmd{margin:18px 0 0;background:var(--panel);border:1px solid var(--border);
+    border-radius:10px;padding:16px 18px;font-family:"IBM Plex Mono";font-size:13px;
+    line-height:1.7;overflow-x:auto;color:var(--text)}
+  pre.cmd .c{color:var(--muted)}
+  pre.cmd .p{color:var(--sim)}
+  section.step{margin-top:60px}
+  .stepnum{display:inline-flex;align-items:center;justify-content:center;
+    width:30px;height:30px;border-radius:9px;background:var(--sim-line);color:#fff;
+    font-family:"IBM Plex Mono";font-size:15px;margin-right:12px;vertical-align:2px}
+  .dialog{margin:20px 0 0;border:1px solid var(--border);border-radius:11px;
+    background:var(--surface);box-shadow:var(--shadow);overflow:hidden;max-width:560px}
+  .dialog .bar{background:var(--panel);border-bottom:1px solid var(--border);
+    padding:9px 14px;font-family:"IBM Plex Mono";font-size:12px;color:var(--muted)}
+  .dialog dl{display:grid;grid-template-columns:auto 1fr;gap:0;margin:0;font-size:14px}
+  .dialog dt{padding:11px 14px;color:var(--muted);border-bottom:1px solid var(--border)}
+  .dialog dd{margin:0;padding:11px 14px;border-bottom:1px solid var(--border);
+    font-family:"IBM Plex Mono";font-size:13.5px;color:var(--text)}
+  .dialog dl > :nth-last-child(-n+2){border-bottom:none}
+  .dialog dd b{color:var(--sim);font-weight:500}
+</style>
+
+<div class="wrap">
+  <header>
+    <div class="kicker">Swarm_SummerSchool_2026 &middot; ground station</div>
+    <h1>QGroundControl on the swarm</h1>
+    <p class="lede">Attach a real ground station to the simulation and see all three drones at once &mdash; the same QGroundControl you would use on the aircraft, talking to the same ArduPilot, over one link you add once.</p>
+    <div class="facts">
+      <span class="fact"><b>Works with</b> ArduPilot</span>
+      <span class="fact"><b>Link</b> UDP 14540</span>
+      <span class="fact"><b>Shows</b> all drones, one link</span>
+      <span class="fact"><b>Setup</b> once, then automatic</span>
+    </div>
+
+    <nav class="contents">
+      <h2>Contents</h2>
+      <ol>
+        <li><a href="#why"><span class="n">00</span> Why a ground station</a></li>
+        <li><a href="#link"><span class="n">01</span> The one link</a></li>
+        <li><a href="#start"><span class="n">02</span> Start it</a></li>
+        <li><a href="#add"><span class="n">03</span> Add the link</a></li>
+        <li><a href="#check"><span class="n">04</span> Check it worked</a></li>
+        <li><a href="#addressed"><span class="n">05</span> Commanding one drone</a></li>
+        <li><a href="#trouble"><span class="n">06</span> When it does not connect</a></li>
+      </ol>
+    </nav>
+  </header>
+
+  <section id="why">
+    <div class="eyebrow">00 &mdash; What this is for</div>
+    <h2>Why attach a ground station at all</h2>
+    <p>The dashboard in this repo was built for one job: watching and flying a <em>formation</em>. A ground station is the other half &mdash; the general-purpose tool you will actually use on the aircraft, for the things a purpose-built page does not do.</p>
+    <ul class="plain">
+      <li><b>Parameters.</b> Browse and edit every <code>FOLL_*</code> value live, instead of through a script.</li>
+      <li><b>Missions.</b> Draw waypoints on a map and upload them.</li>
+      <li><b>Calibration and setup screens</b> &mdash; the ones you will need on the real F450.</li>
+      <li><b>A second opinion.</b> If the dashboard and QGroundControl disagree, one of them has a bug, and that is worth knowing.</li>
+    </ul>
+    <p>QGroundControl speaks ArduPilot natively, so nothing about the simulation has to change to accommodate it. Mission Planner works too &mdash; <code>flyit --mp</code> &mdash; and everything on this page applies to it equally.</p>
+  </section>
+
+  <section id="link">
+    <div class="eyebrow">01 &mdash; The design</div>
+    <h2>One link for the whole swarm</h2>
+    <p>Each drone already has five UDP ports of its own, one per consumer, because a UDP port has exactly one owner. A ground station could attach to a drone's own <code>14553&nbsp;+&nbsp;10i</code> port &mdash; but then you would need one link per drone and three windows to watch three aircraft.</p>
+    <p>So every vehicle <em>also</em> forwards to one shared endpoint. MAVLink messages carry the sender's system ID, so three streams arriving on one port are simply three vehicles, and a ground station lists them as such.</p>
+    <figure>
+      <div class="frame"><svg class="arch" viewBox="0 0 830 366" role="img" aria-label="Each drone's MAVProxy sends to five ports of its own - relay, scripts, dashboard, a single-vehicle ground station and the flight log - and also down to one shared bus, port 14540. All three converge there, and that is the single link QGroundControl attaches to, where it sees every drone at once.">
+  <defs>
+    <marker id="fo" markerWidth="9" markerHeight="9" refX="7.5" refY="4.5" orient="auto">
+      <path d="M0,0.5 L8.5,4.5 L0,8.5 Z" fill="currentColor"/>
+    </marker>
+  </defs>
+  <g font-family="IBM Plex Sans, sans-serif">
+    <text x="20" y="28" font-family="IBM Plex Mono" font-size="11" letter-spacing=".04em" fill="var(--muted)">ONE MAVPROXY PER DRONE</text>
+    <g stroke="var(--sim-line)" stroke-width="1.6" fill="none" opacity=".95">
+      <path d="M96,112 V292"/>
+      <path d="M96,192 V292"/>
+      <path d="M96,272 V292"/>
+      <path d="M96,292 H560 V280" marker-end="url(#fo)"/>
+    </g>
+    <text x="300" y="288" font-family="IBM Plex Mono" font-size="10.5" fill="var(--sim)" stroke="var(--surface)" stroke-width="3.5" paint-order="stroke">every drone also forwards here</text>
+    <rect x="20" y="52" width="152" height="60" rx="9" fill="var(--surface)" stroke="var(--border)" stroke-width="1.3"/>
+    <text x="96" y="78" text-anchor="middle" font-size="13" font-weight="600" fill="var(--text)">drone 1</text>
+    <text x="96" y="96" text-anchor="middle" font-family="IBM Plex Mono" font-size="10" fill="var(--muted)">MAVProxy</text>
+    <line x1="176" y1="74" x2="268" y2="74" stroke="currentColor" stroke-width="1.4" marker-end="url(#fo)"/>
+    <rect x="272" y="52" width="190" height="44" rx="8" fill="var(--panel)" stroke="var(--panel-line)" stroke-width="1.1"/>
+    <text x="284" y="71" font-family="IBM Plex Mono" font-size="10.5" fill="var(--text)">14550 &#8211; 14554</text>
+    <text x="284" y="86" font-family="IBM Plex Mono" font-size="9.5" fill="var(--muted)">its own five consumers</text>
+    <rect x="20" y="132" width="152" height="60" rx="9" fill="var(--surface)" stroke="var(--border)" stroke-width="1.3"/>
+    <text x="96" y="158" text-anchor="middle" font-size="13" font-weight="600" fill="var(--text)">drone 2</text>
+    <text x="96" y="176" text-anchor="middle" font-family="IBM Plex Mono" font-size="10" fill="var(--muted)">MAVProxy</text>
+    <line x1="176" y1="154" x2="268" y2="154" stroke="currentColor" stroke-width="1.4" marker-end="url(#fo)"/>
+    <rect x="272" y="132" width="190" height="44" rx="8" fill="var(--panel)" stroke="var(--panel-line)" stroke-width="1.1"/>
+    <text x="284" y="151" font-family="IBM Plex Mono" font-size="10.5" fill="var(--text)">14560 &#8211; 14564</text>
+    <text x="284" y="166" font-family="IBM Plex Mono" font-size="9.5" fill="var(--muted)">its own five consumers</text>
+    <rect x="20" y="212" width="152" height="60" rx="9" fill="var(--surface)" stroke="var(--border)" stroke-width="1.3"/>
+    <text x="96" y="238" text-anchor="middle" font-size="13" font-weight="600" fill="var(--text)">drone 3</text>
+    <text x="96" y="256" text-anchor="middle" font-family="IBM Plex Mono" font-size="10" fill="var(--muted)">MAVProxy</text>
+    <line x1="176" y1="234" x2="268" y2="234" stroke="currentColor" stroke-width="1.4" marker-end="url(#fo)"/>
+    <rect x="272" y="212" width="190" height="44" rx="8" fill="var(--panel)" stroke="var(--panel-line)" stroke-width="1.1"/>
+    <text x="284" y="231" font-family="IBM Plex Mono" font-size="10.5" fill="var(--text)">14570 &#8211; 14574</text>
+    <text x="284" y="246" font-family="IBM Plex Mono" font-size="9.5" fill="var(--muted)">its own five consumers</text>
+    <rect x="495" y="212" width="130" height="62" rx="10" fill="var(--sim-soft)" stroke="var(--sim-line)" stroke-width="1.5"/>
+    <text x="560" y="239" text-anchor="middle" font-family="IBM Plex Mono" font-size="14" font-weight="500" fill="var(--sim)">:14540</text>
+    <text x="560" y="258" text-anchor="middle" font-size="11" fill="var(--muted)">one shared link</text>
+
+    <line x1="629" y1="243" x2="672" y2="243" stroke="currentColor" stroke-width="1.7" marker-end="url(#fo)"/>
+    <rect x="676" y="212" width="134" height="62" rx="10" fill="var(--accent-soft)" stroke="var(--accent-line)" stroke-width="1.3"/>
+    <text x="743" y="238" text-anchor="middle" font-size="12.5" font-weight="600" fill="var(--text)">QGroundControl</text>
+    <text x="743" y="257" text-anchor="middle" font-family="IBM Plex Mono" font-size="9.5" fill="var(--accent)">3 vehicles, 1 link</text>
+
+    <rect x="20" y="304" width="790" height="46" rx="9" fill="var(--accent-soft)" stroke="var(--accent-line)" stroke-width="1.2"/>
+    <text x="34" y="325" font-size="12.5" font-weight="600" fill="var(--text)">Why not 14550, where QGroundControl connects by itself?</text>
+    <text x="34" y="342" font-size="12" fill="var(--muted)">Because relay.py binds it for drone 1. Two programs cannot own one UDP port &#8212; so the link gets added by hand, once.</text>
+  </g>
+</svg></div>
+      <figcaption><b>Fig. 1</b> &mdash; Five private ports per drone, plus one shared. The shared port sits deliberately <em>below</em> every per-drone block, so it can never collide however many drones you add.</figcaption>
+    </figure>
+
+    <div class="note">
+      <span class="tag">Why you have to add the link by hand</span>
+      <p>QGroundControl connects automatically on UDP&nbsp;<b>14550</b>, and that would be the obvious choice &mdash; except that <code>14550</code> is the first drone's relay port, and <code>relay.py</code> binds it. Two programs cannot own one UDP port, and the relay is what carries the leader's position to the followers: the formation exists because of it.</p>
+      <p>The alternative was renumbering every port in the repo so the automatic connection would land somewhere free. The port scheme is quoted in three documents and every consumer's source, so a one-time link in a dialog is the smaller cost. It is also the more honest lesson: on a real system you rarely get to choose the port you wanted.</p>
+    </div>
+  </section>
+
+  <section id="start" class="step">
+    <div class="eyebrow">02 &mdash; Launch</div>
+    <h2><span class="stepnum">1</span>Start the simulation with it</h2>
+    <pre class="cmd"><span class="p">$</span> flyit --qgc            <span class="c"># three drones + QGroundControl</span>
+<span class="p">$</span> flyit --mp             <span class="c"># Mission Planner instead</span></pre>
+    <p><code>flyit</code> finds the AppImage in your home directory or next to the other dependencies. If yours lives somewhere else, tell it once:</p>
+    <pre class="cmd"><span class="p">$</span> export QGROUNDCONTROL=~/Downloads/QGroundControl-x86_64.AppImage</pre>
+    <p>or put the same line in <code>config/local.env</code>, which is gitignored and read on every run.</p>
+    <p>AppImages need FUSE. Where it is missing, <code>flyit</code> notices what the launch actually wrote to its log and retries with <code>--appimage-extract-and-run</code>, which is AppImage's own documented fallback. It starts more slowly and is otherwise identical.</p>
+  </section>
+
+  <section id="add" class="step">
+    <div class="eyebrow">03 &mdash; Once, ever</div>
+    <h2><span class="stepnum">2</span>Add the link</h2>
+    <p>In QGroundControl: <b>Application Settings</b> &rarr; <b>Comm Links</b> &rarr; <b>Add</b>.</p>
+    <div class="dialog">
+      <div class="bar">Comm Link Settings</div>
+      <dl>
+        <dt>Name</dt><dd>swarm</dd>
+        <dt>Type</dt><dd><b>UDP</b></dd>
+        <dt>Listening port</dt><dd><b>14540</b></dd>
+        <dt>Target hosts</dt><dd>leave empty</dd>
+        <dt>Automatically Connect on Start</dt><dd><b>ticked</b></dd>
+      </dl>
+    </div>
+    <p style="margin-top:20px">Then <b>OK</b> and <b>Connect</b>. Leave the target hosts list empty on purpose: the simulation sends to QGroundControl first, so it learns where to reply from the traffic it receives. Naming a target host as well does no harm but is one more thing to get wrong.</p>
+    <p>With <em>Automatically Connect on Start</em> ticked, every later run just works &mdash; start the simulation, start QGroundControl, and the drones appear.</p>
+  </section>
+
+  <section id="check" class="step">
+    <div class="eyebrow">04 &mdash; Verify</div>
+    <h2><span class="stepnum">3</span>Check it worked</h2>
+    <p>You should see <b>three vehicles</b>, selectable individually, each with its own attitude, battery and GPS. If you only see one, the link is attached to a per-drone port rather than the shared one.</p>
+    <p>You do not need the GUI to prove the endpoint is live. This is the same thing QGroundControl does &mdash; bind the port and see who turns up:</p>
+    <pre class="cmd"><span class="p">$</span> python3 - &lt;&lt;'EOF'
+from pymavlink import mavutil
+import time
+c = mavutil.mavlink_connection("udpin:127.0.0.1:14540")
+seen = set()
+t0 = time.time()
+while time.time() - t0 &lt; 20 and len(seen) &lt; 3:
+    m = c.recv_match(type="HEARTBEAT", blocking=True, timeout=3)
+    if m: seen.add(m.get_srcSystem())
+print("vehicles on the shared link:", sorted(seen))
+EOF
+vehicles on the shared link: [1, 2, 3]</pre>
+  </section>
+
+  <section id="addressed">
+    <div class="eyebrow">05 &mdash; The part that surprises people</div>
+    <h2>Three vehicles on one port, and commands still land on one</h2>
+    <p>If all three drones share a link, what stops a mode change going to all of them? Nothing about the <em>transport</em> &mdash; the datagram may well reach every MAVProxy. What stops it is the message: every MAVLink command carries a <code>target_system</code>, and a vehicle ignores anything addressed to a different system ID.</p>
+    <figure>
+      <div class="frame">        <svg class="arch" viewBox="0 0 830 564" role="img" aria-label="Sequence: QGroundControl binds the shared port, receives heartbeats from all three vehicles and lists them as separate aircraft on one link. When the operator commands drone two, the message carries target_system 2; every MAVProxy may receive it, but only drone two acts on it, and the other two carry on unchanged.">
+          <defs>
+            <marker id="gsm" markerWidth="9" markerHeight="9" refX="7.5" refY="4.5" orient="auto">
+              <path d="M0,0.5 L8.5,4.5 L0,8.5 Z" fill="currentColor"/>
+            </marker>
+          </defs>
+          <line x1="120" y1="88" x2="120" y2="556" stroke="var(--border)" stroke-width="1.4" stroke-dasharray="3 5"/>
+          <line x1="322" y1="88" x2="322" y2="556" stroke="var(--border)" stroke-width="1.4" stroke-dasharray="3 5"/>
+          <line x1="524" y1="88" x2="524" y2="556" stroke="var(--border)" stroke-width="1.4" stroke-dasharray="3 5"/>
+          <line x1="726" y1="88" x2="726" y2="556" stroke="var(--border)" stroke-width="1.4" stroke-dasharray="3 5"/>
+          <rect x="40" y="176" width="776" height="104" rx="7" fill="none" stroke="var(--sim-line)" stroke-width="1.1" stroke-dasharray="4 4" opacity=".75"/>
+          <rect x="40" y="176" width="126" height="19" rx="6" fill="var(--sim-soft)" stroke="var(--sim-line)" stroke-width="1.1"/>
+          <text x="46" y="189.5" font-family="IBM Plex Mono" font-size="10" letter-spacing=".03em" fill="var(--sim)">loop  1 Hz, forever</text>
+          <g font-family="IBM Plex Sans, sans-serif">
+            <rect x="34" y="34" width="172" height="54" rx="8" fill="var(--sim-soft)" stroke="var(--sim-line)" stroke-width="1.3"/>
+            <text x="120" y="56" text-anchor="middle" font-size="13" font-weight="600" fill="var(--text)">QGroundControl</text>
+            <text x="120" y="73" text-anchor="middle" font-family="IBM Plex Mono" font-size="10" fill="var(--muted)">one UDP link, :14540</text>
+            <rect x="236" y="34" width="172" height="54" rx="8" fill="var(--surface)" stroke="var(--border)" stroke-width="1.3"/>
+            <text x="322" y="56" text-anchor="middle" font-size="13" font-weight="600" fill="var(--text)">MAVProxy</text>
+            <text x="322" y="73" text-anchor="middle" font-family="IBM Plex Mono" font-size="10" fill="var(--muted)">one per drone</text>
+            <rect x="438" y="34" width="172" height="54" rx="8" fill="var(--accent-soft)" stroke="var(--accent-line)" stroke-width="1.3"/>
+            <text x="524" y="56" text-anchor="middle" font-size="13" font-weight="600" fill="var(--text)">Drone 2</text>
+            <text x="524" y="73" text-anchor="middle" font-family="IBM Plex Mono" font-size="10" fill="var(--muted)">the one you clicked</text>
+            <rect x="640" y="34" width="172" height="54" rx="8" fill="var(--surface)" stroke="var(--border)" stroke-width="1.3"/>
+            <text x="726" y="56" text-anchor="middle" font-size="13" font-weight="600" fill="var(--text)">Drones 1 and 3</text>
+            <text x="726" y="73" text-anchor="middle" font-family="IBM Plex Mono" font-size="10" fill="var(--muted)">same link, not addressed</text>
+          </g>
+          <g font-family="IBM Plex Mono" font-size="10.5">
+            <text x="26" y="140" text-anchor="end" font-size="10" fill="var(--muted)" opacity=".8">01</text>
+            <path d="M120,136 h34 v20 h-34" fill="none" stroke="currentColor" stroke-width="1.6" marker-end="url(#gsm)"/>
+            <text x="164" y="153" text-anchor="start" fill="var(--muted)">bind udp 14540 - the link you add once</text>
+            <text x="26" y="206" text-anchor="end" font-size="10" fill="var(--muted)" opacity=".8">02</text>
+            <line x1="322" y1="202" x2="120" y2="202" stroke="currentColor" stroke-width="1.6" stroke-dasharray="5 4" marker-end="url(#gsm)"/>
+            <text x="221" y="195" text-anchor="middle" fill="var(--text)">HEARTBEAT sysid 1, 2, 3</text>
+            <text x="221" y="217" text-anchor="middle" font-size="10" fill="var(--muted)">three senders, one port</text>
+            <text x="26" y="246" text-anchor="end" font-size="10" fill="var(--muted)" opacity=".8">03</text>
+            <path d="M120,242 h34 v20 h-34" fill="none" stroke="currentColor" stroke-width="1.6" marker-end="url(#gsm)"/>
+            <text x="164" y="259" text-anchor="start" fill="var(--muted)">three vehicles listed, one link</text>
+            <text x="26" y="336" text-anchor="end" font-size="10" fill="var(--muted)" opacity=".8">04</text>
+            <line x1="120" y1="332" x2="322" y2="332" stroke="currentColor" stroke-width="1.6" marker-end="url(#gsm)"/>
+            <text x="221" y="325" text-anchor="middle" fill="var(--text)">SET_MODE  target_system 2</text>
+            <text x="26" y="376" text-anchor="end" font-size="10" fill="var(--muted)" opacity=".8">05</text>
+            <line x1="322" y1="372" x2="524" y2="372" stroke="currentColor" stroke-width="1.6" marker-end="url(#gsm)"/>
+            <text x="423" y="365" text-anchor="middle" fill="var(--text)">forwarded to drone 2</text>
+            <text x="26" y="416" text-anchor="end" font-size="10" fill="var(--muted)" opacity=".8">06</text>
+            <line x1="322" y1="412" x2="726" y2="412" stroke="currentColor" stroke-width="1.6" stroke-dasharray="5 4" marker-end="url(#gsm)"/>
+            <text x="524" y="405" text-anchor="middle" fill="var(--text)">also arrives</text>
+            <text x="524" y="427" text-anchor="middle" font-size="10" fill="var(--muted)">ignored: addressed elsewhere</text>
+            <text x="26" y="456" text-anchor="end" font-size="10" fill="var(--muted)" opacity=".8">07</text>
+            <line x1="524" y1="452" x2="120" y2="452" stroke="currentColor" stroke-width="1.6" stroke-dasharray="5 4" marker-end="url(#gsm)"/>
+            <text x="322" y="445" text-anchor="middle" fill="var(--text)">HEARTBEAT mode = GUIDED</text>
+            <text x="26" y="496" text-anchor="end" font-size="10" fill="var(--muted)" opacity=".8">08</text>
+            <path d="M726,492 h-34 v20 h34" fill="none" stroke="currentColor" stroke-width="1.6" marker-end="url(#gsm)"/>
+            <text x="682" y="509" text-anchor="end" fill="var(--muted)">still STABILIZE - untouched</text>
+          </g>
+        </svg></div>
+      <figcaption><b>Fig. 2</b> &mdash; Steps 06 to 08 are the whole answer. Addressing is in the message, not in the wiring &mdash; which is also why the leader's system ID must survive the relay untouched, or <code>FOLL_SYSID</code> on the followers stops matching anything.</figcaption>
+    </figure>
+    <p>Measured on this build: a <code>SET_MODE</code> addressed to system&nbsp;2, sent once into the shared port, moved drone&nbsp;2 into <code>GUIDED</code> and left drones&nbsp;1 and&nbsp;3 in <code>STABILIZE</code>.</p>
+  </section>
+
+  <section id="trouble">
+    <div class="eyebrow">06 &mdash; Troubleshooting</div>
+    <h2>When it does not connect</h2>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>What you see</th><th>What it usually is</th><th>Fix</th></tr></thead>
+        <tbody>
+          <tr><td>No vehicles at all</td><td>The link is not connected, or the simulation is not running</td><td>Check <code>flyit</code> printed <span class="mono">all 3 vehicle(s) are streaming</span>, then Connect the link.</td></tr>
+          <tr><td>Exactly one vehicle</td><td>The link is on <code>14553</code> &mdash; a single drone's port</td><td>Change the listening port to <code>14540</code>.</td></tr>
+          <tr><td>Vehicles appear then go stale</td><td>Something else is bound to the port and stealing packets</td><td><span class="mono">ss -lunp | grep 14540</span> &mdash; there should be exactly one listener.</td></tr>
+          <tr><td>Nothing after a restart</td><td><em>Automatically Connect on Start</em> not ticked</td><td>Edit the link, tick it.</td></tr>
+          <tr><td>QGroundControl will not launch</td><td>No FUSE for the AppImage</td><td>It retries automatically; to do it by hand, add <code>--appimage-extract-and-run</code>.</td></tr>
+          <tr><td>Connects, but commands do nothing</td><td>The vehicle is refusing them, not missing them</td><td>Read <code>.run/latest/flight_log.txt</code> &mdash; arming and mode refusals are printed there with the autopilot's own reason.</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="note">
+      <span class="tag">One thing worth noticing on a shared network</span>
+      <p>QGroundControl's automatic link binds <code>0.0.0.0:14550</code> &mdash; every interface, not just loopback. On this machine that coexists harmlessly with the relay's <code>127.0.0.1:14550</code>, because a more specific binding wins for loopback traffic. But it does mean a ground station is listening on the room's network. Everything this repo starts binds loopback only, deliberately; a GCS is the one component that does not, and on a shared Wi-Fi that is worth knowing before you wonder why someone else's drone appeared in your vehicle list.</p>
+    </div>
+  </section>
+
+  <footer>
+    Part of the simulation documentation: <code>QUICKSTART.md</code> gets you flying, <code>docs/workshop.html</code> teaches it, <code>docs/architecture.html</code> explains why it is built this way. Ports and their owners are listed in <code>scripts/env.sh</code>, which is the file to read when something is not where you expect it.
+  </footer>
+</div>
