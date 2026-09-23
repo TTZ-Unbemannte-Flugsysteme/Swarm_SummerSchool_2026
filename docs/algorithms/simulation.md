@@ -6,8 +6,20 @@ The simulation is three ArduPilot drones flying a leader-follower formation in G
 
 ## Task 1 — Get the simulation running
 
-This first task exists only to show you how the simulation works. Nothing here
-is a swarm of your own yet: you are checking that the tooling runs on your machine.
+This task has two parts. **Part 1** is everyone on their own machine, with no
+network to think about. **Part 2** is two groups simulating together, which is
+where addressing starts to matter — and it is the rehearsal for Friday.
+
+### Part 1 — One machine, no IPs to worry about
+
+This part exists only to show you how the simulation works. Nothing here is a
+swarm of your own yet: you are checking that the tooling runs.
+
+Everything runs on one computer, so every endpoint is `127.0.0.1` and the
+vehicles are told apart by **port** alone — vehicle 0 on `14550`–`14554`,
+vehicle 1 on `14560`–`14564`. There is no network configuration in this part at
+all. That is deliberate: it lets you get the formation logic right before any
+of it depends on a radio.
 
 The simulation code lives on the **`simulation`** branch of this repository, separate from `main` (which holds this documentation).
 
@@ -30,6 +42,43 @@ git switch simulation
 
 The branch is under active development — run `git pull` at the start of each
 session to pick up the latest changes.
+
+### Part 2 — Simulate together with another group
+
+Do this once Part 1 runs. **Talk to the other group first** and agree three
+things, because these have to match on both sides or nothing will fly:
+
+- **Who is the leader.** The leader is `MAV_SYSID = 1`; every follower sets
+  `FOLL_SYSID = 1` to point at it. Followers get `MAV_SYSID` 2 and 3.
+- **The offsets** each follower holds — `FOLL_OFS_X/Y/Z`, in metres, in the
+  leader's body frame (`FOLL_OFS_TYPE = 1`). Negative X is behind, negative Y is
+  left, **negative Z is up**.
+- **Who flies what on Friday**, so you simulate the split you will actually fly.
+
+Then build the simulation to match how the real aircraft are wired, not how
+Part 1 was wired. On the real swarm each Pi has its own fixed address and the
+leader pushes its position to each follower on **port 14555**, kept separate
+from the local `14550`/`14551` so the two flows stay distinguishable in logs:
+
+| | Simulation, Part 1 | The real swarm |
+|---|---|---|
+| Address | `127.0.0.1` for everything | one address per Pi (`.101`, `.102`, `.103`) |
+| Tells drones apart | the port | the address |
+| Leader → follower | ports on one machine | leader pushes to each follower on `14555` |
+| Follower side | a port it owns | listens on `0.0.0.0:14555` |
+
+The full procedure — wiring, flight-controller parameters, the per-drone
+configuration matrix, `mavlink-router` configs for leader and followers, and the
+launch sequence — is in the companion computer guide:
+
+[:material-file-pdf-box: Raspberry Pi companion computer setup — swarm drone build (PDF)](../assets/raspberry_pi_companion_computer.pdf){ .md-button }
+
+!!! warning "Fixed addresses come from the router, not from each Pi"
+    The guide assigns them as **DHCP reservations by MAC address** on the router
+    — `drone1` → `192.168.1.101`, `drone2` → `.102`, `drone3` → `.103`. Setting
+    a static address on the Pi itself is the version that tends to fight the
+    access point. Put the Pis on 5 GHz if the router supports it: 2.4 GHz
+    collides with the FrSky RC link.
 
 ## Setup
 
@@ -114,6 +163,31 @@ Flying is the last step, not the first. Before anything leaves the ground:
 4. **Decide the leader-loss behaviour.** If the follower stops hearing the
    leader, should it hold, return, or land? Decide that on the ground rather
    than discovering the default in the air.
+
+### A simple test plan, to run in Gazebo first
+
+Work down this list in simulation. Record a result for each row before Friday —
+a row you cannot pass in Gazebo will not pass in the air.
+
+| # | What you are testing | How, in Gazebo | Pass when |
+|---|---|---|---|
+| 1 | Each drone alone | One vehicle, hover in `LOITER` | It holds position — no drift, no hunting |
+| 2 | The follower hears the leader | On the follower, `watch GLOBAL_POSITION_INT` | Messages from **system 1** arrive, not only its own |
+| 3 | The formation forms | Switch the follower to `FOLLOW` | It moves to station and settles |
+| 4 | The geometry is what you asked for | Compare against `FOLL_OFS_X/Y/Z` | The follower sits where the offsets say it should |
+| 5 | The leader turns | Fly the leader through a turn | The formation keeps its shape |
+| 6 | The leader's stream stops | Stop the leader's relay mid-flight | The follower does what **you decided**, not something you discover |
+| 7 | Recovery | Switch the follower back to `LOITER` | It responds immediately |
+
+Rows 3 and 4 are already scripted — `python3 scripts/leader_follower.py
+--vehicles 3` flies the formation, measures each follower's station-keeping
+error and exits non-zero if it does not hold.
+
+!!! warning "Row 7 is the one that matters most"
+    If the mode switch does not reliably recover the aircraft, stop and fix that
+    before adding a third drone. Rows 6 and 7 are exactly the failures the
+    companion computer guide tells you to rehearse deliberately — and simulation
+    is where they cost nothing.
 
 The [Verification Checklist](#verification-checklist) at the bottom of this page
 is the minimum bar, not your whole test plan.
