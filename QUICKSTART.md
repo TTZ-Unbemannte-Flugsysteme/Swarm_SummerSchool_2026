@@ -1,7 +1,9 @@
 # Quickstart — from nothing to three drones flying
 
 Everything you need is on this page: clone, install, fly. No other file, no
-prior setup.
+prior setup. There is a nicer version of this page for a browser —
+[docs/quickstart.html](docs/quickstart.html) — with the same content and copy
+buttons on every command.
 
 **You need:** Ubuntu 22.04 or 24.04, about 10 GB of free disk, and an internet
 connection. Budget **30-40 minutes**, nearly all of it the ArduPilot compile

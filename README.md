@@ -22,8 +22,10 @@ itself, with `flyit --check`.
 
 ## Install
 
-**New here? [QUICKSTART.md](QUICKSTART.md) is the whole path from clone to
-flying on one page.** This section is the same thing with the reasoning kept in.
+**New here? The whole path from clone to flying is on one page:
+[docs/quickstart.html](docs/quickstart.html) to read in a browser,
+[QUICKSTART.md](QUICKSTART.md) to read in a terminal.** This section is the
+same thing with the reasoning kept in.
 
 On a fresh Ubuntu 22.04 or 24.04 machine, three commands:
 
