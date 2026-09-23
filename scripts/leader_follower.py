@@ -107,16 +107,37 @@ class Vehicle:
                 return True
         return False
 
-    def arm(self, timeout=30):
+    def arm(self, timeout=90):
+        """Keep asking until the autopilot agrees, and remember why it did not.
+
+        90 seconds, not 30. Several pre-arm checks are transient on a fresh
+        SITL: the EKF settles, and the simulated throttle stick starts at
+        minimum and only reaches neutral about a minute in - until it does,
+        arming in GUIDED is refused with "Throttle (RC3) is not neutral".
+        A 30-second window caught the EKF but not that one, so a run started
+        promptly after launch would fail while the identical run a few minutes
+        later passed.
+        """
+        self.prearm_text = None
         deadline = time.time() + timeout
         while time.time() < deadline:
             self.conn.mav.command_long_send(
                 self.conn.target_system, self.conn.target_component,
                 mavutil.mavlink.MAV_CMD_COMPONENT_ARM_DISARM, 0, 1, 0, 0, 0, 0, 0, 0)
-            m = self.conn.recv_match(type="HEARTBEAT", blocking=True, timeout=2)
-            if m and m.base_mode & mavutil.mavlink.MAV_MODE_FLAG_SAFETY_ARMED:
+            m = self.conn.recv_match(type=["HEARTBEAT", "STATUSTEXT"],
+                                     blocking=True, timeout=2)
+            if m is None:
+                continue
+            if m.get_type() == "STATUSTEXT":
+                if m.severity <= 4:
+                    self.prearm_text = m.text.strip()
+                continue
+            if m.base_mode & mavutil.mavlink.MAV_MODE_FLAG_SAFETY_ARMED:
                 return True
         return False
+
+    def last_prearm_text(self):
+        return getattr(self, "prearm_text", None)
 
     def takeoff(self, alt):
         self.conn.mav.command_long_send(
@@ -226,7 +247,18 @@ def main():
             print(f"  FAIL: {v.name} would not enter GUIDED")
             return 1
         if not v.arm():
-            print(f"  FAIL: {v.name} would not arm (EKF or GPS not ready yet?)")
+            # The autopilot always says why; guessing wastes far more time
+            # than reading it. A common one here is "Throttle (RC3) is not
+            # neutral": SITL's simulated throttle stick sits at minimum, and
+            # arming in GUIDED wants it centred. That only bites when the
+            # vehicle is *already* in GUIDED - typically because an earlier
+            # attempt failed and left it there - so say so explicitly.
+            why = v.last_prearm_text() if hasattr(v, "last_prearm_text") else None
+            print(f"  FAIL: {v.name} would not arm"
+                  + (f" - {why}" if why else " (EKF or GPS not ready yet?)"))
+            print(f"        check .run/latest/flight_log.txt for the reason,")
+            print(f"        and note a failed run can leave a vehicle in GUIDED;")
+            print(f"        ./flyit --stop and start again clears that.")
             return 1
         v.takeoff(TAKEOFF_ALT)
         print(f"  {v.name} armed, climbing to {TAKEOFF_ALT:.0f}m")

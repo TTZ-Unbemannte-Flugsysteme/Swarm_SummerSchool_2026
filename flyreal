@@ -1,0 +1,161 @@
+#!/usr/bin/env bash
+# flyreal - the same simulation, wired the way the real aircraft are.
+#
+#   flyreal                 3 drones, one companion agent each, impaired link
+#   flyreal 2               two drones
+#   flyreal --clean-link    agents per drone, but a perfect link
+#   flyreal --loss 0.3      drop 30% of position packets on the Wi-Fi hop
+#   flyreal --delay 0.15    add 150 ms to the Wi-Fi hop
+#   flyreal --stop          shut it all down
+#
+# Each aircraft has its OWN ADDRESS and they share one port, the way real Pis
+# on a Wi-Fi network do - 127.0.0.1, 127.0.0.2, 127.0.0.3 by default, since
+# all of 127.0.0.0/8 is loopback. Point PI_NET at a real subnet and the agent
+# arguments are unchanged:  PI_NET=192.168.1 flyreal 3
+#
+# flyit runs ONE relay process for the whole swarm over loopback, which is
+# convenient and is not what the aircraft do. On the real platform every
+# aircraft carries its own Raspberry Pi, the leader's position crosses a
+# shared Wi-Fi network between them, and only then reaches each follower's
+# flight controller over a local serial link.
+#
+# flyreal reproduces that shape:
+#
+#   leader FC --> [Pi 0] ==== Wi-Fi, lossy and late ====> [Pi 1] --> follower FC
+#                       \\                                 [Pi 2] --> follower FC
+#
+# Same SITL, same Gazebo, same FOLL_* parameters. What changes is the path the
+# leader's position takes to get there - which is the part the simulation is
+# actually meant to be testing.
+#
+# What it does NOT simulate, and you should not claim it does:
+#   - serial timing between the Pi and the flight controller (still UDP)
+#   - the ESP32 DroneBridge's bandwidth or its separate telemetry link
+#   - radio behaviour: interference, range, contention with other traffic
+# It models the leader's position arriving late, or not at all. That is the
+# failure the formation is most exposed to, and the one worth measuring.
+set -u
+
+SELF="$(readlink -f "${BASH_SOURCE[0]}")"
+cd "$(dirname "$SELF")" || exit 1
+export SWARM_SESSION="${SWARM_SESSION:-$(date +%Y%m%d-%H%M%S)}"
+source scripts/env.sh
+
+COUNT=3
+# Defaults chosen to be noticeable but survivable: a busy shared 2.4 GHz
+# network, not a broken one. Raise them until the formation breaks - that
+# number is the useful output of this script.
+LOSS=0.10
+DELAY=0.08
+USE_TERMS=1
+EXTRA=()
+
+while [ $# -gt 0 ]; do
+  case "$1" in
+    --stop)        ./scripts/stop_swarm.sh; exit $? ;;
+    --clean-link)  LOSS=0; DELAY=0 ;;
+    --loss)        LOSS="${2:?--loss needs a value}"; shift ;;
+    --delay)       DELAY="${2:?--delay needs a value}"; shift ;;
+    --loss=*)      LOSS="${1#*=}" ;;
+    --delay=*)     DELAY="${1#*=}" ;;
+    --no-terms)    USE_TERMS=0; EXTRA+=("--no-terms") ;;
+    --no-gazebo)   EXTRA+=("--no-gazebo") ;;
+    -h|--help)     sed -n '2,36p' "$SELF" | sed 's/^# \{0,1\}//'; exit 0 ;;
+    [0-9]*)        COUNT="$1" ;;
+    *) echo "unknown option: $1 (try --help)" >&2; exit 1 ;;
+  esac
+  shift
+done
+
+# The Wi-Fi hop between aircraft.
+#
+# Each aircraft gets its own ADDRESS and they all share one PORT, because that
+# is how a real network works: you configure a peer's IP, not a peer's port
+# number. The whole of 127.0.0.0/8 is loopback on Linux, so 127.0.0.1,
+# 127.0.0.2, 127.0.0.3 ... are usable immediately with no setup - one per
+# aircraft. Swap PI_NET for the real subnet and the agent arguments do not
+# change at all, which is the point.
+PI_NET="${PI_NET:-127.0.0}"
+PI_PORT="${PI_PORT:-14800}"
+pi_ip() { echo "$PI_NET.$(( $1 + 1 ))"; }
+
+echo "=============================================="
+echo " flyreal - $COUNT aircraft, one companion agent each"
+echo "   each aircraft on its own address: $(pi_ip 0) .. $(pi_ip $((COUNT-1))), port $PI_PORT"
+echo "   Wi-Fi hop: ${LOSS} loss, ${DELAY}s delay"
+echo "=============================================="
+
+# Bring the vehicles up exactly as flyit does, but without its single central
+# relay - the per-aircraft agents below replace it.
+SWARM_NO_RELAY=1 ./flyit "$COUNT" "${EXTRA[@]+"${EXTRA[@]}"}" || exit 1
+
+echo
+echo "Starting one companion agent per aircraft..."
+
+FOLLOWER_INGRESS=""
+for i in $(seq 1 $((COUNT - 1))); do
+  FOLLOWER_INGRESS="${FOLLOWER_INGRESS:+$FOLLOWER_INGRESS,}$(pi_ip "$i"):$PI_PORT"
+done
+
+if [ -z "$FOLLOWER_INGRESS" ]; then
+  echo "  only one aircraft; nothing to relay."
+  exit 0
+fi
+
+start_agent() {
+  local title="$1"; shift
+  if [ "$USE_TERMS" = "1" ] && command -v gnome-terminal > /dev/null 2>&1; then
+    gnome-terminal --title="$title" -- bash -lc \
+      "cd '$REPO' && $* ; echo; echo '--- $title finished. Enter to close. ---'; read _" 2>/dev/null &
+  else
+    setsid nohup bash -lc "cd '$REPO' && $*" \
+      > "$SESSION_DIR/$(echo "$title" | tr ' :' '__').log" 2>&1 < /dev/null &
+    record_pid $!
+  fi
+}
+
+# The leader's Pi: reads its own flight controller, pushes onto the Wi-Fi.
+# HEARTBEAT travels with the position so each follower's agent can tell which
+# system ID the stream belongs to - the same thing FOLL_SYSID keys on.
+# This one writes the canonical pidfile, so the dashboard's relay indicator
+# still reflects whether the formation has a position source at all.
+start_agent "pi0: leader agent" \
+  "python3 -u companion/swarm_agent/relay.py --label 'pi0/leader'" \
+  "--leader $(relay_port 0) --push --followers $FOLLOWER_INGRESS" \
+  "--forward HEARTBEAT,GLOBAL_POSITION_INT" \
+  "--loss $LOSS --delay $DELAY --pidfile '$RUNDIR/relay.pid'"
+sleep 2
+
+# Each follower's Pi: takes what arrived over Wi-Fi and writes it into the
+# flight controller sitting next to it. No impairment here - that hop is a
+# 20 cm cable on the real aircraft.
+for i in $(seq 1 $((COUNT - 1))); do
+  start_agent "pi$i: follower agent" \
+    "python3 -u companion/swarm_agent/relay.py --label 'pi$i/follower'" \
+    "--leader $(pi_ip "$i"):$PI_PORT --followers $(relay_port "$i")" \
+    "--pidfile '$RUNDIR/pi$i.pid'"
+done
+
+cat << EOF
+
+==============================================
+ Wired like the aircraft.
+
+   leader FC --> pi0 ==( ${LOSS} loss, ${DELAY}s )==> pi1..pi$((COUNT-1)) --> follower FCs
+
+   Agents      one per aircraft, $COUNT total
+   Addresses   $(pi_ip 0) (leader) -> $(pi_ip 1) .. $(pi_ip $((COUNT-1)))
+   Wi-Fi hop   port $PI_PORT on each, impaired
+   Dashboard   http://127.0.0.1:$DASHBOARD_HTTP_PORT
+
+ Measure what the link costs you:
+   python3 scripts/leader_follower.py --vehicles $COUNT
+
+ Compare against the same run under flyit, where the link is perfect.
+ Raise --loss until the formation stops holding; that number is the answer
+ to "how bad can the Wi-Fi get".
+
+ Shut down:
+   ./flyreal --stop
+==============================================
+EOF

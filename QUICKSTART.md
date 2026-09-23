@@ -139,6 +139,11 @@ flyit --no-terms   # no windows at all, everything in the background
 flyit --help       # all options
 ```
 
+There is also `flyreal`, which runs the same simulation with the aircraft's own
+topology: one companion agent per drone, each on its own IP address, and the
+Wi-Fi hop between them given realistic loss and delay. Use it to find out how
+bad the link can get before the formation stops holding.
+
 `--no-gazebo` is the one to remember on a slow laptop or over SSH. The
 formation is ArduPilot's own, so it behaves identically — you just cannot see
 it or use the cameras.

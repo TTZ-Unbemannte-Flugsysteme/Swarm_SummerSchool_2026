@@ -567,6 +567,7 @@ vehicles on the shared link: [1, 2, 3]</pre>
           <tr><td>Vehicles appear then go stale</td><td>Something else is bound to the port and stealing packets</td><td><span class="mono">ss -lunp | grep 14540</span> &mdash; there should be exactly one listener.</td></tr>
           <tr><td>Nothing after a restart</td><td><em>Automatically Connect on Start</em> not ticked</td><td>Edit the link, tick it.</td></tr>
           <tr><td>QGroundControl will not launch</td><td>No FUSE for the AppImage</td><td>It retries automatically; to do it by hand, add <code>--appimage-extract-and-run</code>.</td></tr>
+          <tr><td><b>The leader will not arm while QGroundControl is open</b><span class="mono">Arm: Throttle (RC3) is not neutral</span></td><td>QGroundControl's <em>automatic</em> UDP link binds <code>0.0.0.0:14550</code>, which is drone 1's relay port. It attaches to that one vehicle as a ground station and supplies centred virtual sticks &mdash; and a copter arms with the throttle <b>down</b>, not centred. Only the leader is affected, which makes it look like a leader-specific fault.</td><td>Turn off the automatic link: <b>Application Settings &rarr; General &rarr; AutoConnect</b>, untick <b>UDP</b>. Keep only the <code>14540</code> link you added. Closing QGroundControl also clears it immediately.</td></tr>
           <tr><td>Connects, but commands do nothing</td><td>The vehicle is refusing them, not missing them</td><td>Read <code>.run/latest/flight_log.txt</code> &mdash; arming and mode refusals are printed there with the autopilot's own reason.</td></tr>
         </tbody>
       </table>
@@ -574,7 +575,7 @@ vehicles on the shared link: [1, 2, 3]</pre>
 
     <div class="note">
       <span class="tag">One thing worth noticing on a shared network</span>
-      <p>QGroundControl's automatic link binds <code>0.0.0.0:14550</code> &mdash; every interface, not just loopback. On this machine that coexists harmlessly with the relay's <code>127.0.0.1:14550</code>, because a more specific binding wins for loopback traffic. But it does mean a ground station is listening on the room's network. Everything this repo starts binds loopback only, deliberately; a GCS is the one component that does not, and on a shared Wi-Fi that is worth knowing before you wonder why someone else's drone appeared in your vehicle list.</p>
+      <p>QGroundControl's automatic link binds <code>0.0.0.0:14550</code> &mdash; every interface, not just loopback. It coexists with the relay's <code>127.0.0.1:14550</code> as far as <em>binding</em> goes, because a more specific binding wins for loopback traffic &mdash; but it is not harmless: it attaches to drone&nbsp;1 as a ground station and feeds it centred virtual sticks, after which the leader refuses to arm because a copter arms with the throttle down. Untick <b>AutoConnect &rarr; UDP</b> and use only the link you added. But it does mean a ground station is listening on the room's network. Everything this repo starts binds loopback only, deliberately; a GCS is the one component that does not, and on a shared Wi-Fi that is worth knowing before you wonder why someone else's drone appeared in your vehicle list.</p>
     </div>
   </section>
 

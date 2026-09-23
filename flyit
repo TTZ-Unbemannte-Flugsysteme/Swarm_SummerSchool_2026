@@ -149,7 +149,11 @@ for i in $(seq 1 $((COUNT - 1))); do
 done
 
 echo "[2/5] Starting the position relay (leader -> $FOLLOWERS)..."
-if [ -z "$FOLLOWERS" ]; then
+if [ "${SWARM_NO_RELAY:-0}" = "1" ]; then
+  # flyreal replaces this single central relay with one companion agent per
+  # aircraft, so starting it here would put two things on the same ports.
+  echo "      skipped - SWARM_NO_RELAY=1 (flyreal starts per-aircraft agents)"
+elif [ -z "$FOLLOWERS" ]; then
   echo "      only one vehicle; nothing to relay."
 elif [ "$USE_TERMS" = "1" ] && open_term "swarm: relay" \
      "cd '$REPO' && python3 -u companion/swarm_agent/relay.py --leader $(relay_port 0) --followers $FOLLOWERS"; then

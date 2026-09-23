@@ -437,6 +437,87 @@ because the ground station is talking. If the dashboard stops, the followers
 hold their last commanded position — safe, but no longer following. That is why
 aiming is a temporary mode with an explicit hand-back rather than the default.
 
+## flyreal — wired the way the aircraft are
+
+`flyit` runs **one** relay process for the whole swarm over loopback. That is
+convenient, and it is not what the aircraft do. On the real platform every
+aircraft carries its own Raspberry Pi, the leader's position crosses a shared
+Wi-Fi network between them, and only then reaches each follower's flight
+controller over a short local link.
+
+```bash
+flyreal              # 3 aircraft, one agent each, impaired link
+flyreal --clean-link # same topology, perfect link
+flyreal --loss 0.3   # drop 30% of position packets on the Wi-Fi hop
+flyreal --delay 0.2  # add 200 ms to it
+flyreal --stop
+```
+
+```
+leader FC --> [pi0] ==== Wi-Fi: loss, delay ====> [pi1] --> follower FC
+                    \                            [pi2] --> follower FC
+```
+
+**Every aircraft has its own IP address, and they share one port** — because
+that is how a network works: you configure a peer's address, not a peer's port
+number. All of `127.0.0.0/8` is loopback on Linux, so each aircraft gets a real
+distinct address with no setup:
+
+```
+pi0  127.0.0.1:14800   (leader)
+pi1  127.0.0.2:14800
+pi2  127.0.0.3:14800
+```
+
+Point `PI_NET` at a real subnet and **the agent arguments do not change at
+all** — which is the whole point of the exercise:
+
+```bash
+PI_NET=192.168.1 flyreal 3
+```
+
+Same SITL, same Gazebo, same `FOLL_*` values. What changes is the path the
+leader's position takes to arrive, which is the part the simulation is really
+meant to be testing.
+
+### What it does not simulate
+
+Worth being blunt, because the name invites over-claiming:
+
+- **Not** serial timing between the Pi and the flight controller — still UDP.
+- **Not** the ESP32 DroneBridge's bandwidth, or its separate telemetry link to
+  the ground. That path is modelled nowhere yet.
+- **Not** radio behaviour: interference, range, contention with other traffic.
+
+What it does model is the leader's position arriving **late, or not at all**.
+That is the failure the formation is most exposed to, and the one worth
+putting a number on.
+
+### Measured
+
+Three aircraft, one agent each, **10% packet loss and 80 ms delay** on the
+Wi-Fi hop, flying the same 120 m evaluation:
+
+```
+      t    leader        follower1         follower2
+      8       41m          6.7m err          5.0m err
+     12       81m          0.4m err          2.8m err
+     20      120m          1.4m err          1.1m err
+     28      120m          0.0m err          0.0m err
+  follower1: closest 0.0m, settled 0.0m (tolerance 6m)
+  follower2: closest 0.0m, settled 0.0m (tolerance 6m)
+RESULT: PASS
+```
+
+The agent's own count: **825 positions forwarded, 84 dropped** — the 10% asked
+for. Worst transient while the leader was moving was **2.8 m**, against 0.3–2.8 m
+over the clean loopback path in `flyit`. So at this level of impairment the link
+costs essentially nothing: `FOLLOW` extrapolates through the gaps.
+
+That is the beginning of the answer, not the end. Raise `--loss` until it stops
+holding — that number is the useful output, and it is what tells you how bad the
+Wi-Fi is allowed to get on the day.
+
 ## Ground station: QGroundControl or Mission Planner
 
 Full walkthrough with diagrams: **[docs/ground-station.html](docs/ground-station.html)**.
@@ -608,6 +689,16 @@ simulation no longer depends on the host's LAN being healthy.
 cameras are aimed correctly and report nothing. Inside roughly 60 m of slant
 range they detect reliably. That is a property of a 320×240 sensor and a 69°
 lens, not a bug, but it sets how close a survey has to pass.
+
+**QGroundControl's automatic link stops the leader arming.** QGC auto-connects
+on `0.0.0.0:14550` — drone 1's relay port — attaches to that one vehicle, and
+supplies centred virtual sticks. A copter arms with the throttle **down**, so
+the leader then refuses with `Arm: Throttle (RC3) is not neutral`, which reads
+like it wants the opposite of what it wants. Only the leader is affected, so it
+looks like a fault in the leader. Verified: with QGC running, drone 1's RC3
+reads 1500 while drones 2 and 3 read 1000; close QGC and drone 1 returns to
+1000 and arms. Fix: **Application Settings → General → AutoConnect**, untick
+**UDP**, and use only the `14540` link.
 
 **`LOITER` is not a hold — it lands.** Every early survey ended with the swarm
 on the ground, with no failsafe and nothing in the flight log but a mode change.
