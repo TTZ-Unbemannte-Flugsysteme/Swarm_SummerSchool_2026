@@ -61,14 +61,47 @@ flyit
 
 First launch takes a couple of minutes. Four terminal windows open — the
 vehicles, the position relay, the flight log, the dashboard — plus a Gazebo
-window with three quadrotors on a runway, and a browser at
-**http://127.0.0.1:8760**.
+window with three quadrotors on a runway.
 
-If the browser does not open by itself, go to that address manually.
+Leave all of it running. The dashboard is the next step.
 
-### Then, in the browser
+## 5. Open the dashboard
 
-**Wait about a minute first.** GPS and the EKF need to settle, and the buttons
+```
+http://127.0.0.1:8760
+```
+
+`flyit` opens a browser there for you. **If no browser appears**, open that
+address yourself — that happens over SSH, on a machine with no desktop, or when
+you used `--no-terms`.
+
+Not sure whether it is even serving? Ask it, without a browser:
+
+```bash
+curl -s http://127.0.0.1:8760/api/status | head -c 120
+```
+
+A line of JSON starting `{"now":` means the dashboard is up and the page will
+load. Nothing at all means the dashboard did not start — check the terminal
+window titled *swarm: dashboard*.
+
+### Running it on a different machine?
+
+The dashboard listens on **loopback only**, deliberately: it can arm and fly the
+vehicles, so it is not something to put on a shared network. Reach it through a
+tunnel instead of exposing it:
+
+```bash
+ssh -L 8760:127.0.0.1:8760 you@that-machine
+```
+
+Leave that running, then open <http://127.0.0.1:8760> on your **own** laptop.
+The traffic goes over SSH; nothing new is opened to the network.
+
+### What you should see
+
+One card per drone, three camera views, a formation map and a station-error
+chart. **Wait about a minute first.** GPS and the EKF need to settle, and the buttons
 stay disabled until they have. They enable themselves — you do not click
 anything to make that happen.
 
@@ -86,7 +119,7 @@ anything to make that happen.
 Watch the **Station error** chart while the formation settles. That is the
 number the whole thing exists to hold.
 
-## 5. Stop
+## 6. Stop
 
 ```bash
 flyit --stop

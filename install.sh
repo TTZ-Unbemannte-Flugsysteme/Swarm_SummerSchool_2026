@@ -282,16 +282,39 @@ if [ "$STATUS" = "0" ]; then
 ==============================================
  Installed.
 
-   flyit              3 drones in Gazebo + dashboard at http://127.0.0.1:8760
+ NEXT, TWO STEPS:
+
+   1.  flyit
+
+       Starts three drones in Gazebo. First launch takes a couple of
+       minutes - ArduPilot writes each vehicle's parameter store.
+
+   2.  Open the web dashboard:
+
+           http://127.0.0.1:8760
+
+       flyit opens it for you. If no browser appears - no desktop, over
+       SSH, or you used --no-terms - open that address yourself.
+
+       Working on a remote machine? The dashboard listens on loopback
+       only, on purpose: it can arm and fly the vehicles. Tunnel to it
+       instead of exposing it:
+
+           ssh -L 8760:127.0.0.1:8760 you@that-machine
+
+       then open http://127.0.0.1:8760 on your own laptop.
+
+ Give it about a minute after launch: GPS and the EKF have to settle before
+ the take-off button enables itself. Nothing to click - it just goes live.
+
+ Other ways to run it:
    flyit 2            two drones
    flyit --no-gazebo  headless physics, much faster to start
+   flyit --qgc        also start QGroundControl
    flyit --stop       shut it all down
 
  If 'flyit' is not found, open a new terminal (the PATH entry is new) or
  run ./flyit from this directory.
-
- First launch takes longer: ArduPilot writes each vehicle's parameter store,
- and GPS/EKF need about a minute to settle before the arm button enables.
 ==============================================
 EOF
 else
