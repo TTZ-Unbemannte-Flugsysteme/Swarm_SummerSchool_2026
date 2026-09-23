@@ -4,7 +4,10 @@ Before flying real hardware, you must test your algorithms in a simulated enviro
 
 The simulation is three ArduPilot drones flying a leader-follower formation in Gazebo, with a browser that flies the leader, streams a camera from each drone, and runs the inspection surveys.
 
-## Get the Simulation Code
+## Task 1 — Get the simulation running
+
+This first task exists only to show you how the simulation works. Nothing here
+is a swarm of your own yet: you are checking that the tooling runs on your machine.
 
 The simulation code lives on the **`simulation`** branch of this repository, separate from `main` (which holds this documentation).
 
@@ -25,8 +28,8 @@ git fetch origin simulation
 git switch simulation
 ```
 
-!!! note
-    The branch is under active development. Run `git pull` at the start of each session to pick up the latest changes.
+The branch is under active development — run `git pull` at the start of each
+session to pick up the latest changes.
 
 ## Setup
 
@@ -74,6 +77,46 @@ The page below is the whole path from a bare laptop to three drones flying, with
 [Open it in its own tab](quickstart.html){ .md-button } &nbsp; [Teaching version, with slides](workshop.html){ .md-button } &nbsp; [Design rationale](architecture.html){ .md-button }
 
 <iframe src="../quickstart.html" width="100%" height="900px" style="border: 1px solid rgba(128,128,128,.3); border-radius: 8px; margin-top: 20px;"></iframe>
+
+## Task 2 — A decentralised swarm
+
+Task 1 gives you one leader and followers that depend on it. This task asks the
+opposite question: how does a group agree on something with **no central
+coordinator**?
+
+Start from the consensus material below and use it as inspiration — a starting
+point to argue with, not a specification to implement.
+
+[:material-file-powerpoint: Download: Multi-Agent Systems — Consensus (PPTX, 62 MB)](../assets/Multi-Agent-Systems-Consensus.pptx){ .md-button }
+
+!!! note
+    Where P2P ("no central relay") genuinely wins is if you need the swarm to
+    work with no ground infrastructure at all. If the ground station is there
+    anyway — and Mission Planner is in your architecture — that argument mostly
+    evaporates.
+
+## Task 3 — Leader-follower in the real world (Friday)
+
+Team up with another group and make leader-follower **testable on real
+hardware**. Friday is the flight day.
+
+Flying is the last step, not the first. Before anything leaves the ground:
+
+1. **Write the test cases first.** Decide what you are measuring and what counts
+   as pass or fail *before* you fly — station-keeping error, time to recover
+   after the leader turns, what happens when the leader's stream stops.
+2. **Run every case in simulation and record the result.** A case you cannot
+   pass in Gazebo will not pass in the air. `scripts/leader_follower.py` below is
+   the pattern to copy: it measures, and it exits non-zero when the formation
+   does not hold.
+3. **Agree the split with the other group** — who flies the leader, who flies
+   the follower, who watches telemetry, and who calls an abort.
+4. **Decide the leader-loss behaviour.** If the follower stops hearing the
+   leader, should it hold, return, or land? Decide that on the ground rather
+   than discovering the default in the air.
+
+The [Verification Checklist](#verification-checklist) at the bottom of this page
+is the minimum bar, not your whole test plan.
 
 ## Running Algorithms
 
