@@ -6,6 +6,9 @@ models/iris_v*/
 worlds/swarm_runway.sdf
 worlds/scene.json
 
+# Machine-specific paths written by ./install.sh.
+config/local.env
+
 # Local tooling and Python bytecode.
 .claude/
 __pycache__/

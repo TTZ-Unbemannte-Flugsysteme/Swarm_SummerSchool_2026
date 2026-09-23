@@ -2,12 +2,29 @@
 # Shared paths, port maths and process handling for every script in this repo.
 # Override any of these in your shell before sourcing if your layout differs.
 
-: "${SSS_ROOT:=/home/ttz/workspaces/SSS_2026}"
+REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+
+# Where ArduPilot and the Gazebo plugin live. Three sources, most specific
+# first, so a clone on a fresh machine needs no edits to this file:
+#
+#   1. exported in your shell   - always wins
+#   2. config/local.env         - written by ./install.sh, gitignored
+#   3. autodetected below       - the usual places a checkout ends up
+#
+# local.env uses `: "${VAR:=...}"` so it sets defaults without overriding a
+# variable you exported yourself.
+[ -f "$REPO/config/local.env" ] && source "$REPO/config/local.env"
+
+if [ -z "${SSS_ROOT:-}" ]; then
+  for _cand in "$REPO/deps" "$REPO/../SSS_2026" "$HOME/SSS_2026" "$HOME/swarm-deps"; do
+    if [ -d "$_cand/ardupilot" ]; then SSS_ROOT="$(cd "$_cand" && pwd)"; break; fi
+  done
+  unset _cand
+fi
+: "${SSS_ROOT:=$REPO/deps}"
 : "${ARDUPILOT:=$SSS_ROOT/ardupilot}"
 : "${ARDUPILOT_GAZEBO:=$SSS_ROOT/ardupilot_gazebo}"
 : "${MISSION_PLANNER:=$SSS_ROOT/MissionPlanner}"
-
-REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 RUNDIR="$REPO/.run"
 PIDFILE="$RUNDIR/pids"
 
@@ -57,7 +74,14 @@ export GZ_IP="${GZ_IP:-127.0.0.1}"
 require_ardupilot() {
   if [ ! -x "$ARDUPILOT/build/sitl/bin/arducopter" ]; then
     echo "ERROR: no SITL binary at $ARDUPILOT/build/sitl/bin/arducopter" >&2
-    echo "Build it with: cd $ARDUPILOT && ./waf configure --board sitl && ./waf copter" >&2
+    if [ ! -d "$ARDUPILOT" ]; then
+      echo "       ArduPilot is not at that path at all (SSS_ROOT=$SSS_ROOT)." >&2
+      echo "       Set it up with:  ./install.sh" >&2
+      echo "       Already have a checkout? export SSS_ROOT=/path/to/its/parent" >&2
+    else
+      echo "       Build it with: cd $ARDUPILOT && ./waf configure --board sitl && ./waf copter" >&2
+    fi
+    echo "       Check the whole rig with: ./scripts/check_setup.sh" >&2
     return 1
   fi
 }

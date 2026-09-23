@@ -1,0 +1,24 @@
+# Python packages the simulation needs. Installed by ./install.sh; to do it by
+# hand:  pip3 install --user -r requirements.txt
+#
+# Not listed here, because pip cannot supply them:
+#   gz-transport13 / gz-msgs10 Python bindings - apt, with Gazebo Harmonic.
+#     Only the camera feeds need them; without them the dashboard runs and
+#     says video is unavailable.
+#   ArduPilot SITL + the ardupilot_gazebo plugin - built from source.
+
+# MAVLink itself: every script here speaks it.
+pymavlink>=2.4.49
+
+# sim_vehicle.py starts one MAVProxy per vehicle to fan MAVLink out to the
+# five UDP endpoints each vehicle needs. It must be on PATH.
+MAVProxy>=1.8.70
+
+# Camera frames: JPEG encoding for the dashboard, and the accident detector.
+opencv-python-headless>=4.5
+numpy>=1.21,<2
+
+# sim_vehicle.py's own helpers.
+future
+pexpect
+empy==3.3.4

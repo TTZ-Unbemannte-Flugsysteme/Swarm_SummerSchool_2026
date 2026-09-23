@@ -1,8 +1,9 @@
 # Swarm-Simulation-SSS
 
 Leader-follower simulation for the F450 swarm, built on ArduPilot SITL and
-Gazebo. **The simulation runs on the NUT-HMT PC** — this repository is the
-source; `flyit` brings the whole thing up there.
+Gazebo. It runs on any Ubuntu 22.04 or 24.04 machine: **`./install.sh` once,
+then `flyit`** brings the whole thing up. The NUT-HMT PC is where it usually
+runs; nothing in here is specific to it.
 
 ![Gazebo showing three quadrotors over the runway beside the operator dashboard with live telemetry, three camera feeds and the formation map](SC/Screenshot%20from%202026-09-21%2013-07-33.png)
 
@@ -16,7 +17,77 @@ this file is the build, in the order you can check it. To *teach* it, open
 decide everything, and a 16-slide deck with a presenter mode.
 
 Every step prints `RESULT: PASS` or `RESULT: FAIL` and exits non-zero on
-failure, so nothing here needs to be judged by eye.
+failure, so nothing here needs to be judged by eye — including the setup
+itself, with `flyit --check`.
+
+## Install
+
+On a fresh Ubuntu 22.04 or 24.04 machine, three commands:
+
+```bash
+git clone https://github.com/<you>/Swarm-Simulation-SSS.git
+cd Swarm-Simulation-SSS
+./install.sh
+```
+
+`install.sh` installs the system packages, Gazebo Harmonic and its Python
+bindings, clones and builds ArduPilot SITL and the `ardupilot_gazebo` plugin,
+installs the Python requirements, records the paths in `config/local.env` and
+links `flyit` onto your `PATH`. Then it runs the check below and tells you
+whether you can fly.
+
+Budget 20-40 minutes, nearly all of it compiling ArduPilot. It is safe to
+re-run: every step checks for its own result first, so a second run after a
+failure resumes rather than starting over.
+
+```bash
+./install.sh --deps-dir ~/x   # put ArduPilot and the plugin somewhere else
+./install.sh --no-gazebo      # skip Gazebo; headless physics only
+./install.sh --no-apt         # no sudo, no apt - you handle system packages
+./install.sh --yes            # don't stop to ask before the long steps
+./install.sh --check          # report what's installed, change nothing
+```
+
+### Check the machine
+
+```bash
+flyit --check          # same as ./scripts/check_setup.sh
+```
+
+One line per dependency, then `RESULT: PASS` or `RESULT: FAIL`. It separates
+"the rig is broken" from "the code is broken", which is most of the debugging.
+Optional pieces print `warn` and still pass — you lose that feature, not the
+simulation:
+
+```
+ArduPilot SITL
+  ok   checkout               /home/you/swarm-deps/ardupilot
+  ok   arducopter binary      built  (ArduPilot-4.6.0-beta1-7764-g06a33a1de4)
+Gazebo
+  ok   gz                     sim 8.10.0
+  warn gz python bindings     missing - dashboard runs, camera feeds do not
+RESULT: PASS - ready to run: flyit
+```
+
+### Already have ArduPilot?
+
+Point at it and skip the build. Nothing needs editing in the repo:
+
+```bash
+export SSS_ROOT=/path/to/parent      # the directory holding ardupilot/
+```
+
+The scripts resolve paths from your shell first, then `config/local.env`
+(written by `install.sh`, gitignored), then by looking in the usual places —
+so a plain clone beside an existing `ardupilot` checkout works with no
+configuration at all. `config/local.env.example` documents every variable.
+
+### Without Gazebo
+
+Gazebo is only needed for the 3D view, the camera feeds and the accident
+detection. The formation itself is ArduPilot's, so `./install.sh --no-gazebo`
+plus `flyit --no-gazebo` gives you the full leader-follower evaluation,
+headless and much faster to start.
 
 ## Everything at once
 
@@ -29,10 +100,11 @@ flyit --mp         # also start Mission Planner
 flyit --stop       # shut it all down
 ```
 
-`flyit` is on `PATH` via a symlink, so it works from any directory:
+`flyit` is on `PATH` via a symlink, so it works from any directory.
+`install.sh` makes it; by hand it is:
 
 ```bash
-ln -sfn "$PWD/flyit" ~/.local/bin/flyit    # already done on this machine
+ln -sfn "$PWD/flyit" ~/.local/bin/flyit
 ```
 
 It resolves that symlink before doing anything, so it always finds the repo
@@ -361,17 +433,29 @@ aiming is a temporary mode with an explicit hand-back rather than the default.
 
 ## What it needs
 
-Already present on this machine at `/home/ttz/workspaces/SSS_2026`:
+`./install.sh` provides all of this; the table is what it is providing, and
+what `flyit --check` verifies.
 
-| Thing | Where | Note |
+| Thing | Where | Required? |
 |---|---|---|
-| ArduPilot source + built SITL | `SSS_2026/ardupilot` | 4.6.0-dev. Aircraft run 4.7.0 — see caveats |
-| `ardupilot_gazebo` plugin | `SSS_2026/ardupilot_gazebo` | already compiled |
-| Gazebo | system `gz` | Harmonic 8.10 / Garden 7.9 |
-| MAVProxy + pymavlink | `~/.local/bin` | 2.4.49 |
-| Mission Planner | `SSS_2026/MissionPlanner` | runs under mono |
+| ArduPilot source + built SITL | `$SSS_ROOT/ardupilot` | yes — the autopilot itself |
+| MAVProxy + pymavlink | `~/.local/bin`, pip | yes — `sim_vehicle.py` needs MAVProxy on `PATH` |
+| Gazebo Harmonic | system `gz` | for the 3D view and cameras |
+| `ardupilot_gazebo` plugin | `$SSS_ROOT/ardupilot_gazebo` | with Gazebo |
+| `python3-gz-transport13`, `python3-gz-msgs10` | apt | for the camera feeds only |
+| OpenCV + numpy | pip, `requirements.txt` | for the camera feeds and accident detection |
+| Mission Planner | `$SSS_ROOT/MissionPlanner` | optional, `flyit --mp`, runs under mono |
 
-Override paths by exporting `SSS_ROOT` or `ARDUPILOT` before running anything.
+`SSS_ROOT` is the directory holding `ardupilot/` and `ardupilot_gazebo/`. It
+resolves from your shell first, then `config/local.env`, then by autodetection
+— so exporting `SSS_ROOT` or `ARDUPILOT` before running anything overrides
+whatever was installed. The Gazebo Python bindings come from apt with Gazebo;
+pip has no equivalent, which is why they are the one dependency
+`requirements.txt` cannot cover.
+
+On this machine everything is already at `/home/ttz/workspaces/SSS_2026`
+(ArduPilot 4.6.0-dev, Gazebo Harmonic 8.10, MAVProxy 2.4.49), found by
+autodetection with no config file.
 
 ## Step 1 — two vehicles with distinct system IDs
 
