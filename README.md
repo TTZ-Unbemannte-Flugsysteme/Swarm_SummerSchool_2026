@@ -15,7 +15,9 @@ Design rationale lives in [docs/architecture.html](docs/architecture.html);
 this file is the build, in the order you can check it. To *teach* it, open
 [docs/workshop.html](docs/workshop.html) — diagrams, SITL vs HIL, why ports
 decide everything, and a 16-slide deck with a presenter mode. To attach a real
-ground station, [docs/ground-station.html](docs/ground-station.html).
+ground station, [docs/ground-station.html](docs/ground-station.html). Every
+diagram on a white background, for slides and reports:
+[docs/diagrams-white.html](docs/diagrams-white.html).
 
 Every step prints `RESULT: PASS` or `RESULT: FAIL` and exits non-zero on
 failure, so nothing here needs to be judged by eye — including the setup
