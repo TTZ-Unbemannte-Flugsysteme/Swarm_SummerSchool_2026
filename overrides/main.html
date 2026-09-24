@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+
+{% block footer %}
+  {{ super() }}
+  <div style="background-color: var(--md-footer-bg-color); padding: 20px 0 40px 0; text-align: center; color: var(--md-footer-fg-color);">
+    <div style="margin-bottom: 20px; font-size: 1.1em; font-weight: 500; opacity: 0.9;">
+      Ignaz Kögler Research Summer Camp – Drone Swarming Technologies
+    </div>
+    <div style="display: flex; justify-content: center; gap: 20px; flex-wrap: wrap;">
+      <div style="background: white; padding: 10px 20px; border-radius: 8px; display: inline-flex; align-items: center; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+        <img src="{{ base_url }}/assets/Logo_TTZ_Unbemannte_Flugsysteme_kurz_schwarz.png" alt="TTZ Logo" style="height: 40px;">
+      </div>
+      <div style="background: white; padding: 10px 20px; border-radius: 8px; display: inline-flex; align-items: center; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+        <img src="{{ base_url }}/assets/ainin_logo_s_RGB.png" alt="AININ Logo" style="height: 50px;">
+      </div>
+    </div>
+  </div>
+{% endblock %}
+
+

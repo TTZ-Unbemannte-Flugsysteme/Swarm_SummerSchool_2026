@@ -1,0 +1,732 @@
+<!doctype html>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Quickstart &mdash; clone, install, fly</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Condensed:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+  :root{
+    --bg:#eef1f4;
+    --surface:#ffffff;
+    --panel:#e3e8ed;
+    --panel-line:#c3ccd5;
+    --border:#c9d2da;
+    --text:#161d29;
+    --muted:#556170;
+    --accent:#a8481a;
+    --accent-soft:#f6e0d2;
+    --accent-line:#c2571f;
+    --sim:#0c6b78;
+    --sim-soft:#d5ecef;
+    --sim-line:#12808f;
+    --good:#2a7048;
+    --warn:#8f6708;
+    --shadow:0 1px 2px rgba(20,30,45,.05), 0 10px 30px -16px rgba(20,30,45,.25);
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --bg:#0f1319;
+      --surface:#181e27;
+      --panel:#1d242f;
+      --panel-line:#303a48;
+      --border:#2d3744;
+      --text:#e9edf2;
+      --muted:#9aa7b5;
+      --accent:#ff9a5e;
+      --accent-soft:#3d2617;
+      --accent-line:#e07f44;
+      --sim:#63d8e8;
+      --sim-soft:#123840;
+      --sim-line:#2ba7bb;
+      --good:#6bcf92;
+      --warn:#e3b451;
+      --shadow:0 1px 2px rgba(0,0,0,.5), 0 10px 30px -16px rgba(0,0,0,.7);
+    }
+  }
+  :root[data-theme="dark"]{
+    --bg:#0f1319;
+    --surface:#181e27;
+    --panel:#1d242f;
+    --panel-line:#303a48;
+    --border:#2d3744;
+    --text:#e9edf2;
+    --muted:#9aa7b5;
+    --accent:#ff9a5e;
+    --accent-soft:#3d2617;
+    --accent-line:#e07f44;
+    --sim:#63d8e8;
+    --sim-soft:#123840;
+    --sim-line:#2ba7bb;
+    --good:#6bcf92;
+    --warn:#e3b451;
+    --shadow:0 1px 2px rgba(0,0,0,.5), 0 10px 30px -16px rgba(0,0,0,.7);
+  }
+
+  *{ box-sizing:border-box }
+
+  body{
+    margin:0;
+    background:var(--bg);
+    color:var(--text);
+    font-family:"IBM Plex Sans", ui-sans-serif, system-ui, sans-serif;
+    font-size:17px;
+    line-height:1.7;
+    -webkit-font-smoothing:antialiased;
+  }
+
+  .wrap{
+    max-width:1000px;
+    margin:0 auto;
+    padding-inline:28px;
+    padding-block:44px 96px;
+  }
+
+  h1,h2,h3{
+    font-family:"IBM Plex Sans Condensed","IBM Plex Sans",sans-serif;
+    text-wrap:balance;
+    line-height:1.15;
+    margin:0;
+  }
+  code,.mono{ font-family:"IBM Plex Mono", ui-monospace, monospace; }
+  code{ font-size:.88em; }
+  a{ color:var(--sim); text-underline-offset:3px; }
+
+  .kicker{
+    font-family:"IBM Plex Mono";
+    font-size:13px;
+    letter-spacing:.1em;
+    text-transform:uppercase;
+    color:var(--sim);
+    margin-bottom:14px;
+  }
+  h1{ font-size:clamp(31px,5vw,44px); font-weight:700; letter-spacing:-.01em; }
+  .dek{
+    font-size:19px;
+    color:var(--muted);
+    max-width:60ch;
+    margin:16px 0 0;
+  }
+  .facts{ display:flex; flex-wrap:wrap; gap:10px; margin-top:26px; }
+  .fact{
+    font-family:"IBM Plex Mono";
+    font-size:12.5px;
+    padding:6px 12px;
+    border:1px solid var(--border);
+    border-radius:999px;
+    color:var(--muted);
+    background:var(--surface);
+  }
+  .fact b{ color:var(--text); font-weight:500; }
+
+  .contents{
+    margin-top:40px;
+    border:1px solid var(--border);
+    border-radius:12px;
+    background:var(--surface);
+    padding:20px 22px 22px;
+    box-shadow:var(--shadow);
+  }
+  .contents h2{
+    font-family:"IBM Plex Mono";
+    font-size:12px;
+    letter-spacing:.1em;
+    text-transform:uppercase;
+    color:var(--muted);
+    font-weight:500;
+    margin-bottom:14px;
+  }
+  .contents ol{
+    list-style:none; margin:0; padding:0;
+    display:grid;
+    grid-template-columns:repeat(auto-fit, minmax(240px, 1fr));
+    gap:2px 22px;
+  }
+  .contents a{
+    display:flex; gap:12px;
+    padding:7px 0;
+    text-decoration:none;
+    color:var(--text);
+    font-size:16px;
+  }
+  .contents a:hover{ color:var(--sim); }
+  .contents a code{ font-size:.92em; background:none; padding:0; }
+  .contents .n{
+    font-family:"IBM Plex Mono";
+    font-size:13px;
+    color:var(--sim);
+    padding-top:2px;
+  }
+
+  section{ margin-top:72px; scroll-margin-top:24px; }
+  .eyebrow{
+    font-family:"IBM Plex Mono";
+    font-size:13px;
+    letter-spacing:.06em;
+    color:var(--sim);
+    margin-bottom:8px;
+  }
+  h2{ font-size:27px; font-weight:600; }
+  section > h2{ margin-bottom:18px; }
+  h3{ font-size:18px; font-weight:600; margin:32px 0 8px; }
+  p{ margin:0 0 18px; max-width:66ch; }
+  p:last-child{ margin-bottom:0; }
+  ul.plain{ max-width:66ch; padding-left:1.15em; margin:0 0 18px; }
+  ul.plain li{ margin-bottom:8px; }
+
+  .note{
+    border:1px solid var(--border);
+    border-left:4px solid var(--accent-line);
+    background:var(--accent-soft);
+    border-radius:10px;
+    padding:22px 24px;
+    margin:24px 0 0;
+    max-width:78ch;
+  }
+  .note .tag,.rec .tag{
+    display:block;
+    font-family:"IBM Plex Mono";
+    font-size:12px;
+    letter-spacing:.08em;
+    text-transform:uppercase;
+    font-weight:500;
+    margin-bottom:10px;
+  }
+  .note .tag{ color:var(--accent); }
+  .note p,.rec p{ max-width:none; }
+  .rec{
+    border:1px solid var(--border);
+    border-left:4px solid var(--sim-line);
+    background:var(--sim-soft);
+    border-radius:10px;
+    padding:22px 24px;
+    max-width:78ch;
+  }
+  .rec .tag{ color:var(--sim); }
+
+  figure{ margin:28px 0 0; }
+  figure:not(:last-child){ margin-bottom:30px; }
+  .frame{
+    background:var(--surface);
+    border:1px solid var(--border);
+    border-radius:12px;
+    padding:22px 20px;
+    box-shadow:var(--shadow);
+    overflow-x:auto;
+  }
+  svg.arch{ display:block; width:100%; min-width:640px; height:auto; }
+  figcaption{
+    font-size:15px;
+    line-height:1.6;
+    color:var(--muted);
+    margin-top:14px;
+    max-width:70ch;
+  }
+  figcaption b{ color:var(--text); font-weight:600; }
+
+  .table-wrap{
+    margin-top:24px;
+    border:1px solid var(--border);
+    border-radius:12px;
+    overflow-x:auto;
+    background:var(--surface);
+  }
+  table{ border-collapse:collapse; width:100%; font-size:15px; }
+  th,td{
+    text-align:left;
+    padding:14px 16px;
+    border-bottom:1px solid var(--border);
+    vertical-align:top;
+  }
+  thead th{
+    background:var(--panel);
+    font-family:"IBM Plex Mono";
+    font-weight:500;
+    font-size:12px;
+    letter-spacing:.05em;
+    text-transform:uppercase;
+    color:var(--muted);
+    line-height:1.5;
+  }
+  thead th span{ display:block; text-transform:none; letter-spacing:0; opacity:.8; }
+  tbody tr:last-child td{ border-bottom:none; }
+  td.mono{ font-size:13.5px; }
+  .ok{ color:var(--good); font-weight:500; }
+  .mid{ color:var(--warn); font-weight:500; }
+  .bad{ color:var(--accent); font-weight:500; }
+
+  pre.tree{
+    margin:24px 0 0;
+    background:var(--panel);
+    border:1px solid var(--border);
+    border-radius:12px;
+    padding:22px 24px;
+    font-family:"IBM Plex Mono";
+    font-size:13.5px;
+    line-height:1.75;
+    overflow-x:auto;
+    color:var(--text);
+  }
+  pre.tree .c{ color:var(--muted); }
+  pre.tree .r{ color:var(--sim); }
+  pre.tree .new{ color:var(--accent); }
+
+  .checklist{
+    list-style:none; margin:24px 0 0; padding:0;
+    border:1px solid var(--border);
+    border-radius:12px;
+    background:var(--surface);
+    overflow:hidden;
+  }
+  .checklist li{ border-bottom:1px solid var(--border); }
+  .checklist li:last-child{ border-bottom:none; }
+  .checklist label{
+    display:flex; gap:14px; align-items:flex-start;
+    padding:16px 20px;
+    cursor:pointer;
+  }
+  .checklist label:hover{ background:var(--panel); }
+  .checklist input{
+    margin:5px 0 0; width:17px; height:17px;
+    accent-color:var(--sim-line); flex:0 0 auto;
+  }
+  .checklist .n{
+    font-family:"IBM Plex Mono";
+    font-size:13px; color:var(--muted);
+    flex:0 0 auto; padding-top:1px;
+  }
+  .checklist .body{ min-width:0; }
+  .checklist .q{ display:block; font-size:16.5px; }
+  .checklist .why{ display:block; color:var(--muted); font-size:14.5px; margin-top:2px; }
+  .checklist input:checked ~ .body .q{ color:var(--muted); text-decoration:line-through; }
+
+  footer{
+    margin-top:72px;
+    padding-top:26px;
+    border-top:1px solid var(--border);
+    color:var(--muted);
+    font-size:15px;
+    max-width:70ch;
+  }
+
+  @media (max-width:640px){
+    body{ font-size:16px; }
+    .wrap{ padding-inline:18px; padding-block:32px 64px; }
+    section{ margin-top:56px; }
+    .note,.rec{ padding:18px; }
+    .frame{ padding:16px 14px; }
+  }
+</style>
+
+<style>
+  /* ---- quickstart additions ---------------------------------------- */
+  .lede{font-size:19px;color:var(--muted);max-width:62ch;margin:16px 0 0}
+  .audience{
+    margin-top:26px;padding:14px 18px;border-radius:10px;
+    background:var(--sim-soft);border:1px solid var(--sim-line);
+    font-size:15px;max-width:78ch;
+  }
+  .audience b{color:var(--sim)}
+
+  /* A numbered step is the spine of this page: one visible action each. */
+  .stepnum{
+    display:inline-flex;align-items:center;justify-content:center;
+    width:30px;height:30px;border-radius:9px;flex:0 0 auto;
+    background:var(--sim-line);color:#fff;
+    font-family:"IBM Plex Mono";font-size:14px;font-weight:500;
+  }
+  section.step > h2{
+    display:flex;gap:14px;align-items:center;margin-bottom:6px;
+  }
+  .steptime{
+    font-family:"IBM Plex Mono";font-size:12.5px;color:var(--muted);
+    margin:0 0 18px 44px;
+  }
+
+  /* Command blocks carry a copy button: this page exists to be typed from,
+     and a mistyped clone URL is the commonest way to lose ten minutes. */
+  .cmd{position:relative;margin:18px 0 0;max-width:78ch}
+  .cmd pre{
+    margin:0;background:var(--panel);border:1px solid var(--border);
+    border-radius:10px;padding:16px 54px 16px 18px;font-family:"IBM Plex Mono";
+    font-size:13px;line-height:1.75;overflow-x:auto;color:var(--text);
+  }
+  .cmd pre .c{color:var(--muted)}
+  .cmd pre .p{color:var(--sim)}
+  .cmd button{
+    position:absolute;top:9px;right:9px;
+    font-family:"IBM Plex Mono";font-size:11px;letter-spacing:.04em;
+    padding:5px 9px;border-radius:6px;cursor:pointer;
+    border:1px solid var(--border);background:var(--surface);color:var(--muted);
+  }
+  .cmd button:hover{color:var(--sim);border-color:var(--sim-line)}
+  .cmd button.done{color:var(--good);border-color:var(--good)}
+
+  .out{
+    margin:18px 0 0;background:var(--surface);border:1px solid var(--border);
+    border-radius:10px;padding:16px 18px;font-family:"IBM Plex Mono";
+    font-size:12.5px;line-height:1.7;overflow-x:auto;color:var(--muted);
+    max-width:78ch;
+  }
+  .out b{color:var(--text);font-weight:500}
+  .out .ok{color:var(--good)}
+  .out .warn{color:var(--warn)}
+
+  /* The browser walkthrough: what to click, in order. */
+  .clicks{counter-reset:c;list-style:none;padding:0;margin:22px 0 0;max-width:78ch}
+  .clicks > li{
+    counter-increment:c;position:relative;padding:0 0 0 42px;margin-bottom:18px;
+  }
+  .clicks > li::before{
+    content:counter(c);position:absolute;left:0;top:0;
+    width:26px;height:26px;border-radius:50%;
+    display:flex;align-items:center;justify-content:center;
+    font-family:"IBM Plex Mono";font-size:12.5px;
+    color:var(--sim);background:var(--surface);border:1px solid var(--border);
+  }
+  .clicks ul{margin:8px 0 0;padding-left:1.15em}
+  .clicks li li{margin-bottom:6px}
+  .btn{
+    display:inline-block;font-family:"IBM Plex Sans";font-size:14px;
+    padding:2px 9px;border-radius:6px;white-space:nowrap;
+    background:var(--sim-soft);border:1px solid var(--sim-line);color:var(--sim);
+    font-weight:500;
+  }
+  .key{
+    display:inline-block;font-family:"IBM Plex Mono";font-size:12.5px;
+    padding:1px 7px;border-radius:5px;
+    background:var(--panel);border:1px solid var(--panel-line);
+    box-shadow:0 1px 0 var(--panel-line);
+  }
+
+  td .fixcmd{
+    display:block;font-family:"IBM Plex Mono";font-size:12.5px;
+    color:var(--sim);margin-top:4px;
+  }
+</style>
+
+<div class="wrap">
+  <header>
+    <div class="kicker">Swarm_SummerSchool_2026 &middot; quickstart</div>
+    <h1>Clone it, install it, fly it</h1>
+    <p class="lede">Everything you need is on this page: three drones flying a formation in Gazebo, with a browser that flies the leader. You have not seen this repository before, and nothing is set up on your machine. That is the assumption throughout.</p>
+    <div class="facts">
+      <span class="fact"><b>Needs</b> Ubuntu 22.04 or 24.04</span>
+      <span class="fact"><b>Disk</b> about 10&nbsp;GB</span>
+      <span class="fact"><b>Time</b> 30&ndash;40 min</span>
+      <span class="fact"><b>Typing</b> 5 commands</span>
+    </div>
+    <div class="audience">
+      <b>Most of that time is not yours.</b> It is the ArduPilot compile, which runs unattended. You type five commands; the machine does the rest. If you only have half an hour, start step&nbsp;2 and go and get a coffee.
+    </div>
+
+    <nav class="contents">
+      <h2>Contents</h2>
+      <ol>
+        <li><a href="#clone"><span class="n">01</span> <span>Clone the branch</span></a></li>
+        <li><a href="#install"><span class="n">02</span> <span>Install everything</span></a></li>
+        <li><a href="#check"><span class="n">03</span> <span>Check the machine</span></a></li>
+        <li><a href="#fly"><span class="n">04</span> <span>Fly</span></a></li>
+        <li><a href="#dashboard"><span class="n">05</span> <span>Open the web dashboard</span></a></li>
+        <li><a href="#browser"><span class="n">06</span> <span>What to do in it</span></a></li>
+        <li><a href="#stop"><span class="n">07</span> <span>Stop</span></a></li>
+        <li><a href="#more"><span class="n">08</span> <span>Other ways to run it</span></a></li>
+        <li><a href="#trouble"><span class="n">09</span> <span>When something goes wrong</span></a></li>
+      </ol>
+    </nav>
+  </header>
+
+  <!-- 01 --------------------------------------------------------------- -->
+  <section class="step" id="clone">
+    <h2><span class="stepnum">1</span> Clone the branch</h2>
+    <p class="steptime">about a minute</p>
+
+    <div class="cmd">
+      <pre><span class="c"># the -b matters: that branch is the one with the simulation on it</span>
+git clone -b simulation https://github.com/TTZ-Unbemannte-Flugsysteme/Swarm_SummerSchool_2026.git
+cd Swarm_SummerSchool_2026</pre>
+      <button type="button" data-copy="git clone -b simulation https://github.com/TTZ-Unbemannte-Flugsysteme/Swarm_SummerSchool_2026.git
+cd Swarm_SummerSchool_2026">copy</button>
+    </div>
+
+    <p style="margin-top:18px">Leave off <code>-b simulation</code> and you land on the default branch, where none of this exists. It is the single commonest way to start confused.</p>
+  </section>
+
+  <!-- 02 --------------------------------------------------------------- -->
+  <section class="step" id="install">
+    <h2><span class="stepnum">2</span> Install everything</h2>
+    <p class="steptime">30&ndash;40 minutes, nearly all of it unattended</p>
+
+    <div class="cmd">
+      <pre>./install.sh</pre>
+      <button type="button" data-copy="./install.sh">copy</button>
+    </div>
+
+    <p style="margin-top:18px">It asks for your <code>sudo</code> password early, for the system packages, then asks once more before the long compile. Answer <code>y</code> and leave it alone. <code>./install.sh --yes</code> skips both questions.</p>
+
+    <p>What it is doing, so the wait makes sense:</p>
+    <ul class="plain">
+      <li>system build tools, then <b>Gazebo Harmonic</b> and its Python bindings &mdash; the 3D physics and the cameras</li>
+      <li><b>ArduPilot SITL</b>, cloned and compiled &mdash; the real autopilot firmware, built to run on your machine instead of on a flight controller. This is the long part.</li>
+      <li>the <b>ardupilot_gazebo</b> plugin, which joins the two together</li>
+      <li>the Python packages, then a record of where it all went, and <code>flyit</code> onto your <code>PATH</code></li>
+    </ul>
+
+    <div class="rec">
+      <span class="tag">If it fails partway</span>
+      <p>Run <code>./install.sh</code> again. Every step checks whether its own work is already done, so a second run resumes where the first stopped rather than starting the compile over. A failed install is not a reason to delete anything and begin again.</p>
+    </div>
+  </section>
+
+  <!-- 03 --------------------------------------------------------------- -->
+  <section class="step" id="check">
+    <h2><span class="stepnum">3</span> Check the machine</h2>
+    <p class="steptime">seconds &mdash; but open a new terminal first</p>
+
+    <div class="cmd">
+      <pre>flyit --check</pre>
+      <button type="button" data-copy="flyit --check">copy</button>
+    </div>
+
+    <div class="note">
+      <span class="tag">Open a new terminal for this</span>
+      <p>The installer added <code>~/.local/bin</code> to your <code>PATH</code>, and the terminal you ran it in does not know that yet &mdash; a shell reads its <code>PATH</code> once, at startup. A new terminal picks it up. If <code>flyit</code> is still not found, use <code>./flyit --check</code> from inside the repository, which works either way.</p>
+    </div>
+
+    <p style="margin-top:24px">One line per dependency, then a verdict:</p>
+
+    <div class="out">
+ArduPilot SITL<br>
+  <span class="ok">ok</span>   checkout               /home/you/swarm-deps/ardupilot<br>
+  <span class="ok">ok</span>   arducopter binary      built  (ArduPilot-4.6.0-beta1-7764-g06a33a1de4)<br>
+Gazebo<br>
+  <span class="ok">ok</span>   gz                     sim 8.10.0<br>
+  <span class="warn">warn</span> gz python bindings     missing - dashboard runs, camera feeds do not<br>
+<br>
+<b>RESULT: PASS - ready to run: flyit</b>
+    </div>
+
+    <p style="margin-top:20px">You want <b>PASS</b>. Lines marked <span class="mid">warn</span> are fine &mdash; they cost you one feature, not the simulation. Lines marked <span class="bad">FAIL</span> print the fix directly underneath them.</p>
+
+    <p>This check exists to answer one question before you waste time on any other: <b>is my machine missing something, or is the simulation broken?</b> Those two have completely different fixes and look identical from the outside.</p>
+  </section>
+
+  <!-- 04 --------------------------------------------------------------- -->
+  <section class="step" id="fly">
+    <h2><span class="stepnum">4</span> Fly</h2>
+    <p class="steptime">a couple of minutes on the first launch</p>
+
+    <div class="cmd">
+      <pre>flyit</pre>
+      <button type="button" data-copy="flyit">copy</button>
+    </div>
+
+    <p style="margin-top:18px">Four terminal windows open &mdash; the vehicles, the position relay, the flight log, the dashboard &mdash; plus a <b>Gazebo</b> window with three quadrotors on a runway.</p>
+
+    <p>The four terminals are not clutter: each one is a component you can watch, and when something misbehaves, that is where it says so. Leave all of it running &mdash; the dashboard is the next step.</p>
+  </section>
+
+  <!-- 05 --------------------------------------------------------------- -->
+  <section class="step" id="dashboard">
+    <h2><span class="stepnum">5</span> Open the web dashboard</h2>
+    <p class="steptime">this is the thing you look at</p>
+
+    <div class="out"><b>http://127.0.0.1:8760</b></div>
+
+    <p style="margin-top:18px"><code>flyit</code> opens a browser there for you. <b>If no browser appears</b>, type that address in yourself &mdash; which is what happens over SSH, on a machine with no desktop, or when you used <code>--no-terms</code>.</p>
+
+    <h3>Is it even serving?</h3>
+    <p>You can ask it without a browser:</p>
+    <div class="cmd">
+      <pre>curl -s http://127.0.0.1:8760/api/status | head -c 120</pre>
+      <button type="button" data-copy="curl -s http://127.0.0.1:8760/api/status | head -c 120">copy</button>
+    </div>
+    <p style="margin-top:14px">A line of JSON beginning <code>{"now":</code> means the dashboard is up and the page will load. Nothing at all means it never started &mdash; look at the terminal titled <i>swarm: dashboard</i>, which will say why.</p>
+
+    <h3>Running the simulation on another machine</h3>
+    <p>The dashboard listens on <b>loopback only</b>, and that is deliberate: it can arm and fly the vehicles, so it is not something to put on a shared network. Reach it through a tunnel rather than exposing it.</p>
+    <div class="cmd">
+      <pre>ssh -L 8760:127.0.0.1:8760 you@that-machine</pre>
+      <button type="button" data-copy="ssh -L 8760:127.0.0.1:8760 you@that-machine">copy</button>
+    </div>
+    <p style="margin-top:14px">Leave that running, then open <b>http://127.0.0.1:8760</b> on your <b>own</b> laptop. The traffic rides the SSH connection you already trust, and nothing new is opened to the network.</p>
+
+    <div class="note">
+      <span class="tag">If the page loads but is empty</span>
+      <p>Port <code>8760</code> may already be taken by something else &mdash; often a dashboard left over from a previous run that <code>flyit --stop</code> would have cleared. Either stop it, or move this one: <code>DASHBOARD_HTTP_PORT=8761 flyit</code>, then use that port in the address.</p>
+    </div>
+  </section>
+
+  <!-- 05 --------------------------------------------------------------- -->
+  <section class="step" id="browser">
+    <h2><span class="stepnum">6</span> What to do in it</h2>
+    <p class="steptime">the part you came for</p>
+
+    <div class="note">
+      <span class="tag">Wait about a minute first</span>
+      <p>The buttons start disabled and <b>enable themselves</b>. GPS and the EKF &mdash; the filter that fuses the sensors into one position estimate &mdash; need time to settle, and arming before they have is how a real aircraft flies into the ground. Nothing is stuck. You do not click anything to make it happen.</p>
+    </div>
+
+    <ol class="clicks">
+      <li><b><span class="btn">Arm + take off all (20 m)</span></b><br>All three lift off and hold at 20 m.</li>
+      <li><b><span class="btn">Followers &rarr; FOLLOW</span></b><br>Drones 2 and 3 take station behind drone 1. This is the whole point of the system: they are now holding a formation on their own, in the autopilot, not because a script is nudging them.</li>
+      <li>Then any of:
+        <ul>
+          <li><span class="btn">Take control</span> &mdash; fly drone 1 from the keyboard. <span class="key">W</span> <span class="key">A</span> <span class="key">S</span> <span class="key">D</span> for north/west/south/east, <span class="key">R</span> <span class="key">F</span> for up/down, <span class="key">Q</span> <span class="key">E</span> to yaw. The other two follow you.</li>
+          <li><b>Click the map</b> &mdash; drone 1 flies to that point, formation intact.</li>
+          <li><span class="btn">Inspect the highway</span> or <span class="btn">Inspect the whole area</span> &mdash; the swarm surveys on its own, finds the staged accident, and reports it with a position and a photo.</li>
+        </ul>
+      </li>
+      <li><b><span class="btn">Land all</span></b> when you are done.</li>
+    </ol>
+
+    <div class="rec">
+      <span class="tag">What to watch</span>
+      <p>The <b>Station error</b> chart, while the formation settles. That number &mdash; how far each follower is from where it should be &mdash; is what the entire system exists to hold small. Everything else on the page is there to explain that one line.</p>
+    </div>
+  </section>
+
+  <!-- 06 --------------------------------------------------------------- -->
+  <section class="step" id="stop">
+    <h2><span class="stepnum">7</span> Stop</h2>
+
+    <div class="cmd">
+      <pre>flyit --stop</pre>
+      <button type="button" data-copy="flyit --stop">copy</button>
+    </div>
+
+    <div class="note">
+      <span class="tag">Closing the windows is not enough</span>
+      <p>The simulator keeps running without them. Always stop it this way. A leftover run holds the network ports the next one needs, so the next <code>flyit</code> refuses to start rather than quietly flying half a swarm against the wrong vehicles.</p>
+    </div>
+  </section>
+
+  <!-- 07 --------------------------------------------------------------- -->
+  <section id="more">
+    <h2>Other ways to run it</h2>
+
+    <div class="cmd">
+      <pre>flyit 2            <span class="c"># two drones instead of three</span>
+flyit --no-gazebo  <span class="c"># no 3D window: headless, starts in seconds</span>
+flyit --no-terms   <span class="c"># no windows at all, everything in the background</span>
+flyit --help       <span class="c"># all options</span></pre>
+      <button type="button" data-copy="flyit --no-gazebo">copy</button>
+    </div>
+
+    <p style="margin-top:18px"><code>--no-gazebo</code> is the one to remember on a slow laptop or over SSH. The formation is ArduPilot's own, so it behaves identically &mdash; you simply cannot see it, and there are no cameras.</p>
+
+    <h3>Prove it works, without watching</h3>
+    <p>There is a scripted version that flies the formation, measures it, and tells you whether it held. Leave <code>flyit</code> running and, in another terminal:</p>
+
+    <div class="cmd">
+      <pre>python3 scripts/leader_follower.py --vehicles 3</pre>
+      <button type="button" data-copy="python3 scripts/leader_follower.py --vehicles 3">copy</button>
+    </div>
+
+    <div class="out">
+  follower1: closest 0.0m, settled 0.0m (tolerance 6m)<br>
+  follower2: closest 0.0m, settled 0.0m (tolerance 6m)<br>
+<b>RESULT: PASS - every follower held station within 6m.</b>
+    </div>
+
+    <p style="margin-top:18px">It exits non-zero on failure, so it works in a script as well as on a screen. Nothing in this repository asks you to judge a result by eye.</p>
+  </section>
+
+  <!-- 08 --------------------------------------------------------------- -->
+  <section id="trouble">
+    <h2>When something goes wrong</h2>
+
+    <p>Run <code>flyit --check</code> first, always. It separates &ldquo;my machine is missing something&rdquo; from &ldquo;the simulation is broken&rdquo;, and that is most of the problem solved.</p>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>What you see</th><th>What it means</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="mono">flyit: command not found</td>
+            <td>You have not opened a new terminal since installing.<span class="fixcmd">./flyit &mdash; from inside the repository</span></td>
+          </tr>
+          <tr>
+            <td class="mono">no SITL binary at ...</td>
+            <td>The install did not finish. Re-running resumes it.<span class="fixcmd">./install.sh</span></td>
+          </tr>
+          <tr>
+            <td class="mono">ERROR: vehicles did not come up</td>
+            <td>The last lines of the vehicle's own log say why.<span class="fixcmd">tail .run/latest/vehicle0.log</span></td>
+          </tr>
+          <tr>
+            <td>The dashboard will not load</td>
+            <td>Something else already holds port 8760.<span class="fixcmd">flyit --stop &nbsp;or&nbsp; DASHBOARD_HTTP_PORT=8761 flyit</span></td>
+          </tr>
+          <tr>
+            <td>Buttons stay greyed out</td>
+            <td>GPS and the EKF are not ready. Give it another minute &mdash; this is the system protecting you, not a fault.</td>
+          </tr>
+          <tr>
+            <td>Camera panels stay black</td>
+            <td>The Gazebo Python bindings are missing. Everything else works.<span class="fixcmd">flyit --check &mdash; it names the package</span></td>
+          </tr>
+          <tr>
+            <td>It refuses to start, says processes are alive</td>
+            <td>A previous run is still up, and stacking a second on top would fly the wrong vehicles.<span class="fixcmd">flyit --stop</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3>Every run keeps its own logs</h3>
+    <p><code>.run/latest/</code> is always the newest run, and <code>.run/latest/flight_log.txt</code> is the merged log of all three drones &mdash; modes, arming, and every message the autopilot sent:</p>
+
+    <pre class="tree">15:54:03    30.5s drone 1  MODE      STABILIZE -&gt; GUIDED
+15:54:04    30.9s drone 1  ARMED     in GUIDED
+15:54:17    44.6s drone 2  MODE      GUIDED -&gt; FOLLOW</pre>
+
+    <p style="margin-top:18px">That file answers most questions about why a drone did, or did not, do something. When the vehicles once refused to arm, it said so in one line: <code>PreArm: Motors: Check frame class and type</code>.</p>
+
+    <h3>Already have ArduPilot built?</h3>
+    <p>Skip the compile entirely. Point at the directory that <i>contains</i> your <code>ardupilot</code> checkout:</p>
+
+    <div class="cmd">
+      <pre>export SSS_ROOT=/path/to/parent
+./install.sh --no-apt</pre>
+      <button type="button" data-copy="export SSS_ROOT=/path/to/parent
+./install.sh --no-apt">copy</button>
+    </div>
+  </section>
+
+  <footer>
+    This is the short path. <code>README.md</code> is the same system built up step by step, each step checkable on its own; <code>docs/architecture.html</code> is why it is built that way, with ten sequence diagrams; <code>docs/workshop.html</code> is the teaching version, with a deck. The plain-text twin of this page is <code>QUICKSTART.md</code>, for reading in a terminal.
+  </footer>
+</div>
+
+<script>
+// Copy buttons. This page exists to be typed from, and a mistyped clone URL
+// is the commonest way to lose ten minutes before anything has even run.
+document.querySelectorAll('.cmd button[data-copy]').forEach(function(btn){
+  btn.addEventListener('click', function(){
+    var text = btn.getAttribute('data-copy');
+    function done(){
+      btn.textContent = 'copied';
+      btn.classList.add('done');
+      setTimeout(function(){ btn.textContent = 'copy'; btn.classList.remove('done'); }, 1400);
+    }
+    // navigator.clipboard is unavailable on a plain http:// origin in some
+    // browsers, and this page is often opened as a local file. Fall back
+    // rather than silently doing nothing.
+    if (navigator.clipboard && window.isSecureContext) {
+      navigator.clipboard.writeText(text).then(done, fallback);
+    } else {
+      fallback();
+    }
+    function fallback(){
+      var ta = document.createElement('textarea');
+      ta.value = text;
+      ta.style.position = 'fixed';
+      ta.style.opacity = '0';
+      document.body.appendChild(ta);
+      ta.select();
+      try { document.execCommand('copy'); done(); } catch (e) { btn.textContent = 'select it'; }
+      document.body.removeChild(ta);
+    }
+  });
+});
+</script>

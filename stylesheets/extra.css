@@ -1,0 +1,40 @@
+/* Custom CSS for SwarmSummerSchool 2026 */
+
+/* Add a line to the active menu item in the left sidebar */
+.md-nav__item--active > .md-nav__link {
+    border-left: 3px solid var(--md-accent-fg-color);
+    padding-left: 0.5rem; /* Ensure the text doesn't hit the border */
+    font-weight: 700;
+}
+
+/* Optional: add a slight glow effect to the border */
+.md-nav__item--active > .md-nav__link {
+    box-shadow: -2px 0px 8px -2px var(--md-accent-fg-color);
+}
+
+/* Custom primary button styling: Lime background, black text */
+.md-typeset .md-button--primary {
+    background-color: var(--md-accent-fg-color);
+    border-color: var(--md-accent-fg-color);
+    color: #000000;
+}
+
+/* Ghost button on hover with a black (or theme-aware) border and text */
+.md-typeset .md-button--primary:hover {
+    background-color: transparent;
+    border-color: var(--md-default-fg-color);
+    color: var(--md-default-fg-color);
+}
+
+/* Site logo: Material forces a square box, which squashes our wide logo.
+   Let the width follow the aspect ratio instead. */
+.md-header__button.md-logo img {
+    height: 1.9rem;
+    width: auto;
+}
+
+/* Same fix for the logo in the mobile navigation drawer */
+.md-nav__button.md-logo img {
+    height: 3rem;
+    width: auto;
+}

@@ -1,0 +1,541 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Drone Setup Simulation: FrSky Taranis QX7</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #0f172a;
+            color: #f8fafc;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+
+        /* Panel styling */
+        .panel {
+            background-color: #1e293b;
+            border: 1px solid #334155;
+            border-radius: 0.5rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        }
+
+        /* Controller Styles */
+        .controller-body {
+            background: linear-gradient(135deg, #374151 0%, #111827 100%);
+            border-radius: 2rem;
+            border: 2px solid #4b5563;
+            box-shadow: inset 0 0 20px rgba(0,0,0,0.5), 0 10px 30px rgba(0,0,0,0.7);
+            position: relative;
+            padding: 2rem;
+        }
+
+        .screen {
+            background-color: #d1d5db;
+            border: 4px solid #1f2937;
+            border-radius: 0.5rem;
+            height: 100px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            color: #111827;
+            font-family: monospace;
+            font-size: 1.25rem;
+            box-shadow: inset 0 0 10px rgba(0,0,0,0.2);
+            overflow: hidden;
+            position: relative;
+        }
+        
+        .screen-line {
+            width: 100%;
+            text-align: left;
+            padding-left: 1rem;
+            white-space: nowrap;
+        }
+        
+        .screen-active-line {
+            background-color: #111827;
+            color: #d1d5db;
+        }
+
+        .gimbal {
+            width: 120px;
+            height: 120px;
+            background-color: #1f2937;
+            border-radius: 50%;
+            border: 4px solid #374151;
+            position: relative;
+            box-shadow: inset 0 0 15px rgba(0,0,0,0.8);
+        }
+
+        .stick {
+            width: 30px;
+            height: 30px;
+            background: radial-gradient(circle at 30% 30%, #9ca3af, #374151);
+            border-radius: 50%;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            box-shadow: 0 5px 10px rgba(0,0,0,0.5);
+            cursor: pointer;
+            transition: transform 0.1s;
+        }
+
+        .toggle-switch {
+            width: 20px;
+            height: 40px;
+            background-color: #1f2937;
+            border-radius: 10px;
+            position: absolute;
+            border: 2px solid #374151;
+            cursor: pointer;
+            display: flex;
+            justify-content: center;
+        }
+
+        .switch-lever {
+            width: 10px;
+            height: 25px;
+            background: linear-gradient(to bottom, #d1d5db, #9ca3af);
+            border-radius: 5px;
+            position: absolute;
+            transition: top 0.2s ease, transform 0.2s ease;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.5);
+        }
+
+        /* Switch states (3-pos) */
+        .switch-up .switch-lever { top: -5px; transform: rotateX(20deg); }
+        .switch-mid .switch-lever { top: 5px; transform: rotateX(0deg); }
+        .switch-down .switch-lever { top: 15px; transform: rotateX(-20deg); }
+        
+        /* Switch states (2-pos) */
+        .switch-2-up .switch-lever { top: -5px; transform: rotateX(20deg); }
+        .switch-2-down .switch-lever { top: 15px; transform: rotateX(-20deg); }
+
+        .button-nav {
+            width: 30px;
+            height: 30px;
+            background-color: #374151;
+            border-radius: 50%;
+            border: 2px solid #1f2937;
+            cursor: pointer;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: #d1d5db;
+        }
+        
+        .button-nav:active {
+            background-color: #1f2937;
+            transform: scale(0.95);
+        }
+        
+        .step-container {
+            transition: all 0.3s ease;
+        }
+        
+        .step-active {
+            border-left: 4px solid #3b82f6;
+            background-color: rgba(30, 41, 59, 0.8);
+        }
+
+        .step-inactive {
+            opacity: 0.5;
+            border-left: 4px solid transparent;
+        }
+
+        /* Drone animation */
+        @keyframes spin {
+            100% { transform: rotate(360deg); }
+        }
+        .propeller {
+            transform-origin: center;
+        }
+        .spinning {
+            animation: spin 0.1s linear infinite;
+        }
+        .beeping {
+            animation: pulse-red 1s infinite;
+        }
+        @keyframes pulse-red {
+            0% { filter: drop-shadow(0 0 0 rgba(239, 68, 68, 0)); }
+            50% { filter: drop-shadow(0 0 10px rgba(239, 68, 68, 1)); }
+            100% { filter: drop-shadow(0 0 0 rgba(239, 68, 68, 0)); }
+        }
+    </style>
+</head>
+<body class="p-4 md:p-8">
+
+    <header class="max-w-6xl mx-auto w-full mb-8 text-center">
+        <h1 class="text-3xl md:text-4xl font-bold text-white mb-2"><i class="fa-solid fa-gamepad text-blue-500 mr-3"></i>FrSky Taranis QX7 Setup Simulator</h1>
+        <p class="text-slate-400">Interactive guide for assigning switches and mixer channels on the FrSky Taranis QX7.</p>
+    </header>
+
+    <main class="max-w-6xl mx-auto w-full grid grid-cols-1 lg:grid-cols-2 gap-8 flex-grow">
+        
+        <!-- Left Column: Instructions -->
+        <div class="lg:col-span-1 space-y-4 max-h-[80vh] overflow-y-auto pr-2" id="instructions-panel">
+            <div class="panel p-4 mb-4 sticky top-0 z-10 border-b-2 border-blue-500">
+                <h2 class="text-xl font-bold text-white mb-2">Setup Progress</h2>
+                <div class="flex justify-between items-center">
+                    <button id="prev-btn" class="px-4 py-2 bg-slate-700 hover:bg-slate-600 rounded text-sm disabled:opacity-50 disabled:cursor-not-allowed" onclick="prevStep()"><i class="fa-solid fa-arrow-left mr-2"></i>Back</button>
+                    <span id="step-counter" class="font-mono text-blue-400 font-bold">Step 1 of 3</span>
+                    <button id="next-btn" class="px-4 py-2 bg-blue-600 hover:bg-blue-500 rounded text-sm disabled:opacity-50 disabled:cursor-not-allowed" onclick="nextStep()">Next<i class="fa-solid fa-arrow-right ml-2"></i></button>
+                </div>
+            </div>
+
+            <!-- Steps List -->
+            <div id="step-1" class="step-container step-active p-4 rounded-r-lg">
+                <h3 class="text-lg font-bold text-white mb-2">1. QX7 Inputs Setup</h3>
+                <p class="text-sm text-slate-300 mb-2">First, we define inputs on the radio. Interact with the controller screen to simulate creating these inputs.</p>
+                <ul class="text-sm text-slate-400 list-disc pl-5 space-y-1">
+                    <li id="task-1-1">Assign <strong>ARM</strong> to the far left 2-position switch (SF).</li>
+                    <li id="task-1-2">Assign <strong>MOD</strong> to the top-left 3-pos switch (SA).</li>
+                    <li id="task-1-3">Assign <strong>BEP/FLP</strong> to top-right 3-pos switch (SD).</li>
+                </ul>
+                <div class="mt-3 p-2 bg-slate-800 rounded text-xs border border-slate-700">
+                    <i class="fa-solid fa-info-circle text-blue-400 mr-1"></i> Action: Click the "MENU" button on the radio, then toggle the switches to map them.
+                </div>
+            </div>
+
+            <div id="step-2" class="step-container step-inactive p-4 rounded-r-lg">
+                <h3 class="text-lg font-bold text-white mb-2">2. QX7 Mixer Setup</h3>
+                <p class="text-sm text-slate-300 mb-2">Next, map inputs to channels in the Mixer screen.</p>
+                <ul class="text-sm text-slate-400 list-disc pl-5 space-y-1">
+                    <li>CH5: ARM (Becomes AUX 1)</li>
+                    <li>CH6: MOD (Becomes AUX 2)</li>
+                    <li>CH7: BEP (Becomes AUX 3)</li>
+                    <li>CH8: FLP (Becomes AUX 4)</li>
+                </ul>
+                <div class="mt-3 p-2 bg-slate-800 rounded text-xs border border-slate-700">
+                    <i class="fa-solid fa-info-circle text-blue-400 mr-1"></i> Action: Click "PAGE" on radio to view mixer setup.
+                </div>
+            </div>
+
+            <div id="step-3" class="step-container step-inactive p-4 rounded-r-lg">
+                <h3 class="text-lg font-bold text-white mb-2">3. Final Test</h3>
+                <p class="text-sm text-slate-300 mb-2">Disconnect USB, plug in battery (simulated), and test functions.</p>
+                <div class="mt-3 p-2 bg-slate-800 rounded text-xs border border-slate-700">
+                    <i class="fa-solid fa-info-circle text-blue-400 mr-1"></i> Action: Disarm all switches. Then Arm the drone to see props spin, or flip the Beeper switch to hear/see it beep.
+                </div>
+            </div>
+        </div>
+
+        <div class="lg:col-span-1 flex flex-col items-center justify-start relative">
+            <h2 class="text-xl font-bold text-slate-300 mb-4">Taranis QX7 Simulator</h2>
+            
+            <div class="controller-body w-full max-w-[400px] aspect-[4/3] flex flex-col items-center justify-between shadow-2xl">
+                
+                <!-- Antena placeholder -->
+                <div class="absolute -top-6 left-1/2 transform -translate-x-1/2 w-4 h-12 bg-slate-800 rounded-t-lg border-2 border-slate-600 z-0"></div>
+
+                <!-- Switches Row -->
+                <div class="w-full flex justify-between px-4 mt-2 mb-4 relative z-10">
+                    <!-- Switch SF (2-pos, ARM) -->
+                    <div class="flex flex-col items-center group relative">
+                        <span class="text-[10px] text-slate-400 mb-1 font-mono">SF (ARM)</span>
+                        <div id="switch-sf" class="toggle-switch switch-2-down" onclick="toggleSwitch('sf', 2)" title="Click to toggle">
+                            <div class="switch-lever"></div>
+                        </div>
+                    </div>
+                    
+                    <!-- Switch SA (3-pos, MOD) -->
+                    <div class="flex flex-col items-center ml-4">
+                        <span class="text-[10px] text-slate-400 mb-1 font-mono">SA (MOD)</span>
+                        <div id="switch-sa" class="toggle-switch switch-up" onclick="toggleSwitch('sa', 3)" title="Click to cycle">
+                            <div class="switch-lever"></div>
+                        </div>
+                    </div>
+
+                    <div class="flex-grow"></div>
+
+                    <!-- Switch SD (3-pos, BEP/FLP) -->
+                    <div class="flex flex-col items-center mr-4">
+                        <span class="text-[10px] text-slate-400 mb-1 font-mono">SD (BEP/FLP)</span>
+                        <div id="switch-sd" class="toggle-switch switch-up" onclick="toggleSwitch('sd', 3)" title="Click to cycle">
+                            <div class="switch-lever"></div>
+                        </div>
+                    </div>
+                     <!-- Decorative Switch -->
+                    <div class="flex flex-col items-center">
+                        <span class="text-[10px] text-slate-500 mb-1 font-mono">SH</span>
+                        <div class="toggle-switch switch-2-down opacity-50 cursor-not-allowed">
+                            <div class="switch-lever"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Screen and Navigation -->
+                <div class="w-full flex justify-center items-center gap-4 my-2">
+                    <!-- Left Nav Buttons -->
+                    <div class="grid grid-cols-1 gap-2">
+                        <button id="btn-menu" class="button-nav text-[10px] font-bold" onclick="radioAction('menu')" title="MENU">M</button>
+                        <button id="btn-page" class="button-nav text-[10px] font-bold" onclick="radioAction('page')" title="PAGE">P</button>
+                    </div>
+
+                    <!-- LCD Screen -->
+                    <div id="radio-screen" class="screen w-48 flex-shrink-0">
+                        <div class="screen-line text-sm text-center font-bold">READY</div>
+                        <div class="screen-line text-xs">Model: TINYS</div>
+                        <div class="screen-line text-xs">V: 7.4V</div>
+                    </div>
+
+                    <!-- Right Nav Buttons -->
+                    <div class="grid grid-cols-1 gap-2">
+                         <button class="button-nav text-[10px]" title="EXIT" onclick="radioAction('exit')"><i class="fa-solid fa-arrow-turn-up fa-flip-horizontal"></i></button>
+                         <button class="button-nav text-[10px]" title="ENTER"><i class="fa-solid fa-check"></i></button>
+                    </div>
+                </div>
+
+                <!-- Gimbals -->
+                <div class="w-full flex justify-between px-6 mt-4">
+                    <div class="gimbal" title="Throttle/Yaw">
+                        <div id="stick-left" class="stick" style="top: 80%;"></div> <!-- Throttle down -->
+                    </div>
+                    
+                    <div class="speaker-grille w-12 h-12 flex flex-wrap gap-1 justify-center content-center opacity-30">
+                        <!-- Dots for speaker -->
+                        <div class="w-1.5 h-1.5 bg-black rounded-full"></div><div class="w-1.5 h-1.5 bg-black rounded-full"></div><div class="w-1.5 h-1.5 bg-black rounded-full"></div>
+                        <div class="w-1.5 h-1.5 bg-black rounded-full"></div><div class="w-1.5 h-1.5 bg-black rounded-full"></div><div class="w-1.5 h-1.5 bg-black rounded-full"></div>
+                        <div class="w-1.5 h-1.5 bg-black rounded-full"></div><div class="w-1.5 h-1.5 bg-black rounded-full"></div><div class="w-1.5 h-1.5 bg-black rounded-full"></div>
+                    </div>
+
+                    <div class="gimbal" title="Pitch/Roll">
+                        <div id="stick-right" class="stick"></div> <!-- Centered -->
+                    </div>
+                </div>
+            </div>
+
+            <div id="drone-viz" class="mt-8 relative w-48 h-48 bg-slate-800 rounded-xl border border-slate-700 flex items-center justify-center shadow-lg transition-all">
+                <!-- Simple Drone SVG -->
+                <svg width="120" height="120" viewBox="0 0 100 100" class="z-10">
+                    <!-- Frame -->
+                    <line x1="20" y1="20" x2="80" y2="80" stroke="#cbd5e1" stroke-width="4" stroke-linecap="round"/>
+                    <line x1="20" y1="80" x2="80" y2="20" stroke="#cbd5e1" stroke-width="4" stroke-linecap="round"/>
+                    <!-- Body -->
+                    <circle cx="50" cy="50" r="12" fill="#3b82f6"/>
+                    <circle cx="50" cy="50" r="6" fill="#1e40af"/>
+                    <!-- Motors -->
+                    <circle cx="20" cy="20" r="6" fill="#475569"/>
+                    <circle cx="80" cy="20" r="6" fill="#475569"/>
+                    <circle cx="20" cy="80" r="6" fill="#475569"/>
+                    <circle cx="80" cy="80" r="6" fill="#475569"/>
+                    
+                    <!-- Propellers (Animated via class) -->
+                    <g id="prop-tl" class="propeller" style="transform-origin: 20px 20px;">
+                        <ellipse cx="20" cy="20" rx="14" ry="4" fill="rgba(255,255,255,0.6)" transform="rotate(45 20 20)"/>
+                    </g>
+                    <g id="prop-tr" class="propeller" style="transform-origin: 80px 20px;">
+                        <ellipse cx="80" cy="20" rx="14" ry="4" fill="rgba(255,255,255,0.6)" transform="rotate(-45 80 20)"/>
+                    </g>
+                    <g id="prop-bl" class="propeller" style="transform-origin: 20px 80px;">
+                        <ellipse cx="20" cy="80" rx="14" ry="4" fill="rgba(255,255,255,0.6)" transform="rotate(-45 20 80)"/>
+                    </g>
+                    <g id="prop-br" class="propeller" style="transform-origin: 80px 80px;">
+                        <ellipse cx="80" cy="80" rx="14" ry="4" fill="rgba(255,255,255,0.6)" transform="rotate(45 80 80)"/>
+                    </g>
+                </svg>
+                
+                <div id="drone-status" class="absolute bottom-2 text-xs font-mono font-bold text-slate-400 bg-slate-900 px-2 py-1 rounded">DISARMED</div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        // State
+        let currentStep = 1;
+        const totalSteps = 3;
+        
+        // Radio State: switch positions as RC channel values (1000, 1500, 2000)
+        let radioState = {
+            sf: 1000, // 2-pos: 1000 (down), 2000 (up)
+            sa: 1000, // 3-pos: 1000 (up), 1500 (mid), 2000 (down)
+            sd: 1000, // 3-pos: 1000 (up), 1500 (mid), 2000 (down)
+            
+            // Screen state
+            menuPage: 'main' // main, inputs, mixer
+        };
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            updateUI();
+        });
+
+        function nextStep() {
+            if (currentStep < totalSteps) {
+                currentStep++;
+                updateUI();
+            }
+        }
+
+        function prevStep() {
+            if (currentStep > 1) {
+                currentStep--;
+                updateUI();
+            }
+        }
+
+        function updateUI() {
+            // Update buttons & counter
+            document.getElementById('prev-btn').disabled = currentStep === 1;
+            document.getElementById('next-btn').disabled = currentStep === totalSteps;
+            document.getElementById('step-counter').innerText = `Step ${currentStep} of ${totalSteps}`;
+
+            // Update step highlighting
+            for (let i = 1; i <= totalSteps; i++) {
+                const el = document.getElementById(`step-${i}`);
+                if (i === currentStep) {
+                    el.classList.remove('step-inactive');
+                    el.classList.add('step-active');
+                    // Scroll into view gently
+                    el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                } else {
+                    el.classList.remove('step-active');
+                    el.classList.add('step-inactive');
+                }
+            }
+
+            // Apply logic based on current step
+            applyStepLogic();
+        }
+
+        function applyStepLogic() {
+            switch (currentStep) {
+                case 1:
+                    radioState.menuPage = 'inputs';
+                    break;
+                case 2:
+                    radioState.menuPage = 'mixer';
+                    break;
+                case 3:
+                    // Final test: back to the home screen, battery connected
+                    radioState.menuPage = 'main';
+                    setSwitchState('sf', 1000); // Reset to disarmed for safety
+                    break;
+            }
+            updateRadioScreen();
+            checkDroneState();
+        }
+
+        function toggleSwitch(id, positions) {
+            const el = document.getElementById(`switch-${id}`);
+            let val = radioState[id];
+
+            // Remove existing classes
+            el.classList.remove('switch-up', 'switch-mid', 'switch-down', 'switch-2-up', 'switch-2-down');
+
+            if (positions === 2) {
+                // Toggle between 1000 (down/away) and 2000 (up/towards)
+                val = val === 1000 ? 2000 : 1000;
+                el.classList.add(val === 2000 ? 'switch-2-up' : 'switch-2-down');
+            } else if (positions === 3) {
+                // Cycle 1000 (up) -> 1500 (mid) -> 2000 (down) -> 1000
+                if (val === 1000) { val = 1500; el.classList.add('switch-mid'); }
+                else if (val === 1500) { val = 2000; el.classList.add('switch-down'); }
+                else { val = 1000; el.classList.add('switch-up'); }
+            }
+
+            radioState[id] = val;
+            
+            // Visual feedback on tasks for step 1
+            if(currentStep === 1) {
+                if(id === 'sf') document.getElementById('task-1-1').classList.add('text-green-400');
+                if(id === 'sa') document.getElementById('task-1-2').classList.add('text-green-400');
+                if(id === 'sd') document.getElementById('task-1-3').classList.add('text-green-400');
+            }
+
+            checkDroneState();
+        }
+
+        function setSwitchState(id, targetVal) {
+             const el = document.getElementById(`switch-${id}`);
+             el.classList.remove('switch-up', 'switch-mid', 'switch-down', 'switch-2-up', 'switch-2-down');
+             radioState[id] = targetVal;
+             
+             if(id === 'sf') {
+                  el.classList.add(targetVal === 2000 ? 'switch-2-up' : 'switch-2-down');
+             }
+             checkDroneState();
+        }
+
+        function radioAction(action) {
+            if (action === 'menu') {
+                radioState.menuPage = 'inputs';
+                if(currentStep === 1) document.getElementById('task-1-1').classList.add('text-green-400'); // hacky indication
+            } else if (action === 'page') {
+                if (radioState.menuPage === 'inputs') radioState.menuPage = 'mixer';
+                else if (radioState.menuPage === 'mixer') radioState.menuPage = 'main';
+                else radioState.menuPage = 'inputs';
+            } else if (action === 'exit') {
+                radioState.menuPage = 'main';
+            }
+            updateRadioScreen();
+        }
+
+        function updateRadioScreen() {
+            const screen = document.getElementById('radio-screen');
+            if (radioState.menuPage === 'main') {
+                screen.innerHTML = `
+                    <div class="screen-line text-sm text-center font-bold">READY</div>
+                    <div class="screen-line text-xs">Model: TINYS</div>
+                    <div class="screen-line text-xs">V: 7.4V</div>
+                `;
+            } else if (radioState.menuPage === 'inputs') {
+                screen.innerHTML = `
+                    <div class="screen-line text-[10px] font-bold border-b border-black mb-1">5/12 INPUTS</div>
+                    <div class="screen-line text-[10px] screen-active-line">I5:ARM SF</div>
+                    <div class="screen-line text-[10px]">I6:MOD SA</div>
+                    <div class="screen-line text-[10px]">I7:BEP SD</div>
+                `;
+            } else if (radioState.menuPage === 'mixer') {
+                screen.innerHTML = `
+                    <div class="screen-line text-[10px] font-bold border-b border-black mb-1">6/12 MIXER</div>
+                    <div class="screen-line text-[10px]">CH5: 100 ARM</div>
+                    <div class="screen-line text-[10px] screen-active-line">CH6: 100 MOD</div>
+                    <div class="screen-line text-[10px]">CH7: 100 BEP</div>
+                `;
+            }
+        }
+
+        function checkDroneState() {
+            if (currentStep !== totalSteps) return; // Only activate drone logic in final step
+
+            const props = document.querySelectorAll('.propeller');
+            const statusLabel = document.getElementById('drone-status');
+            const viz = document.getElementById('drone-viz');
+            
+            const isArmed = radioState.sf > 1500; // Switch SF is UP
+            const isBeeping = radioState.sd > 1800; // Switch SD is DOWN
+
+            // Arm logic
+            if (isArmed) {
+                props.forEach(p => p.classList.add('spinning'));
+                statusLabel.innerText = "ARMED";
+                statusLabel.classList.remove('text-slate-400');
+                statusLabel.classList.add('text-red-500', 'bg-red-900/30');
+            } else {
+                props.forEach(p => p.classList.remove('spinning'));
+                statusLabel.innerText = "DISARMED";
+                statusLabel.classList.add('text-slate-400');
+                statusLabel.classList.remove('text-red-500', 'bg-red-900/30');
+            }
+
+            // Beeper logic
+            if (isBeeping && !isArmed) { // Usually beeper is most noticeable when disarmed
+                viz.classList.add('beeping');
+                if(!isArmed) statusLabel.innerText = "BEEPING...";
+            } else {
+                viz.classList.remove('beeping');
+            }
+        }
+    </script>
+</body>
+</html>

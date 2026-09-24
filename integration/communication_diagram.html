@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Architecture Diagram</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+        
+        body { 
+            font-family: 'Inter', sans-serif; 
+            background-color: transparent; 
+            margin: 0; 
+            padding: 20px; 
+            color: #e2e8f0; 
+        }
+        
+        .glass-card {
+            background: rgba(30, 41, 59, 0.7);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 1rem;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5);
+            transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease;
+        }
+        
+        .glass-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5), 0 0 20px rgba(132, 204, 22, 0.2);
+            border-color: rgba(132, 204, 22, 0.4);
+        }
+        
+        /* Animated gradient lines */
+        .anim-line-h {
+            background: linear-gradient(90deg, transparent 0%, #84cc16 50%, transparent 100%);
+            background-size: 200% 100%;
+            animation: moveGradientH 2s linear infinite;
+        }
+        
+        .anim-line-v {
+            background: linear-gradient(180deg, transparent 0%, #84cc16 50%, transparent 100%);
+            background-size: 100% 200%;
+            animation: moveGradientV 2s linear infinite;
+        }
+        
+        .anim-line-wifi-h {
+            background: linear-gradient(90deg, transparent 0%, #3b82f6 50%, transparent 100%);
+            background-size: 200% 100%;
+            animation: moveGradientH 2s linear infinite;
+        }
+
+        .anim-line-wifi-v {
+            background: linear-gradient(180deg, transparent 0%, #3b82f6 50%, transparent 100%);
+            background-size: 100% 200%;
+            animation: moveGradientV 2s linear infinite;
+        }
+        
+        @keyframes moveGradientH { 
+            0% { background-position: 100% 0; } 
+            100% { background-position: -100% 0; } 
+        }
+        @keyframes moveGradientV { 
+            0% { background-position: 0 100%; } 
+            100% { background-position: 0 -100%; } 
+        }
+        
+        /* Highly visible dashed data flow */
+        .data-flow-h {
+            background-image: linear-gradient(90deg, #bef264 50%, transparent 50%);
+            background-size: 16px 100%;
+            animation: flow-h 0.8s linear infinite;
+            opacity: 0.8;
+        }
+        
+        .data-flow-h-rev {
+            background-image: linear-gradient(90deg, #bef264 50%, transparent 50%);
+            background-size: 16px 100%;
+            animation: flow-h-rev 0.8s linear infinite;
+            opacity: 0.8;
+        }
+
+        @keyframes flow-h {
+            0% { background-position: 0 0; }
+            100% { background-position: 16px 0; }
+        }
+        
+        @keyframes flow-h-rev {
+            0% { background-position: 16px 0; }
+            100% { background-position: 0 0; }
+        }
+        
+        .pulse-icon {
+            animation: pulse-op 2s infinite;
+        }
+        @keyframes pulse-op { 
+            0% { opacity: 0.5; } 
+            50% { opacity: 1; text-shadow: 0 0 10px currentColor; } 
+            100% { opacity: 0.5; } 
+        }
+    </style>
+</head>
+<body class="flex items-center justify-start md:justify-center min-h-[100vh] bg-slate-900 md:bg-transparent rounded-xl overflow-x-auto">
+
+    <div class="flex flex-row items-center justify-start min-w-max w-full max-w-6xl mx-auto py-8 px-4">
+        
+        <!-- Node 1: GCS -->
+        <div class="glass-card flex flex-col items-center p-6 w-[180px] text-center z-10 shrink-0">
+            <div class="w-16 h-16 bg-blue-900/30 rounded-full flex items-center justify-center mb-3 border border-blue-500/50 shadow-[0_0_15px_rgba(59,130,246,0.2)]">
+                <i class="fa-solid fa-laptop text-2xl text-blue-400"></i>
+            </div>
+            <h3 class="font-bold text-white mb-1 text-sm">GCS</h3>
+            <p class="text-[10px] text-slate-400 uppercase tracking-wider">Ground Control</p>
+        </div>
+
+        <!-- Connector 1: WiFi -->
+        <div class="flex flex-col items-center justify-center w-24 mx-2 shrink-0 group relative">
+            <div class="absolute -translate-y-8">
+                <span class="text-[10px] text-blue-400 font-semibold whitespace-nowrap bg-slate-900/80 px-2 py-0.5 rounded-full border border-blue-500/30">
+                    <i class="fa-solid fa-wifi pulse-icon mr-1"></i> WiFi
+                </span>
+            </div>
+            <div class="w-full h-1 bg-slate-700/50 rounded overflow-hidden relative">
+                <div class="absolute inset-0 anim-line-wifi-h"></div>
+            </div>
+        </div>
+
+        <!-- Node 2: DroneBridge (ESP32) -->
+        <div class="glass-card flex flex-col items-center p-6 w-[180px] text-center z-10 shrink-0 border-t-2 border-t-lime-500/50">
+            <div class="w-16 h-16 bg-slate-800 rounded-full flex items-center justify-center mb-3 border border-lime-500/30">
+                <i class="fa-solid fa-microchip text-2xl text-lime-400"></i>
+            </div>
+            <h3 class="font-bold text-white mb-1 text-sm">DroneBridge</h3>
+            <p class="text-[10px] text-slate-400 uppercase tracking-wider">XIAO-ESP32-C6</p>
+        </div>
+
+        <!-- Connector 2: UART Detailed -->
+        <div class="flex flex-col items-center justify-center w-36 mx-4 shrink-0 relative">
+            <div class="absolute -top-10 w-full text-center">
+                <span class="text-[10px] text-lime-400 font-semibold whitespace-nowrap bg-slate-900/80 px-2 py-0.5 rounded-full border border-lime-500/30">
+                    UART Telemetry
+                </span>
+            </div>
+            
+            <!-- 5V Line -->
+            <div class="flex items-center w-full mb-1.5">
+                <span class="text-[9px] font-mono text-red-400 w-8 text-right mr-1">5V</span>
+                <div class="flex-1 h-[2px] bg-red-500/30 rounded relative overflow-hidden">
+                    <div class="absolute inset-0 anim-line-h bg-[linear-gradient(90deg,transparent_0%,#ef4444_50%,transparent_100%)]"></div>
+                </div>
+                <span class="text-[9px] font-mono text-red-400 w-8 ml-1">4V5</span>
+            </div>
+            
+            <!-- GND Line -->
+            <div class="flex items-center w-full mb-1.5">
+                <span class="text-[9px] font-mono text-slate-400 w-8 text-right mr-1">GND</span>
+                <div class="flex-1 h-[2px] bg-slate-500/50 rounded"></div>
+                <span class="text-[9px] font-mono text-slate-400 w-8 ml-1">GND</span>
+            </div>
+            
+            <!-- TX -> RX Line -->
+            <div class="flex items-center w-full mb-1.5">
+                <span class="text-[9px] font-mono text-lime-400 w-8 text-right mr-1">TX</span>
+                <div class="flex-1 h-[4px] bg-slate-800 rounded relative overflow-hidden">
+                    <div class="absolute inset-0 data-flow-h"></div>
+                </div>
+                <span class="text-[9px] font-mono text-lime-400 w-8 ml-1">RX2</span>
+            </div>
+            
+            <!-- RX <- TX Line -->
+            <div class="flex items-center w-full">
+                <span class="text-[9px] font-mono text-lime-400 w-8 text-right mr-1">RX</span>
+                <div class="flex-1 h-[4px] bg-slate-800 rounded relative overflow-hidden">
+                    <div class="absolute inset-0 data-flow-h-rev"></div>
+                </div>
+                <span class="text-[9px] font-mono text-lime-400 w-8 ml-1">TX2</span>
+            </div>
+        </div>
+
+        <!-- Node 3: FC -->
+        <div class="glass-card flex flex-col items-center p-6 w-[180px] text-center z-10 shrink-0 border-2 border-lime-500 shadow-[0_0_20px_rgba(132,204,22,0.15)] bg-slate-800/90 relative overflow-hidden">
+            <div class="absolute -right-4 -top-4 text-[80px] opacity-5 text-lime-500"><i class="fa-solid fa-plane"></i></div>
+            <div class="w-16 h-16 bg-lime-900/30 rounded-full flex items-center justify-center mb-3 border border-lime-500">
+                <i class="fa-solid fa-satellite-dish text-2xl text-white"></i>
+            </div>
+            <h3 class="font-bold text-white mb-1 text-sm">Matek H7A3</h3>
+            <p class="text-[10px] text-slate-400 uppercase tracking-wider text-lime-200/70 font-bold">Flight Controller</p>
+        </div>
+
+        <!-- Connector 3: UART & UBEC Detailed -->
+        <div class="flex flex-col items-center justify-center w-36 mx-4 shrink-0 relative">
+            <div class="absolute -top-10 w-full text-center">
+                <span class="text-[10px] text-slate-300 font-semibold whitespace-nowrap bg-slate-900/80 px-2 py-0.5 rounded-full border border-slate-500/30">
+                    UART MAVLink & UBEC
+                </span>
+            </div>
+            
+            <!-- 5V Line (from UBEC) -->
+            <div class="flex items-center w-full mb-1.5 relative mt-2">
+                <div class="absolute -top-3 left-1/2 -translate-x-1/2 text-[7px] text-red-300 font-bold bg-slate-900 px-1 rounded border border-red-500/30">UBEC 5V</div>
+                <span class="text-[9px] font-mono text-slate-500 w-8 text-right mr-1">Batt</span>
+                <div class="flex-1 h-[2px] bg-red-500/30 rounded relative overflow-hidden">
+                    <div class="absolute inset-0 anim-line-h bg-[linear-gradient(90deg,transparent_0%,#ef4444_50%,transparent_100%)]"></div>
+                </div>
+                <span class="text-[9px] font-mono text-red-400 w-8 ml-1">5V in</span>
+            </div>
+            
+            <!-- GND Line -->
+            <div class="flex items-center w-full mb-1.5">
+                <span class="text-[9px] font-mono text-slate-400 w-8 text-right mr-1">GND</span>
+                <div class="flex-1 h-[2px] bg-slate-500/50 rounded"></div>
+                <span class="text-[9px] font-mono text-slate-400 w-8 ml-1">GND</span>
+            </div>
+            
+            <!-- TX -> RX Line -->
+            <div class="flex items-center w-full mb-1.5">
+                <span class="text-[9px] font-mono text-lime-400 w-8 text-right mr-1">TXx</span>
+                <div class="flex-1 h-[4px] bg-slate-800 rounded relative overflow-hidden">
+                    <div class="absolute inset-0 data-flow-h"></div>
+                </div>
+                <span class="text-[9px] font-mono text-lime-400 w-8 ml-1">RX</span>
+            </div>
+            
+            <!-- RX <- TX Line -->
+            <div class="flex items-center w-full">
+                <span class="text-[9px] font-mono text-lime-400 w-8 text-right mr-1">RXx</span>
+                <div class="flex-1 h-[4px] bg-slate-800 rounded relative overflow-hidden">
+                    <div class="absolute inset-0 data-flow-h-rev"></div>
+                </div>
+                <span class="text-[9px] font-mono text-lime-400 w-8 ml-1">TX</span>
+            </div>
+        </div>
+
+        <!-- Node 4: RPi -->
+        <div class="glass-card flex flex-col items-center p-6 w-[180px] text-center z-10 shrink-0 border-t-2 border-t-red-500/50">
+            <div class="w-16 h-16 bg-red-900/20 rounded-full flex items-center justify-center mb-3 border border-red-500/30 shadow-[0_0_15px_rgba(239,68,68,0.1)]">
+                <i class="fa-brands fa-raspberry-pi text-3xl text-red-400"></i>
+            </div>
+            <h3 class="font-bold text-white mb-1 text-sm">Raspberry Pi</h3>
+            <p class="text-[10px] text-slate-400 uppercase tracking-wider">Companion PC</p>
+        </div>
+
+    </div>
+
+</body>
+</html>
