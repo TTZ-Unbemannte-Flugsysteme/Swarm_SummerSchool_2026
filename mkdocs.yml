@@ -55,6 +55,7 @@ nav:
     - End-to-End Checklist: checklist/index.md
   - Algorithm Testing:
     - Simulation: algorithms/simulation.md
+    - Architectures: algorithms/architectures.md
     - Real Hardware Deployment: algorithms/deployment.md
   - Advanced Middleware:
     - DroneManager: middleware/index.md
@@ -74,6 +75,8 @@ markdown_extensions:
   - pymdownx.inlinehilite
   - pymdownx.snippets
   - pymdownx.magiclink
+  - pymdownx.tabbed:
+      alternate_style: true
 
 extra_css:
   - stylesheets/extra.css

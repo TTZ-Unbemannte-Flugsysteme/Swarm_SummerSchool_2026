@@ -424,10 +424,11 @@
         <li><a href="#install"><span class="n">02</span> <span>Install everything</span></a></li>
         <li><a href="#check"><span class="n">03</span> <span>Check the machine</span></a></li>
         <li><a href="#fly"><span class="n">04</span> <span>Fly</span></a></li>
-        <li><a href="#browser"><span class="n">05</span> <span>In the browser</span></a></li>
-        <li><a href="#stop"><span class="n">06</span> <span>Stop</span></a></li>
-        <li><a href="#more"><span class="n">07</span> <span>Other ways to run it</span></a></li>
-        <li><a href="#trouble"><span class="n">08</span> <span>When something goes wrong</span></a></li>
+        <li><a href="#dashboard"><span class="n">05</span> <span>Open the web dashboard</span></a></li>
+        <li><a href="#browser"><span class="n">06</span> <span>What to do in it</span></a></li>
+        <li><a href="#stop"><span class="n">07</span> <span>Stop</span></a></li>
+        <li><a href="#more"><span class="n">08</span> <span>Other ways to run it</span></a></li>
+        <li><a href="#trouble"><span class="n">09</span> <span>When something goes wrong</span></a></li>
       </ol>
     </nav>
   </header>
@@ -517,16 +518,45 @@ Gazebo<br>
       <button type="button" data-copy="flyit">copy</button>
     </div>
 
-    <p style="margin-top:18px">Four terminal windows open &mdash; the vehicles, the position relay, the flight log, the dashboard &mdash; plus a <b>Gazebo</b> window with three quadrotors on a runway, and a browser at:</p>
+    <p style="margin-top:18px">Four terminal windows open &mdash; the vehicles, the position relay, the flight log, the dashboard &mdash; plus a <b>Gazebo</b> window with three quadrotors on a runway.</p>
+
+    <p>The four terminals are not clutter: each one is a component you can watch, and when something misbehaves, that is where it says so. Leave all of it running &mdash; the dashboard is the next step.</p>
+  </section>
+
+  <!-- 05 --------------------------------------------------------------- -->
+  <section class="step" id="dashboard">
+    <h2><span class="stepnum">5</span> Open the web dashboard</h2>
+    <p class="steptime">this is the thing you look at</p>
 
     <div class="out"><b>http://127.0.0.1:8760</b></div>
 
-    <p style="margin-top:18px">If the browser does not open on its own, go to that address yourself. The four terminals are not clutter: each one is a component you can watch, and when something misbehaves, that is where it says so.</p>
+    <p style="margin-top:18px"><code>flyit</code> opens a browser there for you. <b>If no browser appears</b>, type that address in yourself &mdash; which is what happens over SSH, on a machine with no desktop, or when you used <code>--no-terms</code>.</p>
+
+    <h3>Is it even serving?</h3>
+    <p>You can ask it without a browser:</p>
+    <div class="cmd">
+      <pre>curl -s http://127.0.0.1:8760/api/status | head -c 120</pre>
+      <button type="button" data-copy="curl -s http://127.0.0.1:8760/api/status | head -c 120">copy</button>
+    </div>
+    <p style="margin-top:14px">A line of JSON beginning <code>{"now":</code> means the dashboard is up and the page will load. Nothing at all means it never started &mdash; look at the terminal titled <i>swarm: dashboard</i>, which will say why.</p>
+
+    <h3>Running the simulation on another machine</h3>
+    <p>The dashboard listens on <b>loopback only</b>, and that is deliberate: it can arm and fly the vehicles, so it is not something to put on a shared network. Reach it through a tunnel rather than exposing it.</p>
+    <div class="cmd">
+      <pre>ssh -L 8760:127.0.0.1:8760 you@that-machine</pre>
+      <button type="button" data-copy="ssh -L 8760:127.0.0.1:8760 you@that-machine">copy</button>
+    </div>
+    <p style="margin-top:14px">Leave that running, then open <b>http://127.0.0.1:8760</b> on your <b>own</b> laptop. The traffic rides the SSH connection you already trust, and nothing new is opened to the network.</p>
+
+    <div class="note">
+      <span class="tag">If the page loads but is empty</span>
+      <p>Port <code>8760</code> may already be taken by something else &mdash; often a dashboard left over from a previous run that <code>flyit --stop</code> would have cleared. Either stop it, or move this one: <code>DASHBOARD_HTTP_PORT=8761 flyit</code>, then use that port in the address.</p>
+    </div>
   </section>
 
   <!-- 05 --------------------------------------------------------------- -->
   <section class="step" id="browser">
-    <h2><span class="stepnum">5</span> In the browser</h2>
+    <h2><span class="stepnum">6</span> What to do in it</h2>
     <p class="steptime">the part you came for</p>
 
     <div class="note">
@@ -555,7 +585,7 @@ Gazebo<br>
 
   <!-- 06 --------------------------------------------------------------- -->
   <section class="step" id="stop">
-    <h2><span class="stepnum">6</span> Stop</h2>
+    <h2><span class="stepnum">7</span> Stop</h2>
 
     <div class="cmd">
       <pre>flyit --stop</pre>
