@@ -108,8 +108,6 @@ flyit --check   # every dependency, ending in RESULT: PASS or FAIL
 flyit           # 3 drones in Gazebo + the operator dashboard
 ```
 
-The dashboard opens at <http://127.0.0.1:8760>. Wait about a minute before expecting the buttons to work: GPS and the EKF need to settle, and the buttons enable themselves once they have.
-
 ```bash
 flyit 2            # two drones instead of three
 flyit --no-gazebo  # headless physics, starts in seconds, no 3D window
@@ -118,6 +116,75 @@ flyit --stop       # shut it all down
 
 !!! warning "Always stop with `flyit --stop`"
     Closing the windows is not enough — the simulator keeps running, and a leftover run holds the network ports the next one needs.
+
+## Turn on the dashboard
+
+The dashboard is the web page you actually operate the swarm from — telemetry, a camera per drone, keyboard control of the leader, and the inspection surveys. `flyit` starts it and opens a browser at:
+
+<h3 style="margin:.4em 0"><a href="http://127.0.0.1:8760">http://127.0.0.1:8760</a></h3>
+
+**Wait about a minute before expecting the buttons to work.** GPS and the EKF need to settle, and the buttons enable themselves once they have. Nothing is stuck and there is nothing to click to speed it up.
+
+=== "No browser opened"
+
+    That happens on a machine with no desktop, over SSH, or when you used `--no-terms`. Type the address in yourself:
+
+    ```
+    http://127.0.0.1:8760
+    ```
+
+=== "Is it even running?"
+
+    Ask it without a browser. A line of JSON beginning `{"now":` means the dashboard is up and the page will load:
+
+    ```bash
+    curl -s http://127.0.0.1:8760/api/status | head -c 120
+    ```
+
+    Nothing at all means it never started — look at the terminal titled *swarm: dashboard*, which will say why.
+
+=== "Start it on its own"
+
+    The dashboard is a separate process, so you can start it without restarting the simulation — useful if it crashed, or if you launched the vehicles with `launch_swarm.sh` directly. It attaches to drones that are **already flying**:
+
+    ```bash
+    cd Swarm_SummerSchool_2026
+    python3 dashboard/server.py --vehicles 3
+    ```
+
+    Match `--vehicles` to the number you launched. Other options:
+
+    ```bash
+    --http-port 8761   # if 8760 is taken
+    --no-control       # watch only; refuse to command any vehicle
+    --no-video         # skip the Gazebo camera feeds
+    ```
+
+=== "The simulation is on another machine"
+
+    The dashboard listens on **loopback only**, deliberately: it can arm and fly the vehicles, so it is not something to expose on a shared network. Tunnel to it instead:
+
+    ```bash
+    ssh -L 8760:127.0.0.1:8760 you@that-machine
+    ```
+
+    Leave that running and open <http://127.0.0.1:8760> on your **own** laptop.
+
+=== "The page will not load"
+
+    Something else already holds port 8760 — often a dashboard left over from a previous run:
+
+    ```bash
+    flyit --stop                      # clears it
+    DASHBOARD_HTTP_PORT=8761 flyit    # or move this one
+    ```
+
+### What to do once it is open
+
+1. **Arm + take off all (20 m)** — every drone lifts off, not just the leader.
+2. **Followers → FOLLOW** — the followers take station behind the leader.
+3. Then **Take control** to fly the leader with `W A S D`, **click the map** to send it somewhere, or run **Inspect the highway**.
+4. **Land all** when you are done.
 
 ## Full Walkthrough
 
