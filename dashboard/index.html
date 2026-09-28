@@ -311,15 +311,25 @@
 <script>
 const SERIES = ["--s-leader", "--s-f1", "--s-f2"];
 const css = v => getComputedStyle(document.documentElement).getPropertyValue(v).trim();
-const seriesColor = i => css(SERIES[i % SERIES.length]);
+/* Never cycle a categorical palette: with six drones, repeating after three
+   means two aircraft share a colour and the plot lies about which is which.
+   Past the palette, everything folds into the last slot and identity comes
+   from the numeric label drawn beside each marker and from the table. */
+const seriesColor = i => css(SERIES[Math.min(i, SERIES.length - 1)]);
 const el = id => document.getElementById(id);
 const fmt = (v, d = 1, unit = "") =>
   (v === null || v === undefined) ? "&mdash;" : v.toFixed(d) + unit;
 
 let lastStatus = null;
 
+/* Up to two followers each get their own colour, which is what the measured
+   three-drone runs show. Beyond that the followers are interchangeable on the
+   chart and share one, rather than inventing hues nobody validated. */
+function manyFollowers(status) { return (status.followers || []).length > 2; }
+
 function colorFor(status, sysid) {
   if (sysid === status.leader_sysid) return 0;
+  if (manyFollowers(status)) return 1;
   const order = status.followers.map(f => f.sysid).sort((a, b) => a - b);
   return 1 + Math.max(0, order.indexOf(sysid));
 }
@@ -378,8 +388,12 @@ function renderLegends(s) {
     `<span><span class="swatch" style="background:${i.c}"></span>${i.t}</span>`).join("");
   const items = [];
   if (s.leader) items.push({ c: seriesColor(0), t: `Drone ${s.leader.sysid} (leader)` });
-  for (const f of s.followers)
-    items.push({ c: seriesColor(colorFor(s, f.sysid)), t: `Drone ${f.sysid}` });
+  if (manyFollowers(s)) {
+    items.push({ c: seriesColor(1), t: `${s.followers.length} followers` });
+  } else {
+    for (const f of s.followers)
+      items.push({ c: seriesColor(colorFor(s, f.sysid)), t: `Drone ${f.sysid}` });
+  }
   el("plot-legend").innerHTML = mk(items);
   el("chart-legend").innerHTML = s.followers.length
     ? mk(items.slice(1)) : "";

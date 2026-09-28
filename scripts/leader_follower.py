@@ -42,11 +42,13 @@ BASE_PARAMS = {
 # Station for follower k (0-based) as (north, east) metres from the leader.
 # A trailing V, spaced well clear of GNSS relative error - see the architecture
 # doc on why single-digit spacing is not safe on the real aircraft.
-STATIONS = [(-25.0, -20.0), (-25.0, 20.0), (-50.0, 0.0), (-50.0, -40.0)]
+# Stations are generated, not listed: a fixed list indexed modulo its length
+# hands the fifth drone the first drone's station. See scripts/formation.py.
+import formation
 
 
 def station_for(k):
-    return STATIONS[k % len(STATIONS)]
+    return formation.station(k)
 
 
 def ned_offset(ref, pos):

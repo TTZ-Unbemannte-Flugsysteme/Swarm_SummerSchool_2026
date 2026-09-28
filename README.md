@@ -439,6 +439,78 @@ because the ground station is talking. If the dashboard stops, the followers
 hold their last commanded position — safe, but no longer following. That is why
 aiming is a temporary mode with an explicit hand-back rather than the default.
 
+## Flying more than three
+
+```bash
+flyit 6          # or 9, or 2
+flyreal 6        # same, with one companion agent per aircraft
+```
+
+Everything generalises: ports are `base + 10i`, Gazebo gets one cloned model
+per drone, and each vehicle gets its own parameter store. Two things did not
+generalise, and both are fixed.
+
+### Stations are generated, not listed
+
+`scripts/formation.py` places followers in a V — alternating left and right,
+each pair one rank further back:
+
+```
+$ python3 scripts/formation.py 6
+  drone      north     east   station
+  1            0.0      0.0   leader
+  2          -25.0    -20.0   rank 1 left
+  3          -25.0     20.0   rank 1 right
+  4          -50.0    -40.0   rank 2 left
+  5          -50.0     40.0   rank 2 right
+  6          -75.0    -60.0   rank 3 left
+
+  closest two stations: 32.0 m
+```
+
+The minimum separation stays **32 m** however many you add, because the
+formation widens rather than packing more aircraft into the same volume.
+
+**This replaced a real bug.** The stations used to be a list of four, indexed
+`% len(STATIONS)`. With six drones the fifth got the first one's station; with
+nine, *four pairs* of aircraft were commanded to the same point. `FOLLOW` has
+no inter-follower awareness — each drone steers to its own offset and knows
+nothing about the others — so nothing would have stopped them converging.
+Both the dashboard button and the measured evaluation now read the same
+generator, so they cannot drift apart.
+
+### Measured at six
+
+```
+follower1..5: closest 0.0m, settled 0.0m (tolerance 6m)
+RESULT: PASS - every follower held station within 6m.
+```
+
+### What actually limits the count
+
+Not the ports, and not the formation logic — the **renderer**:
+
+| Drones | Real-time factor | Camera fps (10 Hz asked) |
+|---|---|---|
+| 3 | 0.61 | 6.3 |
+| 6 | 0.315 | 3.0 |
+
+Roughly linear: each drone costs about as much as the last. At RTF 0.315 the
+flight is still correct — lock-step keeps the physics honest — it just takes
+three times longer in the room than on the clock. A two-minute sortie is six
+minutes of your life.
+
+So for a big swarm, drop what you do not need:
+
+```bash
+SWARM_CAMERAS=0 flyit 9    # no camera sensors: the renderer stops being the cost
+flyit 9 --no-gazebo        # no 3D at all; the formation is ArduPilot's own and unchanged
+```
+
+Beyond about **9** on this machine, use `--no-gazebo` unless you specifically
+need to see it. The dashboard, the relay and the formation are unaffected;
+only the picture goes.
+
 ## flyreal — wired the way the aircraft are
 
 `flyit` runs **one** relay process for the whole swarm over loopback. That is

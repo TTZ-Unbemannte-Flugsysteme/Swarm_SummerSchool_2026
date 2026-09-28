@@ -22,6 +22,8 @@ compass. The formation does not rotate with the leader's heading, so neither
 does the operator's frame of reference.
 """
 import math
+import os
+import sys
 import threading
 import time
 
@@ -79,7 +81,11 @@ FOLLOW_PARAMS = {
     "FOLL_YAW_BEHAVE": 0, "FOLL_DIST_MAX": 1000, "FOLL_POS_P": 0.1,
     "FOLL_TIMEOUT": 3.0,
 }
-STATIONS = [(-25.0, -20.0), (-25.0, 20.0), (-50.0, 0.0), (-50.0, -40.0)]
+# Stations come from the same generator the measured evaluation uses, so the
+# button and the script can never disagree about where a drone should be.
+sys.path.insert(0, os.path.join(
+    os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "scripts"))
+import formation
 
 ACK_NAMES = {0: "accepted", 1: "temporarily rejected", 2: "denied",
              3: "unsupported", 4: "failed", 5: "in progress", 6: "cancelled"}
@@ -710,7 +716,7 @@ class Pilot:
                 self._hold(st)
                 n += 1
                 continue
-            ofs_n, ofs_e = STATIONS[(st.sysid - 2) % len(STATIONS)]
+            ofs_n, ofs_e = formation.station(st.sysid - 2)
             params = dict(FOLLOW_PARAMS)
             params["FOLL_SYSID"] = leader_sysid or 1
             params["FOLL_OFS_X"], params["FOLL_OFS_Y"] = ofs_n, ofs_e
