@@ -124,6 +124,39 @@ It opens four terminal windows - the vehicles (with Gazebo and a MAVProxy
 console per drone), the position relay, the unified flight log, and the
 dashboard server - then points a browser at the status page.
 
+### Turning the dashboard on by itself
+
+`flyit` starts it for you at <http://127.0.0.1:8760>. It is a separate process
+though, so you can start it without restarting the simulation - after a crash,
+or if you launched the vehicles with `launch_swarm.sh` directly. It attaches to
+drones that are **already flying**:
+
+```bash
+python3 dashboard/server.py --vehicles 3     # match the number you launched
+```
+
+```bash
+--http-port 8761   # if 8760 is taken
+--no-control       # watch only; refuse to command any vehicle
+--no-video         # skip the Gazebo camera feeds
+--no-detect        # stream the cameras but do not look for the accident
+```
+
+Check it is serving without opening a browser - a line of JSON beginning
+`{"now":` means the page will load:
+
+```bash
+curl -s http://127.0.0.1:8760/api/status | head -c 120
+```
+
+Running the simulation on another machine? The dashboard binds **loopback
+only**, deliberately - it can arm and fly the vehicles. Tunnel to it rather
+than exposing it:
+
+```bash
+ssh -L 8760:127.0.0.1:8760 you@that-machine
+```
+
 `flyit` clears any previous run, generates the Gazebo world, starts the
 vehicles, waits for real heartbeats (not just for ports to exist), starts the
 position relay, flight log and dashboard, then opens
